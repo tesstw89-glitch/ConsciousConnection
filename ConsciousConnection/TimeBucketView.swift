@@ -3,6 +3,7 @@ import SwiftUI
 struct TimeBucketView: View {
     @EnvironmentObject private var router: AppRouter
     @StateObject private var store = TimeFlexStore()
+    @ObservedObject private var customStore = CustomTaskListStore.shared
     @State private var currentIndex: Int = 0
 
     @State private var cardVisible = false
@@ -11,13 +12,27 @@ struct TimeBucketView: View {
     let minutes: Int
     private var isRandomMode: Bool { minutes == 0 }
     private var suggestionKey: String { isRandomMode ? "timeRandomIds" : "time\(minutes)Ids" }
+    private var usesCustomList: Bool { customStore.isCustomListActive }
 
     private func currentTasks() -> [FlexTask] {
         let ids = store.data.currentSuggestions[suggestionKey] ?? []
         return ids.compactMap { id in TASKS.first(where: { $0.id == id }) }
     }
 
+    private func currentCustomTasks() -> [CustomTask] {
+        customStore.tasks(for: suggestionKey)
+    }
+
     private func ensureSuggestion() {
+        if usesCustomList {
+            customStore.ensureSuggestion(
+                for: suggestionKey,
+                minutes: isRandomMode ? nil : minutes
+            )
+            currentIndex = 0
+            return
+        }
+
         store.ensureResets()
         let now = Date()
 
@@ -76,6 +91,15 @@ struct TimeBucketView: View {
         return false
     }
 
+    @discardableResult
+    private func swap(customTask: CustomTask) -> Bool {
+        customStore.swap(
+            taskID: customTask.id,
+            suggestionKey: suggestionKey,
+            minutes: isRandomMode ? nil : minutes
+        )
+    }
+
     private func animateCardIn() {
         cardVisible = false
         cardOffsetX = 40
@@ -103,6 +127,18 @@ struct TimeBucketView: View {
     }
 
     private func markDone() {
+        if usesCustomList {
+            let tasks = currentCustomTasks()
+            guard let task = tasks.first else {
+                router.goHome()
+                return
+            }
+
+            customStore.markDone(taskID: task.id, suggestionKey: suggestionKey)
+            router.goHome()
+            return
+        }
+
         let tasks = currentTasks()
         guard !tasks.isEmpty else {
             router.goHome()
@@ -153,100 +189,13 @@ struct TimeBucketView: View {
             VStack(spacing: 22) {
                 Spacer(minLength: 30)
 
-                VStack(spacing: 6) {
-                    if isRandomMode {
-                        Text("Random")
-                            .font(.custom("Didot", size: 52))
-                            .foregroundStyle(.white)
+                heading
+                    .shadow(color: .black.opacity(0.22), radius: 8, x: 0, y: 3)
 
-                        Text("task")
-                            .font(.custom("Didot", size: 26))
-                            .foregroundStyle(.white.opacity(0.92))
-                    } else {
-                        Text("\(minutes)")
-                            .font(.custom("Didot", size: 58))
-                            .foregroundStyle(.white)
-
-                        Text(minutes == 1 ? "minute" : "minutes")
-                            .font(.custom("Didot", size: 26))
-                            .foregroundStyle(.white.opacity(0.92))
-                    }
-                }
-                .shadow(color: .black.opacity(0.22), radius: 8, x: 0, y: 3)
-
-                let tasks = currentTasks()
-
-                if tasks.isEmpty {
-                    VStack(spacing: 10) {
-                        Text("None for today")
-                            .font(.custom("Didot", size: 34))
-                            .foregroundStyle(.white)
-
-                        Text("You’ve worked hard enough.")
-                            .font(.system(size: 20, weight: .regular, design: .rounded))
-                            .foregroundStyle(.white.opacity(0.88))
-                            .multilineTextAlignment(.center)
-                    }
-                    .padding(.horizontal, 28)
-                    .padding(.vertical, 26)
-                    .frame(maxWidth: .infinity)
-                    .background(
-                        RoundedRectangle(cornerRadius: 28, style: .continuous)
-                            .fill(Color.black.opacity(0.24))
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 28, style: .continuous)
-                            .stroke(Color.white.opacity(0.16), lineWidth: 1)
-                    )
-                    .padding(.horizontal, 22)
-
-                } else if tasks.indices.contains(currentIndex) {
-                    let t = tasks[currentIndex]
-
-                    VStack(alignment: .leading, spacing: 18) {
-                        Text("Your task")
-                            .font(.system(size: 15, weight: .semibold, design: .rounded))
-                            .foregroundStyle(.white.opacity(0.72))
-                            .textCase(.uppercase)
-
-                        Text(t.title)
-                            .font(.system(size: 30, weight: .medium, design: .rounded))
-                            .foregroundStyle(.white)
-                            .fixedSize(horizontal: false, vertical: true)
-
-                        HStack {
-                            Spacer()
-
-                            Button {
-                                if swap(task: t) {
-                                    animateCardRefresh { }
-                                }
-                            } label: {
-                                Text("Swap")
-                            }
-                            .buttonStyle(TimeBucketGhostButtonStyle())
-                        }
-                    }
-                    .padding(24)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(
-                        RoundedRectangle(cornerRadius: 30, style: .continuous)
-                            .fill(Color.black.opacity(0.26))
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 30, style: .continuous)
-                            .stroke(Color.white.opacity(0.16), lineWidth: 1)
-                    )
-                    .shadow(color: .black.opacity(0.14), radius: 10, x: 0, y: 4)
-                    .padding(.horizontal, 22)
-                    .offset(x: cardOffsetX)
-                    .opacity(cardVisible ? 1 : 0)
-
+                if usesCustomList {
+                    customTaskContent
                 } else {
-                    Text("All done ✨")
-                        .font(.custom("Didot", size: 36))
-                        .foregroundStyle(.white)
-                        .padding(.top, 10)
+                    standardTaskContent
                 }
 
                 Button {
@@ -269,11 +218,141 @@ struct TimeBucketView: View {
         }
         .onAppear {
             ensureSuggestion()
-            if !currentTasks().isEmpty {
+            if usesCustomList ? !currentCustomTasks().isEmpty : !currentTasks().isEmpty {
                 animateCardIn()
             }
         }
         .navigationBarBackButtonHidden(true)
+    }
+
+    private var heading: some View {
+        VStack(spacing: 6) {
+            if isRandomMode {
+                Text("Random")
+                    .font(.custom("Didot", size: 52))
+                    .foregroundStyle(.white)
+
+                Text(usesCustomList ? "custom task" : "task")
+                    .font(.custom("Didot", size: 26))
+                    .foregroundStyle(.white.opacity(0.92))
+            } else {
+                Text("\(minutes)")
+                    .font(.custom("Didot", size: 58))
+                    .foregroundStyle(.white)
+
+                Text(minutes == 1 ? "minute" : "minutes")
+                    .font(.custom("Didot", size: 26))
+                    .foregroundStyle(.white.opacity(0.92))
+            }
+
+            if let activeList = customStore.activeList {
+                Text(activeList.name)
+                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.72))
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var customTaskContent: some View {
+        let tasks = currentCustomTasks()
+
+        if let task = tasks.first {
+            taskCard(title: task.title) {
+                if swap(customTask: task) {
+                    animateCardRefresh { }
+                }
+            }
+        } else {
+            emptyTaskCard(
+                message: isRandomMode
+                    ? "There are no unfinished tasks left in this custom list."
+                    : "There are no unfinished \(minutes)-minute tasks in this custom list."
+            )
+        }
+    }
+
+    @ViewBuilder
+    private var standardTaskContent: some View {
+        let tasks = currentTasks()
+
+        if tasks.isEmpty {
+            emptyTaskCard(message: "You’ve worked hard enough.")
+        } else if tasks.indices.contains(currentIndex) {
+            let task = tasks[currentIndex]
+            taskCard(title: task.title) {
+                if swap(task: task) {
+                    animateCardRefresh { }
+                }
+            }
+        } else {
+            Text("All done ✨")
+                .font(.custom("Didot", size: 36))
+                .foregroundStyle(.white)
+                .padding(.top, 10)
+        }
+    }
+
+    private func taskCard(title: String, onSwap: @escaping () -> Void) -> some View {
+        VStack(alignment: .leading, spacing: 18) {
+            Text("Your task")
+                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                .foregroundStyle(.white.opacity(0.72))
+                .textCase(.uppercase)
+
+            Text(title)
+                .font(.system(size: 30, weight: .medium, design: .rounded))
+                .foregroundStyle(.white)
+                .fixedSize(horizontal: false, vertical: true)
+
+            HStack {
+                Spacer()
+
+                Button(action: onSwap) {
+                    Text("Swap")
+                }
+                .buttonStyle(TimeBucketGhostButtonStyle())
+            }
+        }
+        .padding(24)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 30, style: .continuous)
+                .fill(Color.black.opacity(0.26))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 30, style: .continuous)
+                .stroke(Color.white.opacity(0.16), lineWidth: 1)
+        )
+        .shadow(color: .black.opacity(0.14), radius: 10, x: 0, y: 4)
+        .padding(.horizontal, 22)
+        .offset(x: cardOffsetX)
+        .opacity(cardVisible ? 1 : 0)
+    }
+
+    private func emptyTaskCard(message: String) -> some View {
+        VStack(spacing: 10) {
+            Text("None for today")
+                .font(.custom("Didot", size: 34))
+                .foregroundStyle(.white)
+
+            Text(message)
+                .font(.system(size: 20, weight: .regular, design: .rounded))
+                .foregroundStyle(.white.opacity(0.88))
+                .multilineTextAlignment(.center)
+        }
+        .padding(.horizontal, 28)
+        .padding(.vertical, 26)
+        .frame(maxWidth: .infinity)
+        .background(
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                .fill(Color.black.opacity(0.24))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                .stroke(Color.white.opacity(0.16), lineWidth: 1)
+        )
+        .padding(.horizontal, 22)
     }
 }
 
