@@ -219,69 +219,90 @@ private struct NewCustomListSheet: View {
     }
 }
 
+private enum CustomTaskInputMode: String, CaseIterable, Identifiable {
+    case newTask = "Write new"
+    case existingTask = "Choose existing"
+
+    var id: Self { self }
+}
+
 private struct AddCustomTaskSheet: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject private var store = CustomTaskListStore.shared
 
     let list: CustomTaskList
+    @State private var inputMode: CustomTaskInputMode = .newTask
     @State private var title = ""
     @State private var selectedMinutes = 10
+    @State private var selectedBuiltInTaskID: String?
+    @State private var existingTaskSearch = ""
 
     private let columns = [
         GridItem(.adaptive(minimum: 62), spacing: 10)
     ]
 
+    private var builtInTasks: [FlexTask] {
+        TASKS.filter { task in
+            guard task.id != "saturday_focus" else { return false }
+
+            switch task.scope {
+            case .daily, .weekly:
+                return true
+            case .monthly:
+                return false
+            }
+        }
+        .sorted {
+            $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending
+        }
+    }
+
+    private var filteredBuiltInTasks: [FlexTask] {
+        let search = existingTaskSearch.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !search.isEmpty else { return builtInTasks }
+        return builtInTasks.filter { $0.title.localizedCaseInsensitiveContains(search) }
+    }
+
+    private var canAddTask: Bool {
+        let hasTitle = !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+
+        switch inputMode {
+        case .newTask:
+            return hasTitle
+        case .existingTask:
+            return hasTitle && selectedBuiltInTaskID != nil
+        }
+    }
+
     var body: some View {
         NavigationStack {
-            VStack(alignment: .leading, spacing: 22) {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Task")
-                        .font(.headline)
-                    TextField("Write the task", text: $title, axis: .vertical)
-                        .textFieldStyle(.roundedBorder)
-                        .lineLimit(2...4)
-                }
-
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Duration")
-                        .font(.headline)
-
-                    LazyVGrid(columns: columns, spacing: 10) {
-                        ForEach(CustomTaskListStore.allowedDurations, id: \.self) { minutes in
-                            Button {
-                                selectedMinutes = minutes
-                            } label: {
-                                Text("\(minutes)")
-                                    .font(.system(size: 16, weight: .semibold, design: .rounded))
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 12)
-                                    .foregroundStyle(selectedMinutes == minutes ? .white : .primary)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                            .fill(selectedMinutes == minutes ? Color.accentColor : Color.secondary.opacity(0.14))
-                                    )
-                            }
-                            .buttonStyle(.plain)
-                            .accessibilityLabel("\(minutes) minutes")
+            ScrollView {
+                VStack(alignment: .leading, spacing: 22) {
+                    Picker("Task source", selection: $inputMode) {
+                        ForEach(CustomTaskInputMode.allCases) { mode in
+                            Text(mode.rawValue).tag(mode)
                         }
                     }
+                    .pickerStyle(.segmented)
 
-                    Text("minutes")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    if inputMode == .newTask {
+                        newTaskSection
+                    } else {
+                        existingTaskSection
+                    }
+
+                    durationSection
+
+                    Button("OK") {
+                        store.addTask(to: list.id, title: title, minutes: selectedMinutes)
+                        dismiss()
+                    }
+                    .buttonStyle(CustomListPrimaryButtonStyle())
+                    .frame(maxWidth: .infinity)
+                    .disabled(!canAddTask)
                 }
-
-                Spacer()
-
-                Button("OK") {
-                    store.addTask(to: list.id, title: title, minutes: selectedMinutes)
-                    dismiss()
-                }
-                .buttonStyle(CustomListPrimaryButtonStyle())
-                .frame(maxWidth: .infinity)
-                .disabled(title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                .padding(20)
             }
-            .padding(20)
             .navigationTitle(list.name)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -289,8 +310,113 @@ private struct AddCustomTaskSheet: View {
                     Button("Cancel") { dismiss() }
                 }
             }
+            .onChange(of: inputMode) { _, newMode in
+                if newMode == .newTask {
+                    selectedBuiltInTaskID = nil
+                } else {
+                    title = ""
+                    selectedBuiltInTaskID = nil
+                }
+            }
         }
         .presentationDetents([.large])
+    }
+
+    private var newTaskSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Task")
+                .font(.headline)
+
+            TextField("Write the task", text: $title, axis: .vertical)
+                .textFieldStyle(.roundedBorder)
+                .lineLimit(2...4)
+        }
+    }
+
+    private var existingTaskSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Choose from your usual tasks")
+                .font(.headline)
+
+            TextField("Search tasks", text: $existingTaskSearch)
+                .textFieldStyle(.roundedBorder)
+
+            if filteredBuiltInTasks.isEmpty {
+                Text("No matching tasks")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 24)
+            } else {
+                LazyVStack(spacing: 8) {
+                    ForEach(filteredBuiltInTasks) { task in
+                        Button {
+                            selectedBuiltInTaskID = task.id
+                            title = task.title
+                            selectedMinutes = task.minutes
+                        } label: {
+                            HStack(spacing: 12) {
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text(task.title)
+                                        .font(.system(size: 16, weight: .medium, design: .rounded))
+                                        .foregroundStyle(.primary)
+                                        .multilineTextAlignment(.leading)
+
+                                    Text("\(task.minutes) mins")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+
+                                Spacer()
+
+                                Image(systemName: selectedBuiltInTaskID == task.id ? "checkmark.circle.fill" : "circle")
+                                    .font(.title3)
+                                    .foregroundStyle(selectedBuiltInTaskID == task.id ? Color.accentColor : Color.secondary.opacity(0.5))
+                            }
+                            .padding(13)
+                            .background(
+                                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                    .fill(selectedBuiltInTaskID == task.id ? Color.accentColor.opacity(0.12) : Color.secondary.opacity(0.08))
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+        }
+    }
+
+    private var durationSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Duration")
+                .font(.headline)
+
+            LazyVGrid(columns: columns, spacing: 10) {
+                ForEach(CustomTaskListStore.allowedDurations, id: \.self) { minutes in
+                    Button {
+                        selectedMinutes = minutes
+                    } label: {
+                        Text("\(minutes)")
+                            .font(.system(size: 16, weight: .semibold, design: .rounded))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .foregroundStyle(selectedMinutes == minutes ? .white : .primary)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                    .fill(selectedMinutes == minutes ? Color.accentColor : Color.secondary.opacity(0.14))
+                            )
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("\(minutes) minutes")
+                }
+            }
+
+            Text(inputMode == .existingTask && selectedBuiltInTaskID != nil
+                 ? "The task’s usual duration is selected. You can change it here."
+                 : "minutes")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
     }
 }
 
