@@ -231,10 +231,11 @@ private struct AddCustomTaskSheet: View {
     @ObservedObject private var store = CustomTaskListStore.shared
 
     let list: CustomTaskList
+
     @State private var inputMode: CustomTaskInputMode = .newTask
     @State private var title = ""
     @State private var selectedMinutes = 10
-    @State private var selectedBuiltInTaskID: String?
+    @State private var selectedBuiltInTaskIDs: Set<String> = []
     @State private var existingTaskSearch = ""
 
     private let columns = [
@@ -242,7 +243,6 @@ private struct AddCustomTaskSheet: View {
     ]
 
     private var builtInTasks: [FlexTask] {
-        // Match the tasks shown in the normal Daily Tasks and Weekly Tasks sections.
         TASKS.filter { task in
             guard task.id != "saturday_focus" else { return false }
 
@@ -264,14 +264,26 @@ private struct AddCustomTaskSheet: View {
         return builtInTasks.filter { $0.title.localizedCaseInsensitiveContains(search) }
     }
 
-    private var canAddTask: Bool {
-        let hasTitle = !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    private var selectedBuiltInTasks: [FlexTask] {
+        builtInTasks.filter { selectedBuiltInTaskIDs.contains($0.id) }
+    }
 
+    private var canAddTask: Bool {
         switch inputMode {
         case .newTask:
-            return hasTitle
+            return !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         case .existingTask:
-            return hasTitle && selectedBuiltInTaskID != nil
+            return !selectedBuiltInTaskIDs.isEmpty
+        }
+    }
+
+    private var addButtonTitle: String {
+        switch inputMode {
+        case .newTask:
+            return "Add task"
+        case .existingTask:
+            let count = selectedBuiltInTaskIDs.count
+            return count == 1 ? "Add 1 task" : "Add \(count) tasks"
         }
     }
 
@@ -288,15 +300,13 @@ private struct AddCustomTaskSheet: View {
 
                     if inputMode == .newTask {
                         newTaskSection
+                        durationSection
                     } else {
                         existingTaskSection
                     }
 
-                    durationSection
-
-                    Button("OK") {
-                        store.addTask(to: list.id, title: title, minutes: selectedMinutes)
-                        dismiss()
+                    Button(addButtonTitle) {
+                        addSelectedTasks()
                     }
                     .buttonStyle(CustomListPrimaryButtonStyle())
                     .frame(maxWidth: .infinity)
@@ -311,15 +321,43 @@ private struct AddCustomTaskSheet: View {
                     Button("Cancel") { dismiss() }
                 }
             }
-            .onChange(of: inputMode) { _, newMode in
-                selectedBuiltInTaskID = nil
-
-                if newMode == .existingTask {
-                    title = ""
-                }
+            .onChange(of: inputMode) { _, _ in
+                title = ""
+                selectedBuiltInTaskIDs = []
+                existingTaskSearch = ""
             }
         }
         .presentationDetents([.large])
+    }
+
+    private func addSelectedTasks() {
+        switch inputMode {
+        case .newTask:
+            store.addTask(
+                to: list.id,
+                title: title,
+                minutes: selectedMinutes
+            )
+
+        case .existingTask:
+            for task in selectedBuiltInTasks {
+                store.addTask(
+                    to: list.id,
+                    title: task.title,
+                    minutes: task.minutes
+                )
+            }
+        }
+
+        dismiss()
+    }
+
+    private func toggleBuiltInTask(_ task: FlexTask) {
+        if selectedBuiltInTaskIDs.contains(task.id) {
+            selectedBuiltInTaskIDs.remove(task.id)
+        } else {
+            selectedBuiltInTaskIDs.insert(task.id)
+        }
     }
 
     private var newTaskSection: some View {
@@ -335,8 +373,24 @@ private struct AddCustomTaskSheet: View {
 
     private var existingTaskSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Choose from your usual tasks")
-                .font(.headline)
+            HStack {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Choose from your usual tasks")
+                        .font(.headline)
+
+                    Text("Select as many as you like. Each keeps its usual duration.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                if !selectedBuiltInTaskIDs.isEmpty {
+                    Text("\(selectedBuiltInTaskIDs.count) selected")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(Color.accentColor)
+                }
+            }
 
             TextField("Search tasks", text: $existingTaskSearch)
                 .textFieldStyle(.roundedBorder)
@@ -350,10 +404,10 @@ private struct AddCustomTaskSheet: View {
             } else {
                 LazyVStack(spacing: 8) {
                     ForEach(filteredBuiltInTasks) { task in
+                        let isSelected = selectedBuiltInTaskIDs.contains(task.id)
+
                         Button {
-                            selectedBuiltInTaskID = task.id
-                            title = task.title
-                            selectedMinutes = task.minutes
+                            toggleBuiltInTask(task)
                         } label: {
                             HStack(spacing: 12) {
                                 VStack(alignment: .leading, spacing: 3) {
@@ -369,14 +423,14 @@ private struct AddCustomTaskSheet: View {
 
                                 Spacer()
 
-                                Image(systemName: selectedBuiltInTaskID == task.id ? "checkmark.circle.fill" : "circle")
+                                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
                                     .font(.title3)
-                                    .foregroundStyle(selectedBuiltInTaskID == task.id ? Color.accentColor : Color.secondary.opacity(0.5))
+                                    .foregroundStyle(isSelected ? Color.accentColor : Color.secondary.opacity(0.5))
                             }
                             .padding(13)
                             .background(
                                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .fill(selectedBuiltInTaskID == task.id ? Color.accentColor.opacity(0.12) : Color.secondary.opacity(0.08))
+                                    .fill(isSelected ? Color.accentColor.opacity(0.12) : Color.secondary.opacity(0.08))
                             )
                         }
                         .buttonStyle(.plain)
@@ -411,9 +465,7 @@ private struct AddCustomTaskSheet: View {
                 }
             }
 
-            Text(inputMode == .existingTask && selectedBuiltInTaskID != nil
-                 ? "The task’s usual duration is selected. You can change it here."
-                 : "minutes")
+            Text("minutes")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
