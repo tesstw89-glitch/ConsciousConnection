@@ -242,6 +242,7 @@ private struct AddCustomTaskSheet: View {
     ]
 
     private var builtInTasks: [FlexTask] {
+        // Match the tasks shown in the normal Daily Tasks and Weekly Tasks sections.
         TASKS.filter { task in
             guard task.id != "saturday_focus" else { return false }
 
