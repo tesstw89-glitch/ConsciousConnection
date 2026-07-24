@@ -311,11 +311,10 @@ private struct AddCustomTaskSheet: View {
                 }
             }
             .onChange(of: inputMode) { _, newMode in
-                if newMode == .newTask {
-                    selectedBuiltInTaskID = nil
-                } else {
+                selectedBuiltInTaskID = nil
+
+                if newMode == .existingTask {
                     title = ""
-                    selectedBuiltInTaskID = nil
                 }
             }
         }
