@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 
 struct CustomTask: Identifiable, Codable, Hashable {
     let id: UUID
@@ -32,7 +33,6 @@ private struct CustomTaskListData: Codable {
     var currentSuggestions: [String: [UUID]] = [:]
 }
 
-@MainActor
 final class CustomTaskListStore: ObservableObject {
     static let shared = CustomTaskListStore()
 
@@ -42,6 +42,7 @@ final class CustomTaskListStore: ObservableObject {
 
     private var currentSuggestions: [String: [UUID]] = [:]
     private let defaultsKey = "customTaskListData.v1"
+    private let completedDateKey = "customTaskCompletedDate.v1"
 
     private init() {
         load()
@@ -171,19 +172,14 @@ final class CustomTaskListStore: ObservableObject {
         save()
     }
 
-    func clearSuggestion(for suggestionKey: String) {
-        currentSuggestions[suggestionKey] = nil
-        save()
-    }
-
     func ensureDailyReset() {
         let today = Self.todayKey()
-        let savedDate = UserDefaults.standard.string(forKey: "customTaskCompletedDate.v1") ?? ""
+        let savedDate = UserDefaults.standard.string(forKey: completedDateKey) ?? ""
 
         guard savedDate != today else { return }
         completedTaskIDs = []
         currentSuggestions = [:]
-        UserDefaults.standard.set(today, forKey: "customTaskCompletedDate.v1")
+        UserDefaults.standard.set(today, forKey: completedDateKey)
         save()
     }
 
@@ -199,14 +195,14 @@ final class CustomTaskListStore: ObservableObject {
         activeListID = decoded.activeListID
         completedTaskIDs = decoded.completedTaskIDs
         currentSuggestions = decoded.currentSuggestions
-        UserDefaults.standard.set(decoded.completedDate, forKey: "customTaskCompletedDate.v1")
+        UserDefaults.standard.set(decoded.completedDate, forKey: completedDateKey)
     }
 
     private func save() {
         let data = CustomTaskListData(
             lists: lists,
             activeListID: activeListID,
-            completedDate: UserDefaults.standard.string(forKey: "customTaskCompletedDate.v1") ?? Self.todayKey(),
+            completedDate: UserDefaults.standard.string(forKey: completedDateKey) ?? Self.todayKey(),
             completedTaskIDs: completedTaskIDs,
             currentSuggestions: currentSuggestions
         )
