@@ -49,12 +49,49 @@ struct HomeView: View {
     @AppStorage("dismissedWidgetPromo") private var dismissedWidgetPromo = false
     @State private var showingWidgetPromo = false
 
+    @State private var selectedDate = Calendar.current.startOfDay(for: Date())
+
     private var lastActiveDate: Date {
         Date(timeIntervalSince1970: lastActiveDateTimestamp)
     }
 
+    private var isViewingToday: Bool {
+        Calendar.current.isDate(selectedDate, inSameDayAs: Date())
+    }
+
+    private var selectedDateLabel: String {
+        if Calendar.current.isDateInToday(selectedDate) {
+            return "Today"
+        } else if Calendar.current.isDateInYesterday(selectedDate) {
+            return "Yesterday"
+        } else {
+            return selectedDate.formatted(.dateTime.weekday(.wide).day().month(.abbreviated))
+        }
+    }
+
+    private var visibleHabits: [Habit] {
+        habits.filter { habit in
+            !habit.isRestDay(on: selectedDate)
+        }
+    }
+
+    private var hasHabitsButAllAreResting: Bool {
+        !habits.isEmpty && visibleHabits.isEmpty
+    }
+
     private func updateLastActiveDate() {
         lastActiveDateTimestamp = Date().timeIntervalSince1970
+    }
+
+    private func moveSelectedDate(by days: Int) {
+        guard let newDate = Calendar.current.date(byAdding: .day, value: days, to: selectedDate) else { return }
+
+        let today = Calendar.current.startOfDay(for: Date())
+        if newDate > today {
+            selectedDate = today
+        } else {
+            selectedDate = Calendar.current.startOfDay(for: newDate)
+        }
     }
 
     private var topSectionGradient: LinearGradient {
@@ -131,6 +168,57 @@ struct HomeView: View {
         return colorScheme == .dark ? .white : Color(red: 0.15, green: 0.12, blue: 0.25)
     }
 
+    private var dayNavigator: some View {
+        HStack(spacing: 8) {
+            Button {
+                HapticManager.shared.buttonPressed()
+                moveSelectedDate(by: -1)
+            } label: {
+                Image(systemName: "chevron.left")
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(.white)
+                    .frame(width: 34, height: 34)
+                    .background(Color.black.opacity(0.22))
+                    .clipShape(Circle())
+            }
+
+            VStack(spacing: 0) {
+                Text(selectedDateLabel)
+                    .font(.system(size: 22, weight: .bold))
+                    .foregroundStyle(greetingTitleColor)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                    .allowsTightening(true)
+                    .shadow(color: themeManager.dynamicHeaderEnabled ? .black.opacity(0.5) : .clear, radius: 3, x: 0, y: 1)
+
+                if !isViewingToday {
+                    Text("Retrospective view")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(greetingSubtitleColor)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                        .shadow(color: themeManager.dynamicHeaderEnabled ? .black.opacity(0.45) : .clear, radius: 3, x: 0, y: 1)
+                }
+            }
+            .frame(width: 145)
+
+            Button {
+                HapticManager.shared.buttonPressed()
+                moveSelectedDate(by: 1)
+            } label: {
+                Image(systemName: "chevron.right")
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(.white)
+                    .frame(width: 34, height: 34)
+                    .background(Color.black.opacity(0.22))
+                    .clipShape(Circle())
+            }
+            .disabled(isViewingToday)
+            .opacity(isViewingToday ? 0.3 : 1.0)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
     private var greetingHeader: some View {
         HStack(spacing: 12) {
             Image("ProfileMascot")
@@ -138,21 +226,17 @@ struct HomeView: View {
                 .aspectRatio(contentMode: .fit)
                 .frame(width: 65, height: 65)
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 6) {
                     Text(greeting)
                         .font(.subheadline)
                         .foregroundStyle(greetingSubtitleColor)
+                        .lineLimit(1)
                         .shadow(color: themeManager.dynamicHeaderEnabled ? .black.opacity(0.5) : .clear, radius: 3, x: 0, y: 1)
 
                     Text(greetingEmoji)
                         .font(.subheadline)
                 }
-
-                Text(Date.now.formatted(.dateTime.weekday(.wide).day().month(.abbreviated)))
-                    .font(.headline.weight(.semibold))
-                    .foregroundStyle(greetingTitleColor)
-                    .shadow(color: themeManager.dynamicHeaderEnabled ? .black.opacity(0.5) : .clear, radius: 3, x: 0, y: 1)
             }
 
             Spacer()
@@ -212,10 +296,12 @@ struct HomeView: View {
                 ScrollView {
                     VStack(spacing: 12) {
                         Color.clear
-                            .frame(height: habits.isEmpty ? 180 : 280)
+                            .frame(height: visibleHabits.isEmpty ? 180 : 280)
 
                         if habits.isEmpty {
                             emptyStateSection
+                        } else if visibleHabits.isEmpty {
+                            restDaySection
                         } else {
                             habitsPreviewSection
                         }
@@ -231,10 +317,10 @@ struct HomeView: View {
                                 Image(themeManager.currentHeaderImage)
                                     .resizable()
                                     .aspectRatio(contentMode: .fill)
-                                    .frame(width: geo.size.width, height: habits.isEmpty ? 220 : 320)
+                                    .frame(width: geo.size.width, height: visibleHabits.isEmpty ? 220 : 320)
                                     .clipped()
                             }
-                            .frame(height: habits.isEmpty ? 220 : 320)
+                            .frame(height: visibleHabits.isEmpty ? 220 : 320)
                             .clipShape(WaveBottomEdge(amplitude: 25))
                             .ignoresSafeArea(edges: .top)
                         } else {
@@ -244,25 +330,34 @@ struct HomeView: View {
 
                             VStack {}
                                 .frame(maxWidth: .infinity)
-                                .frame(height: habits.isEmpty ? 180 : 280)
+                                .frame(height: visibleHabits.isEmpty ? 180 : 280)
                                 .background(topSectionGradient)
                                 .clipShape(WaveBottomEdge(amplitude: 25))
                         }
 
-                        VStack(spacing: 6) {
-                            greetingHeader
+                        ZStack(alignment: .top) {
+                            VStack(spacing: 6) {
+                                greetingHeader
 
-                            if !habits.isEmpty {
-                                WhiteProgressCard(habits: Array(habits), showDynamicBackground: themeManager.dynamicHeaderEnabled)
+                                if !visibleHabits.isEmpty {
+                                    WhiteProgressCard(
+                                        habits: Array(visibleHabits),
+                                        showDynamicBackground: themeManager.dynamicHeaderEnabled
+                                    )
                                     .id(refreshID)
                                     .padding(.bottom, 8)
-                            } else {
-                                Text("Add habits to track progress")
-                                    .font(.subheadline)
-                                    .foregroundStyle(greetingSubtitleColor)
-                                    .shadow(color: themeManager.dynamicHeaderEnabled ? .black.opacity(0.3) : .clear, radius: 2, x: 0, y: 1)
-                                    .padding(.vertical, 12)
+                                } else {
+                                    Text(hasHabitsButAllAreResting ? "Rest day" : "Add habits to track progress")
+                                        .font(.subheadline)
+                                        .foregroundStyle(greetingSubtitleColor)
+                                        .shadow(color: themeManager.dynamicHeaderEnabled ? .black.opacity(0.3) : .clear, radius: 2, x: 0, y: 1)
+                                        .padding(.vertical, 12)
+                                }
                             }
+
+                            dayNavigator
+                                .padding(.top, 76)
+                                .offset(x: -60)
                         }
                         .padding(.horizontal, 20)
                         .padding(.top, 12)
@@ -322,6 +417,9 @@ struct HomeView: View {
                         showingWidgetPromo = true
                     }
                 }
+            }
+            .onChange(of: selectedDate) { _, _ in
+                refreshID = UUID()
             }
             .onChange(of: scenePhase) { _, newPhase in
                 if newPhase == .active {
@@ -506,7 +604,7 @@ struct HomeView: View {
     private func updateOrCreateCompletion(for habit: Habit, value: Double) {
         let calendar = Calendar.current
 
-        if let existing = habit.safeCompletions.first(where: { calendar.isDateInToday($0.date) }) {
+        if let existing = habit.completion(on: Date(), calendar: calendar) {
             existing.value = value
             existing.isAutoSynced = true
         } else {
@@ -529,19 +627,6 @@ struct HomeView: View {
         }
     }
 
-    private var headerSection: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(greeting)
-                .font(.subheadline)
-                .foregroundStyle(Color(hex: "#6B7280"))
-
-            Text(Date.now.formatted(.dateTime.weekday(.wide).day().month(.wide)))
-                .font(.title2.weight(.bold))
-                .foregroundStyle(Color(hex: "#1F2937"))
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
     private var greeting: String {
         let hour = Calendar.current.component(.hour, from: Date())
         switch hour {
@@ -554,9 +639,10 @@ struct HomeView: View {
 
     private var habitsPreviewSection: some View {
         VStack(spacing: 12) {
-            ForEach(habits) { habit in
+            ForEach(visibleHabits) { habit in
                 HabitCard(
                     habit: habit,
+                    selectedDate: selectedDate,
                     stack: getStack(for: habit),
                     stackPosition: getStackPosition(for: habit),
                     onStartFocus: {
@@ -564,7 +650,7 @@ struct HomeView: View {
                     }
                 )
                 .contextMenu {
-                    if habit.focusEnabled && !habit.isCompletedToday {
+                    if isViewingToday && habit.focusEnabled && !habit.isCompleted(on: selectedDate) {
                         Button {
                             habitForFocus = habit
                         } label: {
@@ -599,7 +685,7 @@ struct HomeView: View {
                 ))
             }
 
-            if habits.count >= 2 {
+            if visibleHabits.count >= 2 {
                 stacksPreviewSection
             }
 
@@ -613,7 +699,7 @@ struct HomeView: View {
     private var stacksPreviewSection: some View {
         StacksPreviewSection(
             stacks: Array(stacks),
-            habits: Array(habits),
+            habits: Array(visibleHabits),
             onShowStacks: { showingStacks = true },
             onCreateStack: { showingCreateStack = true }
         )
@@ -627,6 +713,24 @@ struct HomeView: View {
                 selectedSuggestion = suggestion
             }
         )
+    }
+
+    private var restDaySection: some View {
+        VStack(spacing: 10) {
+            Text("Rest day")
+                .font(.title2.weight(.bold))
+                .foregroundStyle(.white)
+
+            Text("No habits scheduled for \(selectedDateLabel.lowercased()).")
+                .font(.subheadline)
+                .foregroundStyle(.white.opacity(0.75))
+                .multilineTextAlignment(.center)
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 26)
+        .frame(maxWidth: .infinity)
+        .background(Color.white.opacity(0.10))
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
     }
 
     private var emptyStateSection: some View {

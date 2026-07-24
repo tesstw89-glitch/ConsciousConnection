@@ -13,10 +13,13 @@ import SwiftData
 struct HabitCard: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.colorScheme) private var colorScheme
+
     @Bindable var habit: Habit
+    var selectedDate: Date
     var stack: HabitStack?
     var stackPosition: (current: Int, total: Int)?
     var onStartFocus: (() -> Void)?
+
     @State private var showingValueEntry = false
     @State private var showingDetail = false
 
@@ -28,14 +31,28 @@ struct HabitCard: View {
         colorScheme == .dark ? Color.white.opacity(0.7) : Color(hex: "#6B7280")
     }
 
+    private var isViewingToday: Bool {
+        Calendar.current.isDate(selectedDate, inSameDayAs: Date())
+    }
+
+    private var isCompletedForSelectedDate: Bool {
+        habit.isCompleted(on: selectedDate)
+    }
+
+    private var progressForSelectedDate: Double {
+        habit.progress(on: selectedDate)
+    }
+
+    private var valueForSelectedDate: Double {
+        habit.value(on: selectedDate) ?? 0
+    }
+
     var body: some View {
         HStack(spacing: 16) {
-            // Left side: Navigation button (icon + info)
             Button {
                 showingDetail = true
             } label: {
                 HStack(spacing: 16) {
-                    // Icon with chain indicator
                     ZStack(alignment: .bottomTrailing) {
                         ZStack {
                             Circle()
@@ -47,7 +64,6 @@ struct HabitCard: View {
                                 .foregroundStyle(Color(hex: habit.color))
                         }
 
-                        // Chain indicator badge on icon
                         if let stack = stack, let position = stackPosition {
                             ZStack {
                                 Circle()
@@ -62,14 +78,12 @@ struct HabitCard: View {
                         }
                     }
 
-                    // Info
                     VStack(alignment: .leading, spacing: 4) {
                         HStack(spacing: 6) {
                             Text(habit.name)
                                 .font(.headline)
                                 .foregroundStyle(primaryTextColor)
 
-                            // HealthKit badge
                             if habit.dataSource == .healthKit {
                                 Image(systemName: "heart.fill")
                                     .font(.caption2)
@@ -77,11 +91,9 @@ struct HabitCard: View {
                             }
                         }
 
-                        // Show value/goal for HealthKit habits, streak for manual
                         if habit.habitType != .manual, let goal = habit.dailyGoal {
                             HStack(spacing: 4) {
-                                let value = habit.todayValue ?? 0
-                                Text(formatValue(value, unit: habit.unit))
+                                Text(formatValue(valueForSelectedDate, unit: habit.unit))
                                     .font(.caption.weight(.medium))
                                     .foregroundStyle(primaryTextColor.opacity(0.85))
 
@@ -107,7 +119,6 @@ struct HabitCard: View {
                             }
                         }
 
-                        // Chain membership indicator
                         if let stack = stack, let position = stackPosition {
                             HStack(spacing: 4) {
                                 Image(systemName: "link")
@@ -126,13 +137,11 @@ struct HabitCard: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("\(habit.name), \(habit.isCompletedToday ? "completed" : "not completed")")
+            .accessibilityLabel("\(habit.name), \(isCompletedForSelectedDate ? "completed" : "not completed")")
             .accessibilityHint("Double tap to view habit details")
 
-            // Right side: Focus button + Progress/Checkmark Button
             HStack(spacing: 8) {
-                // Focus button (only if enabled and not completed yet)
-                if habit.focusEnabled && !habit.isCompletedToday {
+                if isViewingToday && habit.focusEnabled && !isCompletedForSelectedDate {
                     Button {
                         onStartFocus?()
                     } label: {
@@ -152,24 +161,26 @@ struct HabitCard: View {
                 }
 
                 if habit.habitType != .manual, habit.dailyGoal != nil {
-                    // Progress ring for HealthKit habits with goals
                     progressRing
                 } else {
-                    // Standard checkmark for manual habits
                     CheckmarkTapView(
-                        isCompleted: habit.isCompletedToday,
+                        isCompleted: isCompletedForSelectedDate,
                         color: habit.color,
                         colorScheme: colorScheme,
                         onTap: {
-                            let wasCompleted = habit.isCompletedToday
+                            let wasCompleted = isCompletedForSelectedDate
+
                             withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
                                 toggleCompletion()
                             }
+
                             if wasCompleted {
                                 HapticManager.shared.habitUncompleted()
                             } else {
                                 HapticManager.shared.habitCompleted()
-                                checkAllHabitsCompleted()
+                                if isViewingToday {
+                                    checkAllHabitsCompleted()
+                                }
                             }
                         }
                     )
@@ -190,8 +201,7 @@ struct HabitCard: View {
 
     private var progressRing: some View {
         ZStack {
-            if habit.isCompletedToday {
-                // Show filled checkmark (same as manual habits) when completed
+            if isCompletedForSelectedDate {
                 Circle()
                     .fill(Color(hex: habit.color))
                     .frame(width: 44, height: 44)
@@ -201,32 +211,34 @@ struct HabitCard: View {
                     .foregroundStyle(.white)
                     .transition(.scale.combined(with: .opacity))
             } else {
-                // Show progress ring when not completed
                 Circle()
-                    .stroke(colorScheme == .dark ? Color.white.opacity(0.15) : Color.gray.opacity(0.2), lineWidth: 4)
+                    .stroke(
+                        colorScheme == .dark ? Color.white.opacity(0.15) : Color.gray.opacity(0.2),
+                        lineWidth: 4
+                    )
                     .frame(width: 48, height: 48)
 
                 Circle()
-                    .trim(from: 0, to: min(habit.todayProgress, 1.0))
+                    .trim(from: 0, to: min(progressForSelectedDate, 1.0))
                     .stroke(
                         Color(hex: habit.color),
                         style: StrokeStyle(lineWidth: 4, lineCap: .round)
                     )
                     .frame(width: 48, height: 48)
                     .rotationEffect(.degrees(-90))
-                    .animation(.spring(response: 0.5, dampingFraction: 0.7), value: habit.todayProgress)
+                    .animation(.spring(response: 0.5, dampingFraction: 0.7), value: progressForSelectedDate)
 
-                Text("\(Int(habit.todayProgress * 100))%")
+                Text("\(Int(progressForSelectedDate * 100))%")
                     .font(.system(size: 10, weight: .bold))
                     .foregroundStyle(secondaryTextColor)
                     .contentTransition(.numericText())
             }
         }
         .frame(width: 54, height: 54)
-        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: habit.isCompletedToday)
+        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isCompletedForSelectedDate)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(habit.name) progress, \(Int(habit.todayProgress * 100)) percent")
-        .accessibilityValue(habit.isCompletedToday ? "Completed" : "In progress")
+        .accessibilityLabel("\(habit.name) progress, \(Int(progressForSelectedDate * 100)) percent")
+        .accessibilityValue(isCompletedForSelectedDate ? "Completed" : "In progress")
     }
 
     // MARK: - Helpers
@@ -251,13 +263,13 @@ struct HabitCard: View {
 
     private func toggleCompletion() {
         let calendar = Calendar.current
-        if habit.isCompletedToday {
-            if let todayCompletion = habit.safeCompletions.first(where: { calendar.isDateInToday($0.date) }) {
-                habit.completions?.removeAll { $0.id == todayCompletion.id }
-                modelContext.delete(todayCompletion)
-            }
+        let targetDay = calendar.startOfDay(for: selectedDate)
+
+        if let existingCompletion = habit.completion(on: targetDay, calendar: calendar) {
+            habit.completions?.removeAll { $0.id == existingCompletion.id }
+            modelContext.delete(existingCompletion)
         } else {
-            let completion = HabitCompletion(date: Date(), habit: habit)
+            let completion = HabitCompletion(date: targetDay, habit: habit)
             if habit.completions == nil { habit.completions = [] }
             habit.completions?.append(completion)
             modelContext.insert(completion)
@@ -276,7 +288,7 @@ struct HabitCard: View {
                 let descriptor = FetchDescriptor<Habit>()
                 let allHabits = try modelContext.fetch(descriptor)
 
-                let allCompleted = allHabits.allSatisfy { $0.isCompletedToday }
+                let allCompleted = allHabits.allSatisfy { $0.isCompleted(on: selectedDate) }
 
                 if allCompleted && !allHabits.isEmpty {
                     HapticManager.shared.allHabitsCompleted()
@@ -315,9 +327,11 @@ struct CheckmarkTapView: View {
         }) {
             ZStack {
                 Circle()
-                    .fill(isCompleted
-                          ? Color(hex: color)
-                          : colorScheme == .dark ? Color.white.opacity(0.1) : Color.gray.opacity(0.15))
+                    .fill(
+                        isCompleted
+                        ? Color(hex: color)
+                        : colorScheme == .dark ? Color.white.opacity(0.1) : Color.gray.opacity(0.15)
+                    )
                     .frame(width: 44, height: 44)
 
                 if isCompleted {
@@ -327,7 +341,10 @@ struct CheckmarkTapView: View {
                         .transition(.scale.combined(with: .opacity))
                 } else {
                     Circle()
-                        .stroke(colorScheme == .dark ? Color.white.opacity(0.25) : Color.gray.opacity(0.3), lineWidth: 2)
+                        .stroke(
+                            colorScheme == .dark ? Color.white.opacity(0.25) : Color.gray.opacity(0.3),
+                            lineWidth: 2
+                        )
                         .frame(width: 44, height: 44)
                 }
             }

@@ -20,16 +20,16 @@ enum HabitType: String, Codable {
 // MARK: - Data Source
 
 enum HabitDataSource: String, Codable {
-    case manual     // User enters value manually
-    case healthKit  // Sync from Apple Health
+    case manual
+    case healthKit
 }
 
 // MARK: - Goal Progression
 
 enum GoalProgression: String, Codable, CaseIterable {
-    case fixed      // Goal never changes
-    case rampUp     // Goal gradually increases over time
-    case adaptive   // Goal adjusts based on performance
+    case fixed
+    case rampUp
+    case adaptive
 
     var displayName: String {
         switch self {
@@ -82,16 +82,17 @@ class Habit {
     var restDays: [Int]? // Days of week (1=Sunday, 7=Saturday)
 
     // Stack properties
-    var stackId: UUID? // ID of the stack this habit belongs to
-    var stackOrder: Int? // Order within the stack
+    var stackId: UUID?
+    var stackOrder: Int?
 
     // Focus Session properties
-    var focusEnabled: Bool = false // Whether focus sessions are enabled for this habit
+    var focusEnabled: Bool = false
 
     @Relationship(deleteRule: .cascade, inverse: \HabitCompletion.habit)
     var completions: [HabitCompletion]?
 
-    // Computed property wrappers for enums (SwiftData doesn't support enums directly)
+    // MARK: - Enum wrappers
+
     var habitType: HabitType {
         get { HabitType(rawValue: habitTypeRaw) ?? .manual }
         set { habitTypeRaw = newValue.rawValue }
@@ -109,9 +110,7 @@ class Habit {
 
     /// Check if today is a rest day for this habit
     var isRestDayToday: Bool {
-        guard let restDays = restDays, !restDays.isEmpty else { return false }
-        let todayWeekday = Calendar.current.component(.weekday, from: Date())
-        return restDays.contains(todayWeekday)
+        isRestDay(on: Date())
     }
 
     /// Get the effective daily goal (may be adjusted for ramp-up/adaptive)
@@ -142,20 +141,16 @@ class Habit {
 
     // MARK: - Goal Completion Helper
 
-    /// Check if a value meets the goal for this habit type
-    /// For calories, uses a tolerance range (goal - 300 to goal + 200)
-    /// For other habits, checks if value >= goal
+    /// Check if a value meets the goal for this habit type.
+    /// For calories, uses a tolerance range (goal - 300 to goal + 200).
+    /// For other habits, checks if value >= goal.
     func isGoalMet(value: Double, goal: Double) -> Bool {
         switch habitType {
         case .healthKitCalories:
-            // For calories, allow a tolerance range
-            // Lower bound: 300 under goal (eating less is okay)
-            // Upper bound: 200 over goal (slight overeating acceptable)
             let lowerBound = max(0, goal - 300)
             let upperBound = goal + 200
             return value >= lowerBound && value <= upperBound
         default:
-            // For all other habits, value must meet or exceed goal
             return value >= goal
         }
     }
@@ -167,58 +162,88 @@ class Habit {
         completions ?? []
     }
 
-    /// Get today's tracked value for HealthKit habits
-    var todayValue: Double? {
-        let calendar = Calendar.current
-        return safeCompletions.first(where: { calendar.isDateInToday($0.date) })?.value
+    // MARK: - Date-aware helpers
+
+    func isRestDay(on date: Date, calendar: Calendar = .current) -> Bool {
+        guard let restDays = restDays, !restDays.isEmpty else { return false }
+        let weekday = calendar.component(.weekday, from: date)
+        return restDays.contains(weekday)
     }
 
-    /// Progress toward daily goal (0.0 to 1.0+)
-    var todayProgress: Double {
-        guard let goal = dailyGoal, goal > 0 else {
-            return isCompletedToday ? 1.0 : 0.0
-        }
-        guard let value = todayValue else { return 0.0 }
-        return value / goal
+    func completion(on date: Date, calendar: Calendar = .current) -> HabitCompletion? {
+        safeCompletions.first { calendar.isDate($0.date, inSameDayAs: date) }
     }
 
-    var isCompletedToday: Bool {
-        let calendar = Calendar.current
-        guard let todayCompletion = safeCompletions.first(where: { calendar.isDateInToday($0.date) }) else {
+    func value(on date: Date, calendar: Calendar = .current) -> Double? {
+        completion(on: date, calendar: calendar)?.value
+    }
+
+    func isCompleted(on date: Date, calendar: Calendar = .current) -> Bool {
+        guard let completion = completion(on: date, calendar: calendar) else {
             return false
         }
 
-        // For habits with goals, check if goal is met (with tolerance for calories)
-        if let goal = dailyGoal, let value = todayCompletion.value {
+        if let goal = dailyGoal, let value = completion.value {
             return isGoalMet(value: value, goal: goal)
         }
 
-        // For manual habits without goals, just check existence
         return true
+    }
+
+    func progress(on date: Date, calendar: Calendar = .current) -> Double {
+        guard let goal = dailyGoal, goal > 0 else {
+            return isCompleted(on: date, calendar: calendar) ? 1.0 : 0.0
+        }
+
+        guard let value = value(on: date, calendar: calendar) else {
+            return 0.0
+        }
+
+        return value / goal
+    }
+
+    // MARK: - Today wrappers (backwards compatible)
+
+    var todayValue: Double? {
+        value(on: Date())
+    }
+
+    var todayProgress: Double {
+        progress(on: Date())
+    }
+
+    var isCompletedToday: Bool {
+        isCompleted(on: Date())
+    }
+
+    // MARK: - Streaks / Analytics
+
+    private var completedDates: [Date] {
+        let calendar = Calendar.current
+
+        return Set(safeCompletions.compactMap { completion -> Date? in
+            let date = calendar.startOfDay(for: completion.date)
+
+            if let goal = dailyGoal, goal > 0 {
+                guard let value = completion.value,
+                      isGoalMet(value: value, goal: goal) else {
+                    return nil
+                }
+            }
+
+            return date
+        }).sorted()
     }
 
     var currentStreak: Int {
         let calendar = Calendar.current
+        let completedDatesDescending = completedDates.sorted(by: >)
 
-        // Get unique dates where habit was actually completed (goal met for goal-based habits)
-        let completedDates = Set(safeCompletions.compactMap { completion -> Date? in
-            let date = calendar.startOfDay(for: completion.date)
-
-            // For habits with goals, check if goal was met (with tolerance for calories)
-            if let goal = dailyGoal, goal > 0 {
-                guard let value = completion.value, isGoalMet(value: value, goal: goal) else {
-                    return nil  // Goal not met, don't count this day
-                }
-            }
-            return date
-        }).sorted(by: >)
-
-        guard !completedDates.isEmpty else { return 0 }
+        guard !completedDatesDescending.isEmpty else { return 0 }
 
         var streak = 0
         var expectedDate = calendar.startOfDay(for: Date())
 
-        // If not completed today, start checking from yesterday
         if !isCompletedToday {
             guard let yesterday = calendar.date(byAdding: .day, value: -1, to: expectedDate) else {
                 return 0
@@ -226,7 +251,7 @@ class Habit {
             expectedDate = yesterday
         }
 
-        for date in completedDates {
+        for date in completedDatesDescending {
             if date == expectedDate {
                 streak += 1
                 guard let previousDay = calendar.date(byAdding: .day, value: -1, to: expectedDate) else {
@@ -243,28 +268,16 @@ class Habit {
 
     var longestStreak: Int {
         let calendar = Calendar.current
+        let dates = completedDates
 
-        // Get unique dates where habit was actually completed (goal met for goal-based habits)
-        let completedDates = Set(safeCompletions.compactMap { completion -> Date? in
-            let date = calendar.startOfDay(for: completion.date)
-
-            // For habits with goals, check if goal was met (with tolerance for calories)
-            if let goal = dailyGoal, goal > 0 {
-                guard let value = completion.value, isGoalMet(value: value, goal: goal) else {
-                    return nil  // Goal not met, don't count this day
-                }
-            }
-            return date
-        }).sorted()
-
-        guard !completedDates.isEmpty else { return 0 }
+        guard !dates.isEmpty else { return 0 }
 
         var longest = 1
         var current = 1
 
-        for i in 1..<completedDates.count {
-            let previousDate = completedDates[i - 1]
-            let currentDate = completedDates[i]
+        for i in 1..<dates.count {
+            let previousDate = dates[i - 1]
+            let currentDate = dates[i]
 
             if let nextDay = calendar.date(byAdding: .day, value: 1, to: previousDate),
                calendar.isDate(nextDay, inSameDayAs: currentDate) {
@@ -281,21 +294,11 @@ class Habit {
     var completionRate: Double {
         let calendar = Calendar.current
         let daysSinceCreation = calendar.dateComponents([.day], from: createdAt, to: Date()).day ?? 0
-        guard daysSinceCreation > 0 else { return isCompletedToday ? 1.0 : 0.0 }
 
-        // Count unique days where goal was actually met (with tolerance for calories)
-        let completedDays = Set(safeCompletions.compactMap { completion -> Date? in
-            let date = calendar.startOfDay(for: completion.date)
+        guard daysSinceCreation > 0 else {
+            return isCompletedToday ? 1.0 : 0.0
+        }
 
-            // For habits with goals, check if goal was met
-            if let goal = dailyGoal, goal > 0 {
-                guard let value = completion.value, isGoalMet(value: value, goal: goal) else {
-                    return nil
-                }
-            }
-            return date
-        }).count
-
-        return Double(completedDays) / Double(daysSinceCreation + 1)
+        return Double(completedDates.count) / Double(daysSinceCreation + 1)
     }
 }
