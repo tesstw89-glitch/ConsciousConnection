@@ -2,6 +2,8 @@ import SwiftUI
 
 struct WeeklyTasksView: View {
     @StateObject private var store = TimeFlexStore()
+    @ObservedObject private var customStore = CustomTaskListStore.shared
+    @State private var showingCustomListPicker = false
 
     private let cardMaxWidth: CGFloat = 350
 
@@ -85,6 +87,7 @@ struct WeeklyTasksView: View {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 18) {
                     headerCard
+                    customListSwitchButton
                     taskSection(title: "Daily Tasks", tasks: dailyTasks)
                     taskSection(title: "Weekly Tasks", tasks: weeklyTasksOnly)
                     saturdayFocusSection
@@ -97,8 +100,22 @@ struct WeeklyTasksView: View {
         }
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                NavigationLink {
+                    CustomTaskListsView()
+                } label: {
+                    Text("Create your own custom list")
+                        .font(.system(size: 13, weight: .semibold))
+                }
+            }
+        }
+        .sheet(isPresented: $showingCustomListPicker) {
+            CustomListPickerSheet()
+        }
         .onAppear {
             store.ensureResets()
+            customStore.ensureDailyReset()
         }
     }
 
@@ -122,6 +139,48 @@ struct WeeklyTasksView: View {
         .background(cardBackground)
         .overlay(cardStroke)
         .shadow(color: .black.opacity(0.18), radius: 14, x: 0, y: 8)
+    }
+
+    private var customListSwitchButton: some View {
+        Button {
+            if customStore.isCustomListActive {
+                customStore.deactivate()
+            } else {
+                showingCustomListPicker = true
+            }
+        } label: {
+            HStack(spacing: 10) {
+                Image(systemName: customStore.isCustomListActive ? "xmark.circle.fill" : "arrow.triangle.2.circlepath")
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(customStore.isCustomListActive ? "Switch off custom list" : "Switch to custom list")
+                        .font(.custom("Poppins-SemiBold", size: 16))
+
+                    if let activeList = customStore.activeList {
+                        Text("Currently using: \(activeList.name)")
+                            .font(.custom("Poppins-Regular", size: 12))
+                            .foregroundStyle(.white.opacity(0.68))
+                    }
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .opacity(customStore.isCustomListActive ? 0 : 0.8)
+            }
+            .foregroundStyle(.white)
+            .padding(16)
+            .frame(maxWidth: cardMaxWidth, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .fill(customStore.isCustomListActive ? Color.white.opacity(0.20) : Color.black.opacity(0.24))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .stroke(Color.white.opacity(0.12), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
     }
 
     private func taskSection(title: String, tasks: [FlexTask]) -> some View {
@@ -332,6 +391,58 @@ struct WeeklyTasksView: View {
     private var cardStroke: some View {
         RoundedRectangle(cornerRadius: 24, style: .continuous)
             .stroke(Color.white.opacity(0.10), lineWidth: 1)
+    }
+}
+
+private struct CustomListPickerSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @ObservedObject private var store = CustomTaskListStore.shared
+
+    var body: some View {
+        NavigationStack {
+            Group {
+                if store.lists.isEmpty {
+                    ContentUnavailableView(
+                        "No custom lists",
+                        systemImage: "list.bullet.rectangle",
+                        description: Text("Create a list first, then return here to switch it on.")
+                    )
+                } else {
+                    List(store.lists) { list in
+                        Button {
+                            store.activate(list.id)
+                            dismiss()
+                        } label: {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text(list.name)
+                                        .font(.headline)
+                                    Text("\(list.tasks.count) \(list.tasks.count == 1 ? "task" : "tasks")")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+
+                                Spacer()
+
+                                if store.activeListID == list.id {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .foregroundStyle(.green)
+                                }
+                            }
+                        }
+                        .disabled(list.tasks.isEmpty)
+                    }
+                }
+            }
+            .navigationTitle("Choose a custom list")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+            }
+        }
+        .presentationDetents([.medium, .large])
     }
 }
 
