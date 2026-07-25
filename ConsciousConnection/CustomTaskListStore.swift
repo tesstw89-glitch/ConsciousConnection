@@ -71,17 +71,26 @@ final class CustomTaskListStore: ObservableObject {
 
     func renameList(id: UUID, to rawName: String) {
         let name = rawName.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !name.isEmpty, let index = lists.firstIndex(where: { $0.id == id }) else { return }
+        guard !name.isEmpty,
+              let index = lists.firstIndex(where: { $0.id == id }) else { return }
+
         lists[index].name = name
         save()
     }
 
     func deleteList(id: UUID) {
+        let taskIDs = Set(lists.first(where: { $0.id == id })?.tasks.map(\.id) ?? [])
         lists.removeAll { $0.id == id }
+        completedTaskIDs.subtract(taskIDs)
+        currentSuggestions = currentSuggestions.mapValues { ids in
+            ids.filter { !taskIDs.contains($0) }
+        }
+
         if activeListID == id {
             activeListID = nil
             currentSuggestions = [:]
         }
+
         save()
     }
 
@@ -98,6 +107,7 @@ final class CustomTaskListStore: ObservableObject {
 
     func deleteTask(_ taskID: UUID, from listID: UUID) {
         guard let index = lists.firstIndex(where: { $0.id == listID }) else { return }
+
         lists[index].tasks.removeAll { $0.id == taskID }
         completedTaskIDs.remove(taskID)
         currentSuggestions = currentSuggestions.mapValues { ids in
@@ -108,9 +118,9 @@ final class CustomTaskListStore: ObservableObject {
 
     func activate(_ listID: UUID) {
         guard lists.contains(where: { $0.id == listID }) else { return }
+        ensureDailyReset()
         activeListID = listID
         currentSuggestions = [:]
-        completedTaskIDs = []
         save()
     }
 
@@ -120,20 +130,55 @@ final class CustomTaskListStore: ObservableObject {
         save()
     }
 
+    func isCompleted(_ taskID: UUID) -> Bool {
+        ensureDailyReset()
+        return completedTaskIDs.contains(taskID)
+    }
+
+    func setCompleted(_ taskID: UUID, completed: Bool) {
+        ensureDailyReset()
+
+        let taskExists = lists.contains { list in
+            list.tasks.contains { $0.id == taskID }
+        }
+        guard taskExists else { return }
+
+        var updated = completedTaskIDs
+        if completed {
+            updated.insert(taskID)
+            currentSuggestions = currentSuggestions.mapValues { ids in
+                ids.filter { $0 != taskID }
+            }
+        } else {
+            updated.remove(taskID)
+        }
+
+        completedTaskIDs = updated
+        save()
+    }
+
+    func toggleCompletion(taskID: UUID) {
+        setCompleted(taskID, completed: !isCompleted(taskID))
+    }
+
     func availableTasks(minutes: Int?) -> [CustomTask] {
         ensureDailyReset()
         guard let activeList else { return [] }
 
         return activeList.tasks.filter { task in
-            !completedTaskIDs.contains(task.id) && (minutes == nil || task.minutes == minutes)
+            !completedTaskIDs.contains(task.id) &&
+            (minutes == nil || task.minutes == minutes)
         }
     }
 
     func tasks(for suggestionKey: String) -> [CustomTask] {
         ensureDailyReset()
         guard let activeList else { return [] }
+
         let ids = currentSuggestions[suggestionKey] ?? []
-        return ids.compactMap { id in activeList.tasks.first(where: { $0.id == id }) }
+        return ids.compactMap { id in
+            activeList.tasks.first(where: { $0.id == id })
+        }
     }
 
     func ensureSuggestion(for suggestionKey: String, minutes: Int?) {
@@ -141,7 +186,8 @@ final class CustomTaskListStore: ObservableObject {
 
         let existing = tasks(for: suggestionKey)
         let existingIsValid = !existing.isEmpty && existing.allSatisfy { task in
-            !completedTaskIDs.contains(task.id) && (minutes == nil || task.minutes == minutes)
+            !completedTaskIDs.contains(task.id) &&
+            (minutes == nil || task.minutes == minutes)
         }
 
         if existingIsValid { return }
@@ -167,7 +213,14 @@ final class CustomTaskListStore: ObservableObject {
 
     func markDone(taskID: UUID, suggestionKey: String) {
         ensureDailyReset()
-        completedTaskIDs.insert(taskID)
+
+        var updated = completedTaskIDs
+        updated.insert(taskID)
+        completedTaskIDs = updated
+
+        currentSuggestions = currentSuggestions.mapValues { ids in
+            ids.filter { $0 != taskID }
+        }
         currentSuggestions[suggestionKey] = nil
         save()
     }
@@ -177,6 +230,7 @@ final class CustomTaskListStore: ObservableObject {
         let savedDate = UserDefaults.standard.string(forKey: completedDateKey) ?? ""
 
         guard savedDate != today else { return }
+
         completedTaskIDs = []
         currentSuggestions = [:]
         UserDefaults.standard.set(today, forKey: completedDateKey)
