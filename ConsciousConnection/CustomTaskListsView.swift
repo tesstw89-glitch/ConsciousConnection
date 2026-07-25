@@ -53,6 +53,9 @@ struct CustomTaskListsView: View {
         .sheet(item: $listToAddTaskTo) { list in
             AddCustomTaskSheet(list: list)
         }
+        .onAppear {
+            store.ensureDailyReset()
+        }
     }
 
     private var introCard: some View {
@@ -66,7 +69,7 @@ struct CustomTaskListsView: View {
                 .font(.custom("Poppins-SemiBold", size: 28))
                 .foregroundStyle(.white)
 
-            Text("Make as many reusable lists as you like, then add tasks with a chosen duration.")
+            Text("Add reusable tasks, then tap their circles to tick them off for today.")
                 .font(.custom("Poppins-Regular", size: 14))
                 .foregroundStyle(.white.opacity(0.76))
         }
@@ -97,6 +100,10 @@ struct CustomTaskListsView: View {
         .overlay(cardStroke)
     }
 
+    private func completedCount(in list: CustomTaskList) -> Int {
+        list.tasks.filter { store.completedTaskIDs.contains($0.id) }.count
+    }
+
     private func listCard(_ list: CustomTaskList) -> some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
@@ -105,7 +112,7 @@ struct CustomTaskListsView: View {
                         .font(.custom("Poppins-SemiBold", size: 21))
                         .foregroundStyle(.white)
 
-                    Text("\(list.tasks.count) \(list.tasks.count == 1 ? "task" : "tasks")")
+                    Text("\(completedCount(in: list))/\(list.tasks.count) done today")
                         .font(.custom("Poppins-Regular", size: 13))
                         .foregroundStyle(.white.opacity(0.65))
                 }
@@ -133,16 +140,30 @@ struct CustomTaskListsView: View {
             } else {
                 VStack(spacing: 10) {
                     ForEach(list.tasks) { task in
+                        let isDone = store.completedTaskIDs.contains(task.id)
+
                         HStack(spacing: 12) {
+                            Button {
+                                store.toggleCompletion(taskID: task.id)
+                            } label: {
+                                Image(systemName: isDone ? "checkmark.circle.fill" : "circle")
+                                    .font(.system(size: 26, weight: .medium))
+                                    .foregroundStyle(isDone ? Color.white : Color.white.opacity(0.68))
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel(isDone ? "Mark \(task.title) not done" : "Mark \(task.title) done")
+
                             VStack(alignment: .leading, spacing: 3) {
                                 Text(task.title)
                                     .font(.custom("Poppins-Medium", size: 16))
                                     .foregroundStyle(.white)
+                                    .strikethrough(isDone, color: .white.opacity(0.8))
 
                                 Text("\(task.minutes) mins")
                                     .font(.custom("Poppins-Regular", size: 12))
                                     .foregroundStyle(.white.opacity(0.62))
                             }
+                            .opacity(isDone ? 0.62 : 1)
 
                             Spacer()
 
@@ -152,11 +173,16 @@ struct CustomTaskListsView: View {
                                 Image(systemName: "trash")
                                     .foregroundStyle(.white.opacity(0.72))
                             }
+                            .accessibilityLabel("Delete \(task.title)")
                         }
                         .padding(14)
                         .background(
                             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .fill(Color.black.opacity(0.18))
+                                .fill(isDone ? Color.black.opacity(0.10) : Color.black.opacity(0.18))
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .stroke(isDone ? Color.white.opacity(0.16) : Color.clear, lineWidth: 1)
                         )
                     }
                 }
