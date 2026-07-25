@@ -14,6 +14,10 @@ struct TimeBucketView: View {
     private var suggestionKey: String { isRandomMode ? "timeRandomIds" : "time\(minutes)Ids" }
     private var usesCustomList: Bool { customStore.isCustomListActive }
 
+    private var hasCurrentTask: Bool {
+        usesCustomList ? !currentCustomTasks().isEmpty : !currentTasks().isEmpty
+    }
+
     private func currentTasks() -> [FlexTask] {
         let ids = store.data.currentSuggestions[suggestionKey] ?? []
         return ids.compactMap { id in TASKS.first(where: { $0.id == id }) }
@@ -128,14 +132,18 @@ struct TimeBucketView: View {
 
     private func markDone() {
         if usesCustomList {
-            let tasks = currentCustomTasks()
-            guard let task = tasks.first else {
+            guard let task = currentCustomTasks().first else {
                 router.goHome()
                 return
             }
 
-            customStore.markDone(taskID: task.id, suggestionKey: suggestionKey)
-            router.goHome()
+            animateCardRefresh {
+                customStore.markDone(taskID: task.id, suggestionKey: suggestionKey)
+                customStore.ensureSuggestion(
+                    for: suggestionKey,
+                    minutes: isRandomMode ? nil : minutes
+                )
+            }
             return
         }
 
@@ -153,8 +161,8 @@ struct TimeBucketView: View {
         let isLastTask = currentIndex >= tasks.count - 1
 
         if isLastTask {
-            let t = tasks[currentIndex]
-            TimeFlexEngine.inc(t, data: &store.data)
+            let task = tasks[currentIndex]
+            TimeFlexEngine.inc(task, data: &store.data)
             store.save()
             store.data.currentSuggestions[suggestionKey] = nil
             store.save()
@@ -164,8 +172,8 @@ struct TimeBucketView: View {
                 var refreshedTasks = currentTasks()
                 guard refreshedTasks.indices.contains(currentIndex) else { return }
 
-                let t = refreshedTasks[currentIndex]
-                TimeFlexEngine.inc(t, data: &store.data)
+                let task = refreshedTasks[currentIndex]
+                TimeFlexEngine.inc(task, data: &store.data)
                 store.save()
 
                 refreshedTasks = currentTasks()
@@ -205,6 +213,8 @@ struct TimeBucketView: View {
                 }
                 .buttonStyle(TimeBucketMainButtonStyle())
                 .padding(.top, 4)
+                .disabled(!hasCurrentTask)
+                .opacity(hasCurrentTask ? 1 : 0.45)
 
                 Button {
                     router.goHome()
@@ -218,7 +228,7 @@ struct TimeBucketView: View {
         }
         .onAppear {
             ensureSuggestion()
-            if usesCustomList ? !currentCustomTasks().isEmpty : !currentTasks().isEmpty {
+            if hasCurrentTask {
                 animateCardIn()
             }
         }
