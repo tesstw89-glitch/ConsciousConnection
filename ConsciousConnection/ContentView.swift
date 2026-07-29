@@ -5,6 +5,7 @@ struct ContentView: View {
 
     @EnvironmentObject private var router: AppRouter
     @State private var showingHabitFlow = false
+    @State private var showingMagickPortal = false
 
     private let timeButtons: [TimeButtonConfig] = [
         .init(asset: "button02", minutes: 2,  x: 0.64, y: 0.10, width: 72),
@@ -32,6 +33,10 @@ struct ContentView: View {
     private let workIconX: CGFloat = 0.10
     private let workIconY: CGFloat = 0.65
     private let workIconWidth: CGFloat = 75
+
+    private let magickIconX: CGFloat = 0.30
+    private let magickIconY: CGFloat = 0.55
+    private let magickIconWidth: CGFloat = 68
 
     private let diceX: CGFloat = 0.52
     private let diceY: CGFloat = 0.53
@@ -126,6 +131,22 @@ struct ContentView: View {
 
                 Button {
                     makeTapFeelGood()
+                    showingMagickPortal = true
+                } label: {
+                    Image("Magickicon")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: magickIconWidth)
+                }
+                .buttonStyle(SatisfyingPressStyle())
+                .position(
+                    x: geo.size.width * magickIconX,
+                    y: geo.size.height * magickIconY
+                )
+                .accessibilityLabel("Open the Magick Portal")
+
+                Button {
+                    makeTapFeelGood()
                     router.goToTime(0)
                 } label: {
                     Image("dice")
@@ -174,6 +195,11 @@ struct ContentView: View {
                             }
                         }
                     }
+            }
+        }
+        .fullScreenCover(isPresented: $showingMagickPortal) {
+            MagickPortalRootView {
+                showingMagickPortal = false
             }
         }
     }
