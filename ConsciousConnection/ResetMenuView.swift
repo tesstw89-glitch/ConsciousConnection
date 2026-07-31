@@ -39,7 +39,7 @@ struct ResetMenuView: View {
                         .frame(width: 165)
                 }
                 .buttonStyle(.plain)
-                .position(x: w * 0.50, y: h * 0.22)
+                .position(x: w * 0.50, y: h * 0.16)
 
                 Button {
                     router.path = [.spiral]
@@ -50,7 +50,7 @@ struct ResetMenuView: View {
                         .frame(width: 205)
                 }
                 .buttonStyle(.plain)
-                .position(x: w * 0.50, y: h * 0.49)
+                .position(x: w * 0.50, y: h * 0.40)
 
                 Button {
                     showingLimitingBeliefs = true
@@ -61,7 +61,7 @@ struct ResetMenuView: View {
                         .frame(width: 205)
                 }
                 .buttonStyle(.plain)
-                .position(x: w * 0.50, y: h * 0.76)
+                .position(x: w * 0.50, y: h * 0.64)
                 .accessibilityLabel("Limiting beliefs")
             }
         }
@@ -74,8 +74,6 @@ struct ResetMenuView: View {
                     onContinue: { belief in
                         showingLimitingBeliefs = false
 
-                        // Allow the cover to finish dismissing before replacing
-                        // the Reset route with the shared Spiral States flow.
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
                             router.path = [.spiralStates(belief)]
                         }
