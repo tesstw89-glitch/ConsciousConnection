@@ -1,0 +1,810 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		085BE5252F98452700E2484B /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 085BE5242F98452600E2484B /* WidgetKit.framework */; };
+		085BE5272F98452700E2484B /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 085BE5262F98452700E2484B /* SwiftUI.framework */; };
+		085BE5362F98452900E2484B /* ConsciousConnectionWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 085BE5222F98452600E2484B /* ConsciousConnectionWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		085BE5402F98C08600E2484B /* BEMCheckBox in Frameworks */ = {isa = PBXBuildFile; productRef = 085BE53F2F98C08600E2484B /* BEMCheckBox */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		082BB2382F3E74430023DFEF /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 082BB2222F3E74410023DFEF /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 082BB2292F3E74410023DFEF;
+			remoteInfo = ConsciousConnection;
+		};
+		082BB2422F3E74430023DFEF /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 082BB2222F3E74410023DFEF /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 082BB2292F3E74410023DFEF;
+			remoteInfo = ConsciousConnection;
+		};
+		085BE5342F98452900E2484B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 082BB2222F3E74410023DFEF /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 085BE5212F98452600E2484B;
+			remoteInfo = ConsciousConnectionWidgetExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		085BE5372F98452900E2484B /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				085BE5362F98452900E2484B /* ConsciousConnectionWidgetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		082BB22A2F3E74410023DFEF /* ConsciousConnection.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ConsciousConnection.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		082BB2372F3E74430023DFEF /* ConsciousConnectionTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ConsciousConnectionTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		082BB2412F3E74430023DFEF /* ConsciousConnectionUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ConsciousConnectionUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		085BE5222F98452600E2484B /* ConsciousConnectionWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ConsciousConnectionWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		085BE5242F98452600E2484B /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		085BE5262F98452700E2484B /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		085BE53D2F9848C300E2484B /* ConsciousConnectionWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ConsciousConnectionWidgetExtension.entitlements; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		085BE0732F98183400E2484B /* Exceptions for "ConsciousConnection" folder in "ConsciousConnection" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				"HabitModule/HabitFlowWatch Watch App/Assets.xcassets",
+				"HabitModule/HabitFlowWatch Watch App/ContentView.swift",
+				"HabitModule/HabitFlowWatch Watch App/HabitFlowRootView.swift",
+				"HabitModule/HabitFlowWatch Watch App/HabitFlowWatchApp.swift",
+				"HabitModule/HabitFlowWatch Watch App/HabitRowView.swift",
+				"HabitModule/HabitFlowWatch Watch App/ProgressHeaderView.swift",
+				"HabitModule/HabitFlowWatch Watch App/WatchConnectivityManagerWatch.swift",
+				"HabitModule/HabitFlowWatch Watch App/WatchDataManager.swift",
+				"HabitModule/HabitFlowWatch Watch AppTests/HabitFlowWatch_Watch_AppTests.swift",
+				"HabitModule/HabitFlowWatch Watch AppUITests/HabitFlowWatch_Watch_AppUITests.swift",
+				"HabitModule/HabitFlowWatch Watch AppUITests/HabitFlowWatch_Watch_AppUITestsLaunchTests.swift",
+				HabitModule/HabitFlowWatchWidget/AppIntent.swift,
+				HabitModule/HabitFlowWatchWidget/Assets.xcassets,
+				HabitModule/HabitFlowWatchWidget/HabitFlowWatchWidget.swift,
+				HabitModule/HabitFlowWatchWidget/HabitFlowWatchWidgetBundle.swift,
+				HabitModule/HabitFlowWatchWidget/HabitFlowWatchWidgetControl.swift,
+				HabitModule/HabitFlowWatchWidget/Info.plist,
+				HabitModule/HabitFlowWidget/AppIntent.swift,
+				HabitModule/HabitFlowWidget/Assets.xcassets,
+				HabitModule/HabitFlowWidget/HabitFlowWidget.swift,
+				HabitModule/HabitFlowWidget/HabitFlowWidgetBundle.swift,
+				HabitModule/HabitFlowWidget/HabitFlowWidgetControl.swift,
+				HabitModule/HabitFlowWidget/HabitFlowWidgetLiveActivity.swift,
+				HabitModule/HabitFlowWidget/HabitHistoryWidget.swift,
+				HabitModule/HabitFlowWidget/Info.plist,
+				HabitModule/HabitFlowWidget/WidgetTheme.swift,
+				HabitModule/HabitTracker/App/ContentView.swift,
+				HabitModule/HabitTracker/App/HabitTrackerApp.swift,
+				HabitModule/HabitTracker/Managers/NotificationManager.swift,
+				HabitModule/HabitTracker/Managers/WatchConnectivityManager.swift,
+				HabitModule/HabitTrackerTests/HabitTrackerTests.swift,
+				HabitModule/HabitTrackerUITests/HabitTrackerUITests.swift,
+				HabitModule/HabitTrackerUITests/HabitTrackerUITestsLaunchTests.swift,
+			);
+			target = 082BB2292F3E74410023DFEF /* ConsciousConnection */;
+		};
+		085BE53B2F98452900E2484B /* Exceptions for "ConsciousConnectionWidget" folder in "ConsciousConnectionWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 085BE5212F98452600E2484B /* ConsciousConnectionWidgetExtension */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		082BB22C2F3E74410023DFEF /* ConsciousConnection */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				085BE0732F98183400E2484B /* Exceptions for "ConsciousConnection" folder in "ConsciousConnection" target */,
+			);
+			path = ConsciousConnection;
+			sourceTree = "<group>";
+		};
+		082BB23A2F3E74430023DFEF /* ConsciousConnectionTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = ConsciousConnectionTests;
+			sourceTree = "<group>";
+		};
+		082BB2442F3E74430023DFEF /* ConsciousConnectionUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = ConsciousConnectionUITests;
+			sourceTree = "<group>";
+		};
+		085BE5282F98452700E2484B /* ConsciousConnectionWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				085BE53B2F98452900E2484B /* Exceptions for "ConsciousConnectionWidget" folder in "ConsciousConnectionWidgetExtension" target */,
+			);
+			path = ConsciousConnectionWidget;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		082BB2272F3E74410023DFEF /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				085BE5402F98C08600E2484B /* BEMCheckBox in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		082BB2342F3E74430023DFEF /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		082BB23E2F3E74430023DFEF /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		085BE51F2F98452600E2484B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				085BE5272F98452700E2484B /* SwiftUI.framework in Frameworks */,
+				085BE5252F98452700E2484B /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		082BB2212F3E74410023DFEF = {
+			isa = PBXGroup;
+			children = (
+				085BE53D2F9848C300E2484B /* ConsciousConnectionWidgetExtension.entitlements */,
+				082BB22C2F3E74410023DFEF /* ConsciousConnection */,
+				082BB23A2F3E74430023DFEF /* ConsciousConnectionTests */,
+				082BB2442F3E74430023DFEF /* ConsciousConnectionUITests */,
+				085BE5282F98452700E2484B /* ConsciousConnectionWidget */,
+				085BE5232F98452600E2484B /* Frameworks */,
+				082BB22B2F3E74410023DFEF /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		082BB22B2F3E74410023DFEF /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				082BB22A2F3E74410023DFEF /* ConsciousConnection.app */,
+				082BB2372F3E74430023DFEF /* ConsciousConnectionTests.xctest */,
+				082BB2412F3E74430023DFEF /* ConsciousConnectionUITests.xctest */,
+				085BE5222F98452600E2484B /* ConsciousConnectionWidgetExtension.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		085BE5232F98452600E2484B /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				085BE5242F98452600E2484B /* WidgetKit.framework */,
+				085BE5262F98452700E2484B /* SwiftUI.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		082BB2292F3E74410023DFEF /* ConsciousConnection */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 082BB24B2F3E74430023DFEF /* Build configuration list for PBXNativeTarget "ConsciousConnection" */;
+			buildPhases = (
+				082BB2262F3E74410023DFEF /* Sources */,
+				082BB2272F3E74410023DFEF /* Frameworks */,
+				082BB2282F3E74410023DFEF /* Resources */,
+				085BE5372F98452900E2484B /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				085BE5352F98452900E2484B /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				082BB22C2F3E74410023DFEF /* ConsciousConnection */,
+			);
+			name = ConsciousConnection;
+			packageProductDependencies = (
+				085BE53F2F98C08600E2484B /* BEMCheckBox */,
+			);
+			productName = ConsciousConnection;
+			productReference = 082BB22A2F3E74410023DFEF /* ConsciousConnection.app */;
+			productType = "com.apple.product-type.application";
+		};
+		082BB2362F3E74430023DFEF /* ConsciousConnectionTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 082BB24E2F3E74430023DFEF /* Build configuration list for PBXNativeTarget "ConsciousConnectionTests" */;
+			buildPhases = (
+				082BB2332F3E74430023DFEF /* Sources */,
+				082BB2342F3E74430023DFEF /* Frameworks */,
+				082BB2352F3E74430023DFEF /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				082BB2392F3E74430023DFEF /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				082BB23A2F3E74430023DFEF /* ConsciousConnectionTests */,
+			);
+			name = ConsciousConnectionTests;
+			packageProductDependencies = (
+			);
+			productName = ConsciousConnectionTests;
+			productReference = 082BB2372F3E74430023DFEF /* ConsciousConnectionTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		082BB2402F3E74430023DFEF /* ConsciousConnectionUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 082BB2512F3E74430023DFEF /* Build configuration list for PBXNativeTarget "ConsciousConnectionUITests" */;
+			buildPhases = (
+				082BB23D2F3E74430023DFEF /* Sources */,
+				082BB23E2F3E74430023DFEF /* Frameworks */,
+				082BB23F2F3E74430023DFEF /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				082BB2432F3E74430023DFEF /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				082BB2442F3E74430023DFEF /* ConsciousConnectionUITests */,
+			);
+			name = ConsciousConnectionUITests;
+			packageProductDependencies = (
+			);
+			productName = ConsciousConnectionUITests;
+			productReference = 082BB2412F3E74430023DFEF /* ConsciousConnectionUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		085BE5212F98452600E2484B /* ConsciousConnectionWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 085BE53A2F98452900E2484B /* Build configuration list for PBXNativeTarget "ConsciousConnectionWidgetExtension" */;
+			buildPhases = (
+				085BE51E2F98452600E2484B /* Sources */,
+				085BE51F2F98452600E2484B /* Frameworks */,
+				085BE5202F98452600E2484B /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				085BE5282F98452700E2484B /* ConsciousConnectionWidget */,
+			);
+			name = ConsciousConnectionWidgetExtension;
+			packageProductDependencies = (
+			);
+			productName = ConsciousConnectionWidgetExtension;
+			productReference = 085BE5222F98452600E2484B /* ConsciousConnectionWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		082BB2222F3E74410023DFEF /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1640;
+				LastUpgradeCheck = 1640;
+				TargetAttributes = {
+					082BB2292F3E74410023DFEF = {
+						CreatedOnToolsVersion = 16.4;
+					};
+					082BB2362F3E74430023DFEF = {
+						CreatedOnToolsVersion = 16.4;
+						TestTargetID = 082BB2292F3E74410023DFEF;
+					};
+					082BB2402F3E74430023DFEF = {
+						CreatedOnToolsVersion = 16.4;
+						TestTargetID = 082BB2292F3E74410023DFEF;
+					};
+					085BE5212F98452600E2484B = {
+						CreatedOnToolsVersion = 16.4;
+					};
+				};
+			};
+			buildConfigurationList = 082BB2252F3E74410023DFEF /* Build configuration list for PBXProject "ConsciousConnection" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 082BB2212F3E74410023DFEF;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				085BE53E2F98C08600E2484B /* XCLocalSwiftPackageReference "../BEMCheckBox-master" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 082BB22B2F3E74410023DFEF /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				082BB2292F3E74410023DFEF /* ConsciousConnection */,
+				082BB2362F3E74430023DFEF /* ConsciousConnectionTests */,
+				082BB2402F3E74430023DFEF /* ConsciousConnectionUITests */,
+				085BE5212F98452600E2484B /* ConsciousConnectionWidgetExtension */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		082BB2282F3E74410023DFEF /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		082BB2352F3E74430023DFEF /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		082BB23F2F3E74430023DFEF /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		085BE5202F98452600E2484B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		082BB2262F3E74410023DFEF /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		082BB2332F3E74430023DFEF /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		082BB23D2F3E74430023DFEF /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		085BE51E2F98452600E2484B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		082BB2392F3E74430023DFEF /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 082BB2292F3E74410023DFEF /* ConsciousConnection */;
+			targetProxy = 082BB2382F3E74430023DFEF /* PBXContainerItemProxy */;
+		};
+		082BB2432F3E74430023DFEF /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 082BB2292F3E74410023DFEF /* ConsciousConnection */;
+			targetProxy = 082BB2422F3E74430023DFEF /* PBXContainerItemProxy */;
+		};
+		085BE5352F98452900E2484B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 085BE5212F98452600E2484B /* ConsciousConnectionWidgetExtension */;
+			targetProxy = 085BE5342F98452900E2484B /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		082BB2492F3E74430023DFEF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		082BB24A2F3E74430023DFEF /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		082BB24C2F3E74430023DFEF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = ConsciousConnection/ConsciousConnection.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = RYLASAZ54A;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tess.ConsciousConnection;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		082BB24D2F3E74430023DFEF /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = ConsciousConnection/ConsciousConnection.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = RYLASAZ54A;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tess.ConsciousConnection;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		082BB24F2F3E74430023DFEF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tess.ConsciousConnectionTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ConsciousConnection.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/ConsciousConnection";
+			};
+			name = Debug;
+		};
+		082BB2502F3E74430023DFEF /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tess.ConsciousConnectionTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ConsciousConnection.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/ConsciousConnection";
+			};
+			name = Release;
+		};
+		082BB2522F3E74430023DFEF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tess.ConsciousConnectionUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = ConsciousConnection;
+			};
+			name = Debug;
+		};
+		082BB2532F3E74430023DFEF /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tess.ConsciousConnectionUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = ConsciousConnection;
+			};
+			name = Release;
+		};
+		085BE5382F98452900E2484B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = ConsciousConnectionWidgetExtension.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = RYLASAZ54A;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ConsciousConnectionWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ConsciousConnectionWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tess.ConsciousConnection.ConsciousConnectionWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		085BE5392F98452900E2484B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = ConsciousConnectionWidgetExtension.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = RYLASAZ54A;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ConsciousConnectionWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ConsciousConnectionWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tess.ConsciousConnection.ConsciousConnectionWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		082BB2252F3E74410023DFEF /* Build configuration list for PBXProject "ConsciousConnection" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				082BB2492F3E74430023DFEF /* Debug */,
+				082BB24A2F3E74430023DFEF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		082BB24B2F3E74430023DFEF /* Build configuration list for PBXNativeTarget "ConsciousConnection" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				082BB24C2F3E74430023DFEF /* Debug */,
+				082BB24D2F3E74430023DFEF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		082BB24E2F3E74430023DFEF /* Build configuration list for PBXNativeTarget "ConsciousConnectionTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				082BB24F2F3E74430023DFEF /* Debug */,
+				082BB2502F3E74430023DFEF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		082BB2512F3E74430023DFEF /* Build configuration list for PBXNativeTarget "ConsciousConnectionUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				082BB2522F3E74430023DFEF /* Debug */,
+				082BB2532F3E74430023DFEF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		085BE53A2F98452900E2484B /* Build configuration list for PBXNativeTarget "ConsciousConnectionWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				085BE5382F98452900E2484B /* Debug */,
+				085BE5392F98452900E2484B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		085BE53E2F98C08600E2484B /* XCLocalSwiftPackageReference "../BEMCheckBox-master" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = "../BEMCheckBox-master";
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		085BE53F2F98C08600E2484B /* BEMCheckBox */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = BEMCheckBox;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 082BB2222F3E74410023DFEF /* Project object */;
+}
