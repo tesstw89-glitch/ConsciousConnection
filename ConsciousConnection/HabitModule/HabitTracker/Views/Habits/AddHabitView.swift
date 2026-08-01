@@ -35,6 +35,10 @@ struct AddHabitView: View {
     @State private var selectedRestDays: Set<Int> = []
     @State private var showGoalProgressionOptions = false
 
+    // Cheat Days
+    @State private var cheatDaysAllowed = 0
+    @State private var cheatDayPeriod: CheatDayPeriod = .week
+
     // Focus Session
     @State private var focusEnabled = false
 
@@ -325,6 +329,9 @@ struct AddHabitView: View {
 
                 // Rest Days Section
                 restDaysSection
+
+                // Cheat Day Section
+                cheatDaySection
 
                 // Focus Session Section (only for manual habits)
                 if selectedHabitType == .manual {
@@ -818,6 +825,20 @@ struct AddHabitView: View {
         .liquidGlass(cornerRadius: 20)
     }
 
+    // MARK: - Cheat Day Section
+
+    private var cheatDaySection: some View {
+        CheatDaySettingsSection(
+            allowance: $cheatDaysAllowed,
+            period: $cheatDayPeriod,
+            accentColor: accentColor,
+            primaryText: primaryText,
+            secondaryText: secondaryText,
+            tertiaryText: tertiaryText,
+            colorScheme: colorScheme
+        )
+    }
+
     // MARK: - Icon Section
 
     private var iconSection: some View {
@@ -925,6 +946,10 @@ struct AddHabitView: View {
             habit.restDaysPerWeek = selectedRestDays.count
         }
 
+        // Set cheat days
+        habit.cheatDaysAllowed = cheatDaysAllowed
+        habit.cheatDayPeriod = cheatDayPeriod
+
         // Set focus session enabled
         habit.focusEnabled = focusEnabled
 
@@ -932,4 +957,3 @@ struct AddHabitView: View {
         dismiss()
     }
 }
-
