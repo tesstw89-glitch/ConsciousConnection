@@ -18,11 +18,22 @@ class HabitCompletion {
     var value: Double?         // Numeric value (e.g., 2000ml, 7.5 hours)
     var isAutoSynced: Bool = false  // Track if from HealthKit
 
-    init(date: Date = Date(), habit: Habit? = nil, value: Double? = nil, isAutoSynced: Bool = false) {
+    // Cheat days are stored alongside completions so they sync and persist,
+    // while Habit analytics can still distinguish them from genuine completions.
+    var isCheatDay: Bool = false
+
+    init(
+        date: Date = Date(),
+        habit: Habit? = nil,
+        value: Double? = nil,
+        isAutoSynced: Bool = false,
+        isCheatDay: Bool = false
+    ) {
         self.id = UUID()
         self.date = date
         self.habit = habit
         self.value = value
         self.isAutoSynced = isAutoSynced
+        self.isCheatDay = isCheatDay
     }
 }
