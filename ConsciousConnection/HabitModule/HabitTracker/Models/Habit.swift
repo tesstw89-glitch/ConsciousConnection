@@ -24,6 +24,36 @@ enum HabitDataSource: String, Codable {
     case healthKit
 }
 
+// MARK: - Cheat Day Period
+
+enum CheatDayPeriod: String, Codable, CaseIterable, Identifiable {
+    case week
+    case month
+
+    var id: Self { self }
+
+    var displayName: String {
+        switch self {
+        case .week: return "Per week"
+        case .month: return "Per month"
+        }
+    }
+
+    var unitName: String {
+        switch self {
+        case .week: return "week"
+        case .month: return "month"
+        }
+    }
+
+    fileprivate var calendarComponent: Calendar.Component {
+        switch self {
+        case .week: return .weekOfYear
+        case .month: return .month
+        }
+    }
+}
+
 // MARK: - Goal Progression
 
 enum GoalProgression: String, Codable, CaseIterable {
@@ -81,6 +111,10 @@ class Habit {
     var restDaysPerWeek: Int?
     var restDays: [Int]? // Days of week (1=Sunday, 7=Saturday)
 
+    // Cheat Day properties
+    var cheatDaysAllowed: Int = 0
+    var cheatDayPeriodRaw: String = CheatDayPeriod.week.rawValue
+
     // Stack properties
     var stackId: UUID?
     var stackOrder: Int?
@@ -106,6 +140,11 @@ class Habit {
     var goalProgression: GoalProgression {
         get { GoalProgression(rawValue: goalProgressionRaw) ?? .fixed }
         set { goalProgressionRaw = newValue.rawValue }
+    }
+
+    var cheatDayPeriod: CheatDayPeriod {
+        get { CheatDayPeriod(rawValue: cheatDayPeriodRaw) ?? .week }
+        set { cheatDayPeriodRaw = newValue.rawValue }
     }
 
     /// Check if today is a rest day for this habit
@@ -178,9 +217,32 @@ class Habit {
         completion(on: date, calendar: calendar)?.value
     }
 
+    func isCheatDay(on date: Date, calendar: Calendar = .current) -> Bool {
+        completion(on: date, calendar: calendar)?.isCheatDay == true
+    }
+
+    private func isGenuinelyCompleted(on date: Date, calendar: Calendar = .current) -> Bool {
+        guard let completion = completion(on: date, calendar: calendar),
+              !completion.isCheatDay else {
+            return false
+        }
+
+        if let goal = dailyGoal, let value = completion.value {
+            return isGoalMet(value: value, goal: goal)
+        }
+
+        return true
+    }
+
     func isCompleted(on date: Date, calendar: Calendar = .current) -> Bool {
         guard let completion = completion(on: date, calendar: calendar) else {
             return false
+        }
+
+        // A cheat day resolves the habit for the day without counting as a
+        // genuine completion in streak length or completion-rate analytics.
+        if completion.isCheatDay {
+            return true
         }
 
         if let goal = dailyGoal, let value = completion.value {
@@ -195,11 +257,50 @@ class Habit {
             return isCompleted(on: date, calendar: calendar) ? 1.0 : 0.0
         }
 
+        if isCheatDay(on: date, calendar: calendar) {
+            return 1.0
+        }
+
         guard let value = value(on: date, calendar: calendar) else {
             return 0.0
         }
 
         return value / goal
+    }
+
+    // MARK: - Cheat Days
+
+    func cheatDaysUsed(
+        inPeriodContaining date: Date = Date(),
+        calendar: Calendar = .current
+    ) -> Int {
+        guard cheatDaysAllowed > 0,
+              let interval = calendar.dateInterval(
+                of: cheatDayPeriod.calendarComponent,
+                for: date
+              ) else {
+            return 0
+        }
+
+        return safeCompletions.filter { completion in
+            completion.isCheatDay && interval.contains(completion.date)
+        }.count
+    }
+
+    func remainingCheatDays(
+        inPeriodContaining date: Date = Date(),
+        calendar: Calendar = .current
+    ) -> Int {
+        max(0, cheatDaysAllowed - cheatDaysUsed(inPeriodContaining: date, calendar: calendar))
+    }
+
+    func canUseCheatDay(on date: Date = Date(), calendar: Calendar = .current) -> Bool {
+        guard cheatDaysAllowed > 0,
+              completion(on: date, calendar: calendar) == nil else {
+            return false
+        }
+
+        return remainingCheatDays(inPeriodContaining: date, calendar: calendar) > 0
     }
 
     // MARK: - Today wrappers (backwards compatible)
@@ -222,6 +323,8 @@ class Habit {
         let calendar = Calendar.current
 
         return Set(safeCompletions.compactMap { completion -> Date? in
+            guard !completion.isCheatDay else { return nil }
+
             let date = calendar.startOfDay(for: completion.date)
 
             if let goal = dailyGoal, goal > 0 {
@@ -237,30 +340,30 @@ class Habit {
 
     var currentStreak: Int {
         let calendar = Calendar.current
-        let completedDatesDescending = completedDates.sorted(by: >)
+        let today = calendar.startOfDay(for: Date())
+        let creationDay = calendar.startOfDay(for: createdAt)
 
-        guard !completedDatesDescending.isEmpty else { return 0 }
-
+        var cursor = today
         var streak = 0
-        var expectedDate = calendar.startOfDay(for: Date())
+        var hasCountedCompletion = false
 
-        if !isCompletedToday {
-            guard let yesterday = calendar.date(byAdding: .day, value: -1, to: expectedDate) else {
-                return 0
-            }
-            expectedDate = yesterday
-        }
-
-        for date in completedDatesDescending {
-            if date == expectedDate {
+        while cursor >= creationDay {
+            if isGenuinelyCompleted(on: cursor, calendar: calendar) {
                 streak += 1
-                guard let previousDay = calendar.date(byAdding: .day, value: -1, to: expectedDate) else {
-                    break
-                }
-                expectedDate = previousDay
-            } else if date < expectedDate {
+                hasCountedCompletion = true
+            } else if isCheatDay(on: cursor, calendar: calendar) ||
+                        isRestDay(on: cursor, calendar: calendar) {
+                // Exempt days preserve the chain without increasing its length.
+            } else if !hasCountedCompletion && calendar.isDate(cursor, inSameDayAs: today) {
+                // Today is still in progress, so yesterday may still continue the streak.
+            } else {
                 break
             }
+
+            guard let previousDay = calendar.date(byAdding: .day, value: -1, to: cursor) else {
+                break
+            }
+            cursor = previousDay
         }
 
         return streak
@@ -268,24 +371,28 @@ class Habit {
 
     var longestStreak: Int {
         let calendar = Calendar.current
-        let dates = completedDates
+        let creationDay = calendar.startOfDay(for: createdAt)
+        let today = calendar.startOfDay(for: Date())
 
-        guard !dates.isEmpty else { return 0 }
+        var cursor = creationDay
+        var longest = 0
+        var current = 0
 
-        var longest = 1
-        var current = 1
-
-        for i in 1..<dates.count {
-            let previousDate = dates[i - 1]
-            let currentDate = dates[i]
-
-            if let nextDay = calendar.date(byAdding: .day, value: 1, to: previousDate),
-               calendar.isDate(nextDay, inSameDayAs: currentDate) {
+        while cursor <= today {
+            if isGenuinelyCompleted(on: cursor, calendar: calendar) {
                 current += 1
                 longest = max(longest, current)
+            } else if isCheatDay(on: cursor, calendar: calendar) ||
+                        isRestDay(on: cursor, calendar: calendar) {
+                // Preserve the current run without adding a completed day.
             } else {
-                current = 1
+                current = 0
             }
+
+            guard let nextDay = calendar.date(byAdding: .day, value: 1, to: cursor) else {
+                break
+            }
+            cursor = nextDay
         }
 
         return longest
@@ -296,7 +403,7 @@ class Habit {
         let daysSinceCreation = calendar.dateComponents([.day], from: createdAt, to: Date()).day ?? 0
 
         guard daysSinceCreation > 0 else {
-            return isCompletedToday ? 1.0 : 0.0
+            return isGenuinelyCompleted(on: Date(), calendar: calendar) ? 1.0 : 0.0
         }
 
         return Double(completedDates.count) / Double(daysSinceCreation + 1)
