@@ -29,6 +29,10 @@ struct EditHabitView: View {
     @State private var selectedRestDays: Set<Int>
     @State private var showGoalProgressionOptions = false
 
+    // Cheat Days
+    @State private var cheatDaysAllowed: Int
+    @State private var cheatDayPeriod: CheatDayPeriod
+
     // Focus Session
     @State private var focusEnabled: Bool
 
@@ -77,6 +81,10 @@ struct EditHabitView: View {
         _goalIncrementInterval = State(initialValue: habit.goalIncrementIntervalDays ?? 7)
         _selectedRestDays = State(initialValue: Set(habit.restDays ?? []))
 
+        // Cheat days
+        _cheatDaysAllowed = State(initialValue: habit.cheatDaysAllowed)
+        _cheatDayPeriod = State(initialValue: habit.cheatDayPeriod)
+
         // Focus session
         _focusEnabled = State(initialValue: habit.focusEnabled)
     }
@@ -107,6 +115,9 @@ struct EditHabitView: View {
 
                         // Rest Days Section
                         restDaysSection
+
+                        // Cheat Day Section
+                        cheatDaySection
 
                         // Focus Session Section (only for manual habits)
                         if habit.habitType == .manual {
@@ -511,6 +522,20 @@ struct EditHabitView: View {
         .liquidGlass(cornerRadius: 20)
     }
 
+    // MARK: - Cheat Day Section
+
+    private var cheatDaySection: some View {
+        CheatDaySettingsSection(
+            allowance: $cheatDaysAllowed,
+            period: $cheatDayPeriod,
+            accentColor: accentColor,
+            primaryText: primaryText,
+            secondaryText: secondaryText,
+            tertiaryText: tertiaryText,
+            colorScheme: colorScheme
+        )
+    }
+
     // MARK: - Icon Section
 
     private var iconSection: some View {
@@ -620,6 +645,10 @@ struct EditHabitView: View {
             habit.restDaysPerWeek = nil
         }
 
+        // Cheat days
+        habit.cheatDaysAllowed = cheatDaysAllowed
+        habit.cheatDayPeriod = cheatDayPeriod
+
         // Focus session
         habit.focusEnabled = focusEnabled
 
@@ -629,4 +658,3 @@ struct EditHabitView: View {
         dismiss()
     }
 }
-
