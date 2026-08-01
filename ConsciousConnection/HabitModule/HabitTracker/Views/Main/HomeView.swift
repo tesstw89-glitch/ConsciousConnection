@@ -607,11 +607,38 @@ struct HomeView: View {
         if let existing = habit.completion(on: Date(), calendar: calendar) {
             existing.value = value
             existing.isAutoSynced = true
+            existing.isCheatDay = false
         } else {
             let completion = HabitCompletion(date: Date(), habit: habit, value: value, isAutoSynced: true)
             modelContext.insert(completion)
         }
 
+        NotificationCenter.default.post(name: .habitsDidChange, object: nil)
+    }
+
+    private func useCheatDay(for habit: Habit, on date: Date) {
+        let calendar = Calendar.current
+        let targetDay = calendar.startOfDay(for: date)
+
+        guard habit.canUseCheatDay(on: targetDay, calendar: calendar) else {
+            return
+        }
+
+        let completion = HabitCompletion(
+            date: targetDay,
+            habit: habit,
+            isCheatDay: true
+        )
+
+        if habit.completions == nil {
+            habit.completions = []
+        }
+        habit.completions?.append(completion)
+        modelContext.insert(completion)
+        try? modelContext.save()
+
+        HapticManager.shared.buttonPressed()
+        refreshID = UUID()
         NotificationCenter.default.post(name: .habitsDidChange, object: nil)
     }
 
@@ -655,6 +682,14 @@ struct HomeView: View {
                             habitForFocus = habit
                         } label: {
                             Label("Start Focus Session", systemImage: "timer")
+                        }
+                    }
+
+                    if isViewingToday && habit.canUseCheatDay(on: selectedDate) {
+                        Button {
+                            useCheatDay(for: habit, on: selectedDate)
+                        } label: {
+                            Label("Use a Cheat Day", systemImage: "sparkles")
                         }
                     }
 
