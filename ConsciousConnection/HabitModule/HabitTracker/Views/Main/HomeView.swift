@@ -684,8 +684,7 @@ struct HomeView: View {
                             Label("Start Focus Session", systemImage: "timer")
                         }
                     }
-
-                    if isViewingToday && habit.canUseCheatDay(on: selectedDate) {
+                    if habit.canUseCheatDay(on: selectedDate) {
                         Button {
                             useCheatDay(for: habit, on: selectedDate)
                         } label: {
