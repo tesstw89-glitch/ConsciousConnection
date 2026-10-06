@@ -6,6 +6,7 @@ struct ContentView: View {
     @EnvironmentObject private var router: AppRouter
     @State private var showingHabitFlow = false
     @State private var showingMagickPortal = false
+    @State private var isGettingReady = true
 
     private let timeButtons: [TimeButtonConfig] = [
         .init(asset: "button02", minutes: 2,  x: 0.64, y: 0.10, width: 72),
@@ -202,6 +203,17 @@ struct ContentView: View {
                 showingMagickPortal = false
             }
         }
+        .overlay {
+            if isGettingReady {
+                ConsciousConnectionSyncingView {
+                    withAnimation(.easeInOut(duration: 0.45)) {
+                        isGettingReady = false
+                    }
+                }
+                .transition(.opacity)
+                .zIndex(100)
+            }
+        }
     }
 
     @ViewBuilder
@@ -273,6 +285,147 @@ struct ContentView: View {
         let generator = UIImpactFeedbackGenerator(style: .medium)
         generator.prepare()
         generator.impactOccurred()
+    }
+}
+
+private struct ConsciousConnectionSyncingView: View {
+    let onComplete: () -> Void
+
+    @State private var statusMessage = "Preparing your space"
+
+    var body: some View {
+        ZStack {
+            Image("Wallpaper3")
+                .resizable()
+                .scaledToFill()
+                .frame(
+                    maxWidth: .infinity,
+                    maxHeight: .infinity
+                )
+                .clipped()
+                .ignoresSafeArea()
+
+            LinearGradient(
+                colors: [
+                    Color.black.opacity(0.10),
+                    Color.black.opacity(0.28),
+                    Color.black.opacity(0.58)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                Spacer()
+
+                VStack(spacing: 14) {
+                    Image(systemName: "sparkles")
+                        .font(
+                            .system(
+                                size: 30,
+                                weight: .semibold
+                            )
+                        )
+                        .foregroundStyle(.white)
+                        .frame(
+                            width: 68,
+                            height: 68
+                        )
+                        .background(
+                            Color.white.opacity(0.15),
+                            in: Circle()
+                        )
+
+                    Text("Conscious Connection is getting ready")
+                        .font(.title2)
+                        .bold()
+                        .foregroundStyle(.white)
+                        .multilineTextAlignment(.center)
+
+                    TimelineView(
+                        .periodic(
+                            from: .now,
+                            by: 0.45
+                        )
+                    ) { context in
+                        Text(
+                            statusMessage
+                            + animatedDots(at: context.date)
+                        )
+                        .font(.subheadline)
+                        .foregroundStyle(
+                            Color.white.opacity(0.82)
+                        )
+                        .contentTransition(.numericText())
+                        .multilineTextAlignment(.center)
+                        .frame(
+                            maxWidth: 300,
+                            minHeight: 24
+                        )
+                    }
+                }
+
+                Spacer()
+
+                ProgressView()
+                    .controlSize(.large)
+                    .tint(.white)
+                    .padding(.bottom, 54)
+            }
+            .padding(.horizontal, 24)
+        }
+        .frame(
+            maxWidth: .infinity,
+            maxHeight: .infinity
+        )
+        .task {
+            await runStartupSequence()
+        }
+    }
+
+    private func animatedDots(at date: Date) -> String {
+        let phase = Int(
+            date.timeIntervalSinceReferenceDate / 0.45
+        ) % 4
+
+        return String(
+            repeating: ".",
+            count: phase
+        )
+    }
+
+    @MainActor
+    private func runStartupSequence() async {
+        statusMessage = "Preparing your space"
+
+        try? await Task.sleep(
+            nanoseconds: 700_000_000
+        )
+
+        guard !Task.isCancelled else { return }
+
+        withAnimation(.easeInOut(duration: 0.2)) {
+            statusMessage = "Loading your routines"
+        }
+
+        try? await Task.sleep(
+            nanoseconds: 700_000_000
+        )
+
+        guard !Task.isCancelled else { return }
+
+        withAnimation(.easeInOut(duration: 0.2)) {
+            statusMessage = "Almost ready"
+        }
+
+        try? await Task.sleep(
+            nanoseconds: 600_000_000
+        )
+
+        guard !Task.isCancelled else { return }
+
+        onComplete()
     }
 }
 
