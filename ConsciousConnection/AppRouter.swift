@@ -1,6 +1,13 @@
 import SwiftUI
 
 enum Route: Hashable {
+    // New front-page sections
+    case groundHome
+    case liveHome
+    case createHome
+    case becomeHome
+    case timeOnlyHome
+
     case goodMorning
 
     // Morning flow

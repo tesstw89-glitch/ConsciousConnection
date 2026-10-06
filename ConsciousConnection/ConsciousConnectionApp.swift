@@ -45,9 +45,24 @@ struct ConsciousConnectionApp: App {
         WindowGroup {
             if let container = habitModelContainer {
                 NavigationStack(path: $router.path) {
-                    ContentView()
+                    FrontPageView()
                         .navigationDestination(for: Route.self) { route in
                             switch route {
+
+                            case .groundHome:
+                                SectionHomeView(mode: .ground)
+
+                            case .liveHome:
+                                SectionHomeView(mode: .live)
+
+                            case .createHome:
+                                SectionHomeView(mode: .create)
+
+                            case .becomeHome:
+                                SectionHomeView(mode: .become)
+
+                            case .timeOnlyHome:
+                                SectionHomeView(mode: .timeOnly)
 
                             case .goodMorning:
                                 GoodMorningView()
