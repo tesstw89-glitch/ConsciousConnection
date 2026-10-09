@@ -241,7 +241,7 @@ struct SectionHomeView: View {
 
                     Button {
                         tap()
-                        router.path.append(.workoutMenu)
+                        openStrengthLab()
                     } label: {
 
                         Image("workout")
@@ -353,6 +353,25 @@ struct SectionHomeView: View {
 
             MagickPortalRootView {
                 showingMagickPortal = false
+            }
+        }
+    }
+
+
+
+    private func openStrengthLab() {
+        guard let url = URL(string: "strengthlab://open") else {
+            return
+        }
+
+        UIApplication.shared.open(
+            url,
+            options: [:]
+        ) { success in
+            if !success {
+                DispatchQueue.main.async {
+                    router.path.append(.workoutMenu)
+                }
             }
         }
     }
