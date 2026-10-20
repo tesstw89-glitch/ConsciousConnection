@@ -15,7 +15,7 @@ let package = Package(
             name: "StrengthLabModule",
             dependencies: [.product(name: "YouTubeKit", package: "YouTubeKit")],
             path: "Sources/StrengthLabModule",
-            resources: [.process("Assets.xcassets")]
+            resources: [.process("Assets.xcassets"), .copy("Resources/ExerciseDB")]
         )
     ]
 )

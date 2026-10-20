@@ -170,6 +170,15 @@ enum StrengthLabExerciseLibrary {
         -> [StrengthLabExerciseDefinition]
     {
         let possibleURLs: [URL?] = [
+            Bundle.module.url(
+                forResource: "free-exercise-db-plusplus",
+                withExtension: "json",
+                subdirectory: "ExerciseDB"
+            ),
+            Bundle.module.url(
+                forResource: "free-exercise-db-plusplus",
+                withExtension: "json"
+            ),
             Bundle.main.url(
                 forResource:
                     "free-exercise-db-plusplus",

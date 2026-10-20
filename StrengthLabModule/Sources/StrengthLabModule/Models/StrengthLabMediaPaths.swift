@@ -7,7 +7,7 @@ import SwiftData
 // Do not copy/delete files and do not erase a reference if its file is missing.
 enum StrengthLabMediaPaths {
     private static let knownFolders: Set<String> = [
-        "ImportedVideos", "ExerciseDemos", "EditedGIFs"
+        "ImportedVideos", "ExerciseDemos", "EditedGIFs", "ExerciseGIFs"
     ]
 
     static func available(_ original: URL?) -> URL? {

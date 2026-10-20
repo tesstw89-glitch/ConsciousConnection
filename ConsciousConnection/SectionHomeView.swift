@@ -1,5 +1,6 @@
 import SwiftUI
 import UIKit
+import StrengthLabModule
 
 enum SectionHomeMode {
     case ground
@@ -15,6 +16,7 @@ struct SectionHomeView: View {
     @EnvironmentObject private var router: AppRouter
 
     @State private var showingHabitFlow = false
+    @State private var showingStrengthLab = false
     @State private var showingMagickPortal = false
 
     let mode: SectionHomeMode
@@ -241,7 +243,7 @@ struct SectionHomeView: View {
 
                     Button {
                         tap()
-                        openStrengthLab()
+                        showingStrengthLab = true
                     } label: {
 
                         Image("workout")
@@ -323,6 +325,26 @@ struct SectionHomeView: View {
             }
         }
 
+        // Embedded StrengthLab: opens inside ConsciousConnection, not by URL.
+        .fullScreenCover(isPresented: $showingStrengthLab) {
+            VStack(spacing: 0) {
+                HStack {
+                    Text("StrengthLab")
+                        .font(.headline)
+                    Spacer()
+                    Button("Done") {
+                        showingStrengthLab = false
+                    }
+                    .fontWeight(.semibold)
+                }
+                .padding(.horizontal, 18)
+                .padding(.vertical, 12)
+                .background(.ultraThinMaterial)
+
+                StrengthLabRootView()
+            }
+        }
+
         // Habit tracker retains its existing full-screen flow.
         .fullScreenCover(
             isPresented: $showingHabitFlow
@@ -359,22 +381,6 @@ struct SectionHomeView: View {
 
 
 
-    private func openStrengthLab() {
-        guard let url = URL(string: "strengthlab://open") else {
-            return
-        }
-
-        UIApplication.shared.open(
-            url,
-            options: [:]
-        ) { success in
-            if !success {
-                DispatchQueue.main.async {
-                    router.path.append(.workoutMenu)
-                }
-            }
-        }
-    }
 
 
     private func tap() {
