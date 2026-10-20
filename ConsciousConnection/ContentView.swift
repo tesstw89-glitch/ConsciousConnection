@@ -1,10 +1,12 @@
 import SwiftUI
+import StrengthLabModule
 import UIKit
 
 struct ContentView: View {
 
     @EnvironmentObject private var router: AppRouter
     @State private var showingHabitFlow = false
+    @State private var showingStrengthLab = false
     @State private var showingMagickPortal = false
     @State private var isGettingReady = true
 
@@ -87,7 +89,7 @@ struct ContentView: View {
 
                 Button {
                     makeTapFeelGood()
-                    router.path.append(.workoutMenu)
+                    showingStrengthLab = true
                 } label: {
                     Image("workout")
                         .resizable()
@@ -184,6 +186,24 @@ struct ContentView: View {
                 }
                 .buttonStyle(SatisfyingPressStyle())
                 .position(x: geo.size.width * 0.80, y: geo.size.height * 0.90)
+            }
+        }
+        .fullScreenCover(isPresented: $showingStrengthLab) {
+            VStack(spacing: 0) {
+                HStack {
+                    Text("StrengthLab")
+                        .font(.headline)
+                    Spacer()
+                    Button("Done") {
+                        showingStrengthLab = false
+                    }
+                    .fontWeight(.semibold)
+                }
+                .padding(.horizontal, 18)
+                .padding(.vertical, 12)
+                .background(.ultraThinMaterial)
+
+                StrengthLabRootView()
             }
         }
         .fullScreenCover(isPresented: $showingHabitFlow) {
