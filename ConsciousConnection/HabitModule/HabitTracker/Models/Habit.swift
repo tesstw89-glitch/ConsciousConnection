@@ -95,6 +95,7 @@ class Habit {
     var icon: String = "checkmark.circle.fill"
     var color: String = "#34C759"
     var createdAt: Date = Date()
+    var individualReminderTime: Date? = nil
 
     // HealthKit properties
     var habitTypeRaw: String = HabitType.manual.rawValue

@@ -648,6 +648,9 @@ struct HomeView: View {
             for completion in habit.safeCompletions {
                 modelContext.delete(completion)
             }
+            NotificationManager.shared.cancelIndividualReminder(
+                id: habit.id
+            )
             modelContext.delete(habit)
             habitToDelete = nil
             NotificationCenter.default.post(name: .habitsDidChange, object: nil)
@@ -773,6 +776,9 @@ struct HomeView: View {
 
     private func deleteHabits(offsets: IndexSet) {
         for index in offsets {
+            NotificationManager.shared.cancelIndividualReminder(
+                id: habits[index].id
+            )
             modelContext.delete(habits[index])
         }
     }

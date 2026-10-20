@@ -42,6 +42,12 @@ struct AddHabitView: View {
     // Focus Session
     @State private var focusEnabled = false
 
+    @State private var isIndividualReminderOn = false
+    @State private var individualReminderTime =
+        Calendar.current.date(
+            bySettingHour: 9, minute: 0, second: 0, of: Date()
+        ) ?? Date()
+
     // HealthKit permission
     @State private var showingHealthKitPermission = false
 
@@ -316,6 +322,8 @@ struct AddHabitView: View {
 
                 // Name Input
                 nameSection
+
+                individualReminderSection
 
                 // Goal Section (for HealthKit types)
                 if selectedHabitType != .manual {
@@ -917,6 +925,34 @@ struct AddHabitView: View {
         }
     }
 
+    // MARK: - Individual Habit Reminder
+
+    private var individualReminderSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Toggle(isOn: $isIndividualReminderOn) {
+                Label("Daily reminder", systemImage: "bell")
+                    .font(.headline)
+                    .foregroundStyle(primaryText)
+            }
+            .tint(accentColor)
+
+            if isIndividualReminderOn {
+                DatePicker(
+                    "Notify me at",
+                    selection: $individualReminderTime,
+                    displayedComponents: .hourAndMinute
+                )
+                .foregroundStyle(primaryText)
+
+                Text("Repeats every day at the selected time.")
+                    .font(.caption)
+                    .foregroundStyle(secondaryText)
+            }
+        }
+        .padding(16)
+        .liquidGlass(cornerRadius: 20)
+    }
+
     // MARK: - Actions
 
     private func saveHabit() {
@@ -953,7 +989,18 @@ struct AddHabitView: View {
         // Set focus session enabled
         habit.focusEnabled = focusEnabled
 
+        habit.individualReminderTime =
+            isIndividualReminderOn ? individualReminderTime : nil
+
         modelContext.insert(habit)
+        try? modelContext.save()
+
+        NotificationManager.shared.updateIndividualReminder(
+            id: habit.id,
+            title: habit.name,
+            time: habit.individualReminderTime
+        )
+
         dismiss()
     }
 }

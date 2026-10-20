@@ -108,6 +108,76 @@ final class NotificationManager: ObservableObject {
         }
     }
 
+    // MARK: - Individual habit reminders
+
+    private var individualReminderTokens: [UUID: UUID] = [:]
+
+    func cancelIndividualReminder(id: UUID) {
+        individualReminderTokens[id] = UUID()
+        let identifier = "consciousconnection.individual.\(id.uuidString)"
+        notificationCenter.removePendingNotificationRequests(
+            withIdentifiers: [identifier]
+        )
+    }
+
+    func updateIndividualReminder(
+        id: UUID,
+        title: String,
+        time: Date?
+    ) {
+        cancelIndividualReminder(id: id)
+
+        guard let time else { return }
+
+        let token = UUID()
+        individualReminderTokens[id] = token
+
+        Task {
+            let settings = await notificationCenter.notificationSettings()
+            let allowed: Bool
+
+            if settings.authorizationStatus == .notDetermined {
+                allowed = (try? await notificationCenter.requestAuthorization(
+                    options: [.alert, .sound]
+                )) ?? false
+            } else {
+                allowed = settings.authorizationStatus == .authorized
+                    || settings.authorizationStatus == .provisional
+            }
+
+            guard allowed, individualReminderTokens[id] == token else {
+                return
+            }
+
+            let content = UNMutableNotificationContent()
+            content.title = "Conscious Connection"
+            content.body = "Time for \(title)"
+            content.sound = .default
+
+            let components = Calendar.current.dateComponents(
+                [.hour, .minute], from: time
+            )
+
+            let trigger = UNCalendarNotificationTrigger(
+                dateMatching: components,
+                repeats: true
+            )
+
+            let identifier = "consciousconnection.individual.\(id.uuidString)"
+            let request = UNNotificationRequest(
+                identifier: identifier,
+                content: content,
+                trigger: trigger
+            )
+
+            do {
+                try await notificationCenter.add(request)
+            } catch {
+                print("Individual reminder scheduling failed:", error)
+            }
+        }
+    }
+
     // MARK: - Task reminders
 
     func scheduleTaskReminders() {

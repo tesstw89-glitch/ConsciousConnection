@@ -36,6 +36,9 @@ struct EditHabitView: View {
     // Focus Session
     @State private var focusEnabled: Bool
 
+    @State private var isIndividualReminderOn: Bool
+    @State private var individualReminderTime: Date
+
     let icons = [
         "checkmark.circle.fill", "star.fill", "heart.fill", "bolt.fill",
         "flame.fill", "drop.fill", "leaf.fill", "moon.fill",
@@ -87,6 +90,16 @@ struct EditHabitView: View {
 
         // Focus session
         _focusEnabled = State(initialValue: habit.focusEnabled)
+        _isIndividualReminderOn = State(
+            initialValue: habit.individualReminderTime != nil
+        )
+        _individualReminderTime = State(
+            initialValue: habit.individualReminderTime
+                ?? Calendar.current.date(
+                    bySettingHour: 9, minute: 0, second: 0, of: Date()
+                )
+                ?? Date()
+        )
     }
 
     var body: some View {
@@ -102,6 +115,8 @@ struct EditHabitView: View {
 
                         // Name Input
                         nameSection
+
+                        individualReminderSection
 
                         // Goal Section (for non-manual types)
                         if habit.habitType != .manual {
@@ -614,6 +629,34 @@ struct EditHabitView: View {
         }
     }
 
+    // MARK: - Individual Habit Reminder
+
+    private var individualReminderSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Toggle(isOn: $isIndividualReminderOn) {
+                Label("Daily reminder", systemImage: "bell")
+                    .font(.headline)
+                    .foregroundStyle(primaryText)
+            }
+            .tint(accentColor)
+
+            if isIndividualReminderOn {
+                DatePicker(
+                    "Notify me at",
+                    selection: $individualReminderTime,
+                    displayedComponents: .hourAndMinute
+                )
+                .foregroundStyle(primaryText)
+
+                Text("Repeats every day at the selected time.")
+                    .font(.caption)
+                    .foregroundStyle(secondaryText)
+            }
+        }
+        .padding(16)
+        .liquidGlass(cornerRadius: 20)
+    }
+
     // MARK: - Actions
 
     private func saveChanges() {
@@ -651,6 +694,17 @@ struct EditHabitView: View {
 
         // Focus session
         habit.focusEnabled = focusEnabled
+
+        habit.individualReminderTime =
+            isIndividualReminderOn ? individualReminderTime : nil
+
+        try? modelContext.save()
+
+        NotificationManager.shared.updateIndividualReminder(
+            id: habit.id,
+            title: habit.name,
+            time: habit.individualReminderTime
+        )
 
         // Notify widgets
         NotificationCenter.default.post(name: .habitsDidChange, object: nil)
