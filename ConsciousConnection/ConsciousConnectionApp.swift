@@ -47,13 +47,17 @@ struct ConsciousConnectionApp: App {
                 NavigationStack(path: $router.path) {
                     FrontPageView()
                         .navigationDestination(for: Route.self) { route in
-                            switch route {
+                            Group {
+                                switch route {
 
                             case .groundHome:
                                 SectionHomeView(mode: .ground)
 
                             case .liveHome:
                                 SectionHomeView(mode: .live)
+
+                            case .nutritionHome:
+                                NutritionView()
 
                             case .createHome:
                                 SectionHomeView(mode: .create)
@@ -209,8 +213,23 @@ struct ConsciousConnectionApp: App {
 
                             case .workoutTemplateSession(let templateID):
                                 TemplateWorkoutSessionView(templateID: templateID)
+                                }
                             }
+                            .navigationBarBackButtonHidden(true)
                         }
+                }
+                // This overlay sits above every pushed route, including
+                // video screens that intentionally hide the navigation bar.
+                .overlay(alignment: .topLeading) {
+                    if !router.path.isEmpty {
+                        ConsciousCircleBackButton {
+                            guard !router.path.isEmpty else { return }
+                            router.path.removeLast()
+                        }
+                        .padding(.leading, 20)
+                        .padding(.top, 18)
+                        .zIndex(999)
+                    }
                 }
                 .environmentObject(router)
                 .environmentObject(workoutStore)

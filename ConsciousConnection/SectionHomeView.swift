@@ -62,7 +62,7 @@ struct SectionHomeView: View {
             ZStack {
 
                 // EXACT same home artwork.
-                Image("homeBackground")
+                Image(mode == .ground ? "Water" : mode == .become ? "Become_Background" : "homeBackground")
                     .resizable()
                     .scaledToFill()
                     .ignoresSafeArea()
@@ -120,87 +120,58 @@ struct SectionHomeView: View {
                 // ==================================================
 
                 if showsGround {
+                    // Ground icons: +10% size, +18pt lower
 
-                    // Gratitude
+                    VStack(alignment: .leading, spacing: 12) {
 
-                    Button {
-                        tap()
-                        router.path.append(.gratitudeTouchstone)
-                    } label: {
+                        Button {
+                            tap()
+                            router.path.append(.gratitudeTouchstone)
+                        } label: {
 
-                        Image("GratitudeTouchstone")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 95)
-                    }
-                    .buttonStyle(SectionPressStyle())
-                    .position(
-                        x: geo.size.width * 0.70,
-                        y: geo.size.height * 0.72
-                    )
+                            Image("GratitudeTouchstone")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 70.4)
+                        }
+                        .buttonStyle(SectionPressStyle())
 
+                        Button {
+                            tap()
+                            router.path.append(.breatheYouAreHere)
+                        } label: {
 
-                    // You Are Here / breathing
+                            Image("youAreHere")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 77)
+                        }
+                        .buttonStyle(SectionPressStyle())
 
-                    Button {
-                        tap()
-                        router.path.append(.breatheYouAreHere)
-                    } label: {
+                        Button {
+                            tap()
+                            router.path = [.resetMenu]
+                        } label: {
 
-                        Image("youAreHere")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 110)
-                    }
-                    .buttonStyle(SectionPressStyle())
-                    .position(
-                        x: geo.size.width * 0.32,
-                        y: geo.size.height * 0.13
-                    )
+                            Image("resetButton")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 85.8)
+                        }
+                        .buttonStyle(SectionPressStyle())
 
+                        Button {
+                            tap()
+                            showingMagickPortal = true
+                        } label: {
 
-                    // Reset
-
-                    Button {
-                        tap()
-                        router.path = [.resetMenu]
-                    } label: {
-
-                        Image("resetButton")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 140)
-                    }
-                    .buttonStyle(SectionPressStyle())
-                    .position(
-                        x: geo.size.width * 0.68,
-                        y: geo.size.height * 0.13
-                    )
-
-
-                    // Magick — provisional home!
-
-                    Button {
-                        tap()
-                        showingMagickPortal = true
-                    } label: {
-
-                        Image("Magickicon")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 68)
-                    }
-                    .buttonStyle(SectionPressStyle())
-                    .position(
-                        x: geo.size.width * 0.78,
-                        y: geo.size.height * 0.48
-                    )
-                    .accessibilityLabel("Magick")
-
-
-                    // Morning + Night stay where they were.
-
-                    HStack(spacing: 6) {
+                            Image("Magickicon")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 52.8)
+                        }
+                        .buttonStyle(SectionPressStyle())
+                        .accessibilityLabel("Magick")
 
                         Button {
                             tap()
@@ -210,10 +181,9 @@ struct SectionHomeView: View {
                             Image("morning")
                                 .resizable()
                                 .scaledToFit()
-                                .frame(width: 90)
+                                .frame(width: 70.4)
                         }
                         .buttonStyle(SectionPressStyle())
-
 
                         Button {
                             tap()
@@ -223,16 +193,18 @@ struct SectionHomeView: View {
                             Image("night")
                                 .resizable()
                                 .scaledToFit()
-                                .frame(width: 90)
+                                .frame(width: 70.4)
                         }
                         .buttonStyle(SectionPressStyle())
                     }
-                    .position(
-                        x: 130,
-                        y: geo.size.height * 0.913
+                    .frame(
+                        maxWidth: .infinity,
+                        maxHeight: .infinity,
+                        alignment: .topLeading
                     )
+                    .padding(.leading, 20)
+                    .padding(.top, 108)
                 }
-
 
                 // ==================================================
                 // LIVE:
@@ -246,18 +218,43 @@ struct SectionHomeView: View {
                         showingStrengthLab = true
                     } label: {
 
-                        Image("workout")
+                        Image("Workout_app")
                             .resizable()
                             .scaledToFit()
-                            .frame(width: 70)
+                            .frame(width: 100, height: 100)
+                            .clipShape(
+                                RoundedRectangle(
+                                    cornerRadius: 22,
+                                    style: .continuous
+                                )
+                            )
                     }
                     .buttonStyle(SectionPressStyle())
                     .position(
-                        x: geo.size.width * 0.10,
+                        x: geo.size.width * 0.16,
                         y: geo.size.height * 0.76
                     )
                 }
 
+
+                // ==================================================
+                if mode == .live {
+                    Button {
+                        tap()
+                        router.path.append(.nutritionHome)
+                    } label: {
+                        Image("Meals")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 94)
+                    }
+                    .buttonStyle(SectionPressStyle())
+                    .position(
+                        x: geo.size.width * 0.47,
+                        y: geo.size.height * 0.76
+                    )
+                    .accessibilityLabel("Nutrition")
+                }
 
                 // ==================================================
                 // BECOME:
@@ -274,11 +271,11 @@ struct SectionHomeView: View {
                         Image("HabitIcon")
                             .resizable()
                             .scaledToFit()
-                            .frame(width: 70)
+                            .frame(width: 92)
                     }
                     .buttonStyle(SectionPressStyle())
                     .position(
-                        x: geo.size.width * 0.10,
+                        x: geo.size.width * 0.16,
                         y: geo.size.height * 0.54
                     )
                 }
@@ -332,10 +329,9 @@ struct SectionHomeView: View {
                     Text("StrengthLab")
                         .font(.headline)
                     Spacer()
-                    Button("Done") {
+                    ConsciousCircleBackButton(accessibilityLabel: "Close StrengthLab") {
                         showingStrengthLab = false
                     }
-                    .fontWeight(.semibold)
                 }
                 .padding(.horizontal, 18)
                 .padding(.vertical, 12)
@@ -359,7 +355,7 @@ struct SectionHomeView: View {
                             placement: .topBarLeading
                         ) {
 
-                            Button("Close") {
+                            ConsciousCircleBackButton(accessibilityLabel: "Close Habits") {
                                 showingHabitFlow = false
                             }
                         }

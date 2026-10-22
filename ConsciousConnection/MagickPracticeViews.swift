@@ -221,7 +221,7 @@ private struct MagickPortalView: View {
                     Spacer()
                 }
                 .padding(.horizontal, 20)
-                .padding(.top, 8)
+                .padding(.top, 32)
 
                 Spacer()
             }
@@ -257,6 +257,7 @@ private struct PortalActionLabel: View {
 
 private struct MagickPracticeBuilderView: View {
     let onReturnHome: () -> Void
+    @Environment(\.dismiss) private var dismiss
 
     @State private var items = MagickPracticeItem.defaultCustomPractice
     @State private var showingAddStep = false
@@ -316,11 +317,17 @@ private struct MagickPracticeBuilderView: View {
         }
         .navigationTitle("Build Your Own Practice")
         .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true)
         .toolbar(.visible, for: .navigationBar)
         .toolbarBackground(Color(red: 24.0 / 255.0, green: 29.0 / 255.0, blue: 44.0 / 255.0), for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarColorScheme(.dark, for: .navigationBar)
         .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                ConsciousCircleBackButton {
+                    dismiss()
+                }
+            }
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     makeMagickHaptic()
@@ -491,7 +498,7 @@ private struct MagickAddStepView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") {
+                    ConsciousCircleBackButton(accessibilityLabel: "Close add step") {
                         dismiss()
                     }
                 }
@@ -506,6 +513,7 @@ private struct MagickAddStepView: View {
 private struct MagickPracticeRunnerView: View {
     let items: [MagickPracticeItem]
     let onReturnHome: () -> Void
+    @Environment(\.dismiss) private var dismiss
 
     @State private var currentIndex = 0
     @State private var symbolSelections: [UUID: TraditionalSymbol]
@@ -582,6 +590,14 @@ private struct MagickPracticeRunnerView: View {
             .frame(width: geometry.size.width, height: geometry.size.height)
         }
         .ignoresSafeArea()
+        .overlay(alignment: .topLeading) {
+            ConsciousCircleBackButton {
+                dismiss()
+            }
+            .padding(.leading, 20)
+            // Runner is edge-to-edge, so clear the Dynamic Island/status bar.
+            .padding(.top, 72)
+        }
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
     }

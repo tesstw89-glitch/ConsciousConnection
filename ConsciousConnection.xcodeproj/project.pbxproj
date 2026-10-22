@@ -7,11 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		C969E11C5958409090C110A6 /* StrengthLabModule in Frameworks */ = {isa = PBXBuildFile; productRef = AFA4F654FD3F4626BB3FA63B /* StrengthLabModule */; };
 		085BE5252F98452700E2484B /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 085BE5242F98452600E2484B /* WidgetKit.framework */; };
 		085BE5272F98452700E2484B /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 085BE5262F98452700E2484B /* SwiftUI.framework */; };
 		085BE5362F98452900E2484B /* ConsciousConnectionWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 085BE5222F98452600E2484B /* ConsciousConnectionWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		085BE5402F98C08600E2484B /* BEMCheckBox in Frameworks */ = {isa = PBXBuildFile; productRef = 085BE53F2F98C08600E2484B /* BEMCheckBox */; };
+		C969E11C5958409090C110A6 /* StrengthLabModule in Frameworks */ = {isa = PBXBuildFile; productRef = AFA4F654FD3F4626BB3FA63B /* StrengthLabModule */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -564,14 +564,15 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = ConsciousConnection/ConsciousConnection.entitlements;
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "StrengthLab reads workout data you authorise in Apple Health;";
-				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "StrengthLab saves workout data you choose to share with Apple Health;";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = RYLASAZ54A;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Scan packaged food barcodes to add ingredients to your kitchen or meal journal.";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "StrengthLab reads workout data you authorise in Apple Health;";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "StrengthLab saves workout data you choose to share with Apple Health;";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -597,14 +598,15 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = ConsciousConnection/ConsciousConnection.entitlements;
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "StrengthLab reads workout data you authorise in Apple Health;";
-				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "StrengthLab saves workout data you choose to share with Apple Health;";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = RYLASAZ54A;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Scan packaged food barcodes to add ingredients to your kitchen or meal journal.";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "StrengthLab reads workout data you authorise in Apple Health;";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "StrengthLab saves workout data you choose to share with Apple Health;";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -801,25 +803,25 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		71BFCA52A13B4C8CB78472A8 /* XCLocalSwiftPackageReference "StrengthLabModule" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = StrengthLabModule;
-		};
 		085BE53E2F98C08600E2484B /* XCLocalSwiftPackageReference "../BEMCheckBox-master" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = "../BEMCheckBox-master";
 		};
+		71BFCA52A13B4C8CB78472A8 /* XCLocalSwiftPackageReference "StrengthLabModule" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = StrengthLabModule;
+		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		085BE53F2F98C08600E2484B /* BEMCheckBox */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = BEMCheckBox;
+		};
 		AFA4F654FD3F4626BB3FA63B /* StrengthLabModule */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 71BFCA52A13B4C8CB78472A8 /* XCLocalSwiftPackageReference "StrengthLabModule" */;
 			productName = StrengthLabModule;
-		};
-		085BE53F2F98C08600E2484B /* BEMCheckBox */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = BEMCheckBox;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

@@ -4,6 +4,7 @@ enum Route: Hashable {
     // New front-page sections
     case groundHome
     case liveHome
+    case nutritionHome
     case createHome
     case becomeHome
     case timeOnlyHome

@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 import AVFoundation
 
 // ✅ IMPORTANT: no NavigationStack in here.
@@ -138,7 +139,6 @@ struct StateDetailView: View {
     let index: Int
     let onClimbTo: (Int) -> Void
 
-    @State private var speaker = SpeechHelper()
 
     var body: some View {
         let cur = SCALE[index]
@@ -238,9 +238,9 @@ struct StateDetailView: View {
                     }
 
                     Button {
-                        speaker.speak(detailSpeechText(cur: cur, up: up))
+                        discussLadder()
                     } label: {
-                        Text("Speak")
+                        Text("Discuss")
                             .font(.custom("Poppins-SemiBold", size: 17))
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
@@ -280,17 +280,41 @@ struct StateDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
     }
 
-    private func detailSpeechText(cur: ScaleRung, up: [ScaleRung]) -> String {
-        var text = "You chose: \(cur.name). "
-        if !up.isEmpty {
-            let list = up.map { $0.name }.joined(separator: ", ")
-            text += "Can we move to: \(list). "
-        } else {
-            text += "You're already at the highest state. "
+    // Read the actual state buttons tapped from the active navigation path.
+    // This automatically handles going back and choosing another state.
+    private func discussLadder() {
+        let selectedStates: [ScaleRung] = router.path.compactMap { route in
+            guard case let .stateDetail(index) = route,
+                  SCALE.indices.contains(index) else {
+                return nil
+            }
+            return SCALE[index]
         }
-        if cur.r >= 15, let ref = REFRAME[cur.r] {
-            text += "Polarising positive: \(ref)."
+
+        guard let first = selectedStates.first,
+              let last = selectedStates.last else {
+            return
         }
-        return text
+
+        let journey = selectedStates.map { $0.name }.joined(separator: " → ")
+        let message = """
+        I've just worked through my Abraham Hicks emotional ladder in ConsciousConnection.
+
+        These are the states I selected, in the order I chose them:
+        \(journey)
+
+        I started at \(first.name) and ended at \(last.name).
+
+        Can we discuss how I felt at the beginning, what might have been behind that feeling, what changed as I worked through the ladder, and where I've arrived? I'd love you to ask thoughtful questions rather than assume that every state I tapped was exactly how I felt.
+        """
+
+        // Never send the message automatically: keep the user in control.
+        UIPasteboard.general.string = message
+
+        // Opens ChatGPT when the device supports the link; otherwise its site.
+        if let url = URL(string: "chatgpt://") {
+            UIApplication.shared.open(url)
+        }
     }
+
 }

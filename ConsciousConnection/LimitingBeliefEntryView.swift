@@ -33,23 +33,7 @@ struct LimitingBeliefEntryView: View {
                 HStack {
                     Spacer()
 
-                    Button(action: onCancel) {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 17, weight: .bold))
-                            .foregroundStyle(.white)
-                            .frame(width: 44, height: 44)
-                            .background(Color.black.opacity(0.48))
-                            .clipShape(Circle())
-                            .overlay {
-                                Circle()
-                                    .stroke(
-                                        Color.white.opacity(0.24),
-                                        lineWidth: 1
-                                    )
-                            }
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Close limiting beliefs")
+                    ConsciousCircleBackButton(accessibilityLabel: "Close limiting beliefs", action: onCancel)
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 10)

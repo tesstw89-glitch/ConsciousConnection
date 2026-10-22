@@ -194,10 +194,9 @@ struct ContentView: View {
                     Text("StrengthLab")
                         .font(.headline)
                     Spacer()
-                    Button("Done") {
+                    ConsciousCircleBackButton(accessibilityLabel: "Close StrengthLab") {
                         showingStrengthLab = false
                     }
-                    .fontWeight(.semibold)
                 }
                 .padding(.horizontal, 18)
                 .padding(.vertical, 12)
@@ -211,7 +210,7 @@ struct ContentView: View {
                 HabitFlowRootView()
                     .toolbar {
                         ToolbarItem(placement: .topBarLeading) {
-                            Button("Close") {
+                            ConsciousCircleBackButton(accessibilityLabel: "Close Habits") {
                                 showingHabitFlow = false
                             }
                         }

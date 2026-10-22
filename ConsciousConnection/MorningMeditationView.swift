@@ -37,20 +37,7 @@ struct MorningMeditationView: View {
                     Spacer()
                 }
 
-                Button {
-                    audio.pause()
-                    dismiss()
-                } label: {
-                    Image("back_button")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: backWidth)
-                }
-                .buttonStyle(AssetButtonPressStyle())
-                .position(
-                    x: geo.size.width * backX,
-                    y: geo.size.height * backY
-                )
+                // Back is supplied by the shared navigation X overlay.
             }
             .onDisappear {
                 audio.pause()
