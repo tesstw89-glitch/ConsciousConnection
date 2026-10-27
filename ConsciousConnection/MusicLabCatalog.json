@@ -1720,11 +1720,11 @@
       "title": "Minor blues storyteller",
       "subtitle": "",
       "tonal": "F♯minor blues → written D♯ minor blues",
-      "progression": "F♯m7 × 4 | Bm7 × 2 | F♯m7 × 2 | C♯7(♭9) × 1 | Bm7 × 1 |",
+      "progression": "F♯m7 × 4 | Bm7 × 2 | F♯m7 × 2 | C♯7(♭9) × 1 | Bm7 × 1 | F♯m7 × 1 | C♯7(♭9) × 1",
       "groove": "90 BPM · 4/4 · Slow greasy minor blues · 12 bars",
       "goal": "Phrase in the blues language while hearing the changing harmony; blues is more than a scale shape.",
       "palette": "Written D♯ minor pentatonic: D♯ F♯ G♯ A♯ C♯. Blues note: A natural.",
-      "saxChords": "D♯m7 × 4 | G♯m7 × 2 | D♯m7 × 2 | A♯7(♭9) × 1 | G♯m7 × 1 |",
+      "saxChords": "D♯m7 × 4 | G♯m7 × 2 | D♯m7 × 2 | A♯7(♭9) × 1 | G♯m7 × 1 | D♯m7 × 1 | A♯7(♭9) × 1",
       "backing": "Behind-the-beat drums, warm bass and electric-piano comping that clearly marks the twelve-bar form. Keep harmonic density low on the turnaround.",
       "steps": [
         "4 MIN · ONE EXPRESSIVE TURN Work written F♯–G♯–A–A♯ slowly, exploring articulation and the blue-note inflection without forcing pitch bends.",
@@ -1758,6 +1758,16 @@
         },
         {
           "symbol": "Bm7",
+          "bars": 1,
+          "notes": []
+        },
+        {
+          "symbol": "F♯m7",
+          "bars": 1,
+          "notes": []
+        },
+        {
+          "symbol": "C♯7(♭9)",
           "bars": 1,
           "notes": []
         }
@@ -1831,7 +1841,7 @@
       "category": "HARMONIC PERCEPTION",
       "title": "One collection, two homes",
       "subtitle": "",
-      "tonal": "C major ↔ A minor (relative) → written A major ↔ F♯",
+      "tonal": "C major ↔ A minor (relative) → written A major ↔ F♯ minor",
       "progression": "Cmaj9 × 8 | Am9 × 8",
       "groove": "77 BPM · 4/4 · Spacious neo-soul · 16 bars",
       "goal": "Hear how the same pitch collection behaves differently when the bass changes the centre of gravity.",
@@ -1949,7 +1959,7 @@
       "category": "HARMONIC COLOUR",
       "title": "Borrow the shadow",
       "subtitle": "",
-      "tonal": "D major with borrowed minor iv → written B major with",
+      "tonal": "D major with borrowed minor iv → written B major with minor iv",
       "progression": "Dmaj9 × 4 | Gm9 × 4 | Dmaj9 × 4",
       "groove": "79 BPM · 4/4 · Bittersweet Rhodes soul · 12 bars",
       "goal": "Introduce borrowed harmony by listening to the emotional change, rather than memorising exotic scale names.",
@@ -2036,7 +2046,7 @@
       "category": "CHROMATIC COLOUR",
       "title": "Step outside, then return",
       "subtitle": "",
-      "tonal": "B minor with semitone side-slip → written G♯ minor / A",
+      "tonal": "B minor with semitone side-slip → written G♯ minor / A minor",
       "progression": "Bm9 × 8 | Cm9 × 2 | Bm9 × 6",
       "groove": "96 BPM · 4/4 · Space-jazz with heavy bass · 16 bars",
       "goal": "Learn to carry a motif temporarily outside its tonal home, without sounding lost.",
@@ -2108,7 +2118,7 @@
       "category": "PERFORMANCE INTEGRATION",
       "title": "A complete musical journey",
       "subtitle": "",
-      "tonal": "F→ minor",
+      "tonal": "F♯ minor → written D♯ minor",
       "progression": "F♯m9 × 4 | Dmaj9 × 4 | Bm11 × 4 | C♯7(♭9) × 4",
       "groove": "95 BPM · 4/4 · Expansive cosmic jazz-fusion · 16 bars",
       "goal": "Build a multi-chorus solo with an opening idea, development, contrast, harmonic awareness and an intentional ending.",
