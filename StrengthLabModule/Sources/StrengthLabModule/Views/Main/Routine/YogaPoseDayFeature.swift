@@ -1,5 +1,6 @@
 import SwiftUI
 import WebKit
+import Security
 
 // MARK: - Yoga Pose a Day
 // Global per-install progression. No SwiftData schema, workout, exercise or
@@ -1048,6 +1049,70 @@ private enum YogaPoseDayCatalog {
     ]
 }
 
+// YOGA_TUTORIAL_REFRESH_V1: on-device, in-place video refresh via official YouTube search.
+// Only the video choice is stored; the pose, date, categories and day order stay unchanged.
+private struct YogaTutorialChoice: Codable, Equatable {
+    let id: String
+    let title: String
+    let channel: String
+}
+
+private struct YogaYouTubeSearchResponse: Decodable {
+    struct Result: Decodable {
+        struct Identifier: Decodable { let videoId: String? }
+        struct Details: Decodable {
+            let title: String
+            let channelTitle: String
+        }
+        let id: Identifier
+        let snippet: Details
+    }
+    let items: [Result]
+    let nextPageToken: String?
+}
+
+private struct YogaYouTubeErrorResponse: Decodable {
+    struct APIError: Decodable { let message: String }
+    let error: APIError
+}
+
+private enum YogaYouTubeAPIKeyStore {
+    private static let service = "ConsciousConnection.StrengthLab.Yoga.YouTubeSearch"
+    private static let account = "YouTubeDataAPIv3"
+
+    private static var lookup: [String: Any] {
+        [kSecClass as String: kSecClassGenericPassword,
+         kSecAttrService as String: service,
+         kSecAttrAccount as String: account]
+    }
+
+    static func read() -> String? {
+        var query = lookup
+        query[kSecReturnData as String] = true
+        query[kSecMatchLimit as String] = kSecMatchLimitOne
+        var value: CFTypeRef?
+        guard SecItemCopyMatching(query as CFDictionary, &value) == errSecSuccess,
+              let data = value as? Data,
+              let key = String(data: data, encoding: .utf8),
+              !key.isEmpty else { return nil }
+        return key
+    }
+
+    static func save(_ key: String) -> Bool {
+        let value = key.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !value.isEmpty else { return false }
+        // Updating the existing item avoids deleting a working key on failure.
+        let attributes: [String: Any] = [kSecValueData as String: Data(value.utf8)]
+        let updated = SecItemUpdate(lookup as CFDictionary, attributes as CFDictionary)
+        if updated == errSecSuccess { return true }
+        guard updated == errSecItemNotFound else { return false }
+        var item = lookup
+        item[kSecValueData as String] = Data(value.utf8)
+        item[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+        return SecItemAdd(item as CFDictionary, nil) == errSecSuccess
+    }
+}
+
 // YOGA_STUDIO_SWAP_FILTERS_V1
 // The banner remains on StrengthLab's main page; the sheet handles swapping.
 struct YogaPoseDayBanner: View {
@@ -1134,6 +1199,26 @@ private struct YogaPoseDayStudioView: View {
     @State private var categoryFilters: Set<String> = []
     @State private var chakraFilters: Set<String> = []
 
+    // One replacement video is remembered for each pose across app launches.
+    // This is independent of the order of the 98 yoga days.
+    @AppStorage("strengthlab.yogaPoseDay.tutorialOverrides.v1")
+    private var tutorialOverridesJSON = ""
+
+    @State private var youtubeSetupShown = false
+    @State private var youtubeKeyDraft = ""
+    @State private var youtubePendingPoseRank: Int?
+    @State private var searchingVideoRank: Int?
+    @State private var youtubeSearchError = ""
+    @State private var youtubeErrorShown = false
+
+    // Cache batches of search results so consecutive rotations don't each
+    // spend another YouTube search API request.
+    @State private var youtubeVideoCandidates: [Int: [YogaTutorialChoice]] = [:]
+    @State private var youtubeNextCandidate: [Int: Int] = [:]
+    @State private var youtubePageTokens: [Int: String] = [:]
+    @State private var youtubeSearchedRanks: Set<Int> = []
+    @State private var youtubeVideoNotices: [Int: String] = [:]
+
     private var cycleIndex: Int { (dayNumber - 1) % 98 }
     private var order: [Int] {
         YogaPoseDayCatalog.order(saved: savedPoseOrder, completedCount: max(0, completedCount))
@@ -1202,6 +1287,18 @@ private struct YogaPoseDayStudioView: View {
         }
         .presentationDetents([.large])
         .presentationDragIndicator(.visible)
+        .sheet(isPresented: $youtubeSetupShown) {
+            youtubeSearchSetup
+        }
+        .alert("Video search", isPresented: $youtubeErrorShown) {
+            Button("Change API key") {
+                youtubeKeyDraft = ""
+                youtubeSetupShown = true
+            }
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(youtubeSearchError)
+        }
     }
 
     private var todayScreen: some View {
@@ -1210,24 +1307,23 @@ private struct YogaPoseDayStudioView: View {
                 Text("YOGA POSE A DAY · DAY \(dayNumber)")
                     .font(StrengthLabFigmaTheme.bold(12))
                     .foregroundStyle(StrengthLabFigmaTheme.coral)
-                Text(pose.title)
-                    .font(StrengthLabFigmaTheme.bold(24))
-                    .foregroundStyle(StrengthLabFigmaTheme.ink)
+                tutorialHeading(for: pose)
                 yogaVideo(for: pose)
-                Text("Tutorial: \(pose.videoTitle) · \(pose.instructor)")
+                videoNotice(for: pose)
+                Text("Tutorial: \(selectedTutorial(for: pose).title) · \(selectedTutorial(for: pose).channel)")
                     .font(StrengthLabFigmaTheme.regular(13))
                     .foregroundStyle(StrengthLabFigmaTheme.muted)
 
                 poseTags(rank: pose.rank)
 
-                if pose.match != "Direct" {
+                if pose.match != "Direct" && selectedTutorial(for: pose).id == pose.videoID {
                     Label("\(pose.match) reference — \(pose.note.isEmpty ? "Tutorial may demonstrate a related variation." : pose.note)", systemImage: "info.circle")
                         .font(StrengthLabFigmaTheme.regular(12))
                         .padding(12)
                         .background(StrengthLabFigmaTheme.blush,
                                     in: RoundedRectangle(cornerRadius: 12))
                 }
-                if let url = pose.watchURL {
+                if let url = URL(string: "https://www.youtube.com/watch?v=\(selectedTutorial(for: pose).id)") {
                     Link(destination: url) {
                         Label("Watch on YouTube if embedding is unavailable",
                               systemImage: "play.rectangle")
@@ -1387,9 +1483,7 @@ private struct YogaPoseDayStudioView: View {
                 Text("DAY \(dayNumber) · SWAP PREVIEW")
                     .font(StrengthLabFigmaTheme.bold(12))
                     .foregroundStyle(StrengthLabFigmaTheme.coral)
-                Text(candidate.title)
-                    .font(StrengthLabFigmaTheme.bold(24))
-                    .foregroundStyle(StrengthLabFigmaTheme.ink)
+                tutorialHeading(for: candidate)
 
                 // Confirm / cancel sit to the right of the video.
                 HStack(alignment: .top, spacing: 10) {
@@ -1421,11 +1515,12 @@ private struct YogaPoseDayStudioView: View {
                     .buttonStyle(.plain)
                 }
 
-                Text("Tutorial: \(candidate.videoTitle) · \(candidate.instructor)")
+                videoNotice(for: candidate)
+                Text("Tutorial: \(selectedTutorial(for: candidate).title) · \(selectedTutorial(for: candidate).channel)")
                     .font(StrengthLabFigmaTheme.regular(13))
                     .foregroundStyle(StrengthLabFigmaTheme.muted)
                 poseTags(rank: candidate.rank)
-                if candidate.match != "Direct" {
+                if candidate.match != "Direct" && selectedTutorial(for: candidate).id == candidate.videoID {
                     Label("\(candidate.match) reference — \(candidate.note.isEmpty ? "This video may show a related variation." : candidate.note)", systemImage: "info.circle")
                         .font(StrengthLabFigmaTheme.regular(12))
                         .padding(12)
@@ -1441,11 +1536,249 @@ private struct YogaPoseDayStudioView: View {
     }
 
     private func yogaVideo(for candidate: YogaPoseDay) -> some View {
-        YogaPoseYouTubePlayer(videoID: candidate.videoID)
+        let choice = selectedTutorial(for: candidate)
+        return YogaPoseYouTubePlayer(videoID: choice.id)
             .frame(height: 215)
             .background(Color.black)
             .clipShape(RoundedRectangle(cornerRadius: 14))
-            .id(candidate.rank)
+            // This rebuilds WKWebView for a new video: updateUIView intentionally
+            // does not reload YouTube on ordinary SwiftUI state updates.
+            .id(choice.id)
+    }
+
+    private var storedTutorials: [String: YogaTutorialChoice] {
+        guard let data = tutorialOverridesJSON.data(using: .utf8),
+              let values = try? JSONDecoder().decode(
+                [String: YogaTutorialChoice].self, from: data
+              ) else { return [:] }
+        return values
+    }
+
+    private func selectedTutorial(for pose: YogaPoseDay) -> YogaTutorialChoice {
+        storedTutorials[String(pose.rank)] ?? YogaTutorialChoice(
+            id: pose.videoID,
+            title: pose.videoTitle,
+            channel: pose.instructor
+        )
+    }
+
+    private func tutorialHeading(for pose: YogaPoseDay) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            Text(pose.title)
+                .font(StrengthLabFigmaTheme.bold(24))
+                .foregroundStyle(StrengthLabFigmaTheme.ink)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Spacer(minLength: 0)
+
+            Button {
+                requestAnotherVideo(for: pose)
+            } label: {
+                Group {
+                    if searchingVideoRank == pose.rank {
+                        ProgressView().tint(StrengthLabFigmaTheme.coral)
+                    } else {
+                        Image(systemName: "arrow.clockwise")
+                            .font(.system(size: 21, weight: .semibold))
+                    }
+                }
+                .frame(width: 44, height: 44)
+                .background(StrengthLabFigmaTheme.blush, in: Circle())
+            }
+            .disabled(searchingVideoRank != nil)
+            .buttonStyle(.plain)
+            .accessibilityLabel("Try a different YouTube tutorial for \(pose.title)")
+            .accessibilityHint("Replaces the video here without changing the yoga pose")
+        }
+    }
+
+    @ViewBuilder
+    private func videoNotice(for pose: YogaPoseDay) -> some View {
+        if let notice = youtubeVideoNotices[pose.rank] {
+            Text(notice)
+                .font(StrengthLabFigmaTheme.regular(12))
+                .foregroundStyle(StrengthLabFigmaTheme.muted)
+        }
+    }
+
+    private var youtubeSearchSetup: some View {
+        NavigationStack {
+            Form {
+                Section("Connect video search once") {
+                    Text("To find new YouTube videos automatically, Google requires a YouTube Data API key. Set it up once, then 🔄 will replace the video here with no list or extra steps.")
+                    SecureField("YouTube Data API key", text: $youtubeKeyDraft)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                    Link("Get a YouTube Data API key in Google Cloud",
+                         destination: URL(string: "https://console.cloud.google.com/apis/library/youtube.googleapis.com")!)
+                }
+                Section {
+                    Button("Save key & find another video") {
+                        guard YogaYouTubeAPIKeyStore.save(youtubeKeyDraft) else {
+                            youtubeSearchError = "Couldn't save this API key on your iPhone."
+                            youtubeErrorShown = true
+                            return
+                        }
+                        youtubeKeyDraft = ""
+                        youtubeSetupShown = false
+                        if let rank = youtubePendingPoseRank,
+                           let nextPose = YogaPoseDayCatalog.poses.first(where: { $0.rank == rank }) {
+                            Task { await rotateToNextTutorial(for: nextPose) }
+                        }
+                        youtubePendingPoseRank = nil
+                    }
+                    .disabled(youtubeKeyDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+                Section {
+                    Text("The key is stored in your iPhone's Keychain, not in the app source or GitHub. Only YouTube search requests use it.")
+                        .font(.footnote)
+                }
+            }
+            .navigationTitle("Video search setup")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Cancel") { youtubeSetupShown = false }
+                }
+            }
+        }
+    }
+
+    private func requestAnotherVideo(for pose: YogaPoseDay) {
+        guard searchingVideoRank == nil else { return }
+        guard YogaYouTubeAPIKeyStore.read() != nil else {
+            youtubePendingPoseRank = pose.rank
+            youtubeSetupShown = true
+            return
+        }
+        Task { await rotateToNextTutorial(for: pose) }
+    }
+
+    @MainActor
+    private func rotateToNextTutorial(for pose: YogaPoseDay) async {
+        guard let key = YogaYouTubeAPIKeyStore.read(),
+              searchingVideoRank == nil else { return }
+
+        let rank = pose.rank
+        searchingVideoRank = rank
+        defer { searchingVideoRank = nil }
+
+        var candidates = youtubeVideoCandidates[rank] ?? []
+        var index = youtubeNextCandidate[rank] ?? 0
+
+        // Download the next page only when the local batch runs out.
+        // One query returns up to 25 embeddable videos at once.
+        if index >= candidates.count,
+           (!youtubeSearchedRanks.contains(rank) || youtubePageTokens[rank] != nil) {
+            do {
+                let page = try await searchForTutorials(
+                    named: pose.title, key: key,
+                    pageToken: youtubePageTokens[rank]
+                )
+                youtubeSearchedRanks.insert(rank)
+                youtubePageTokens[rank] = page.nextPageToken
+
+                let existing = Set(candidates.map(\.id)).union([pose.videoID])
+                let newVideos = page.items.compactMap { item -> YogaTutorialChoice? in
+                    guard let id = item.id.videoId,
+                          id.count == 11,
+                          !existing.contains(id) else { return nil }
+                    return YogaTutorialChoice(
+                        id: id,
+                        title: item.snippet.title,
+                        channel: item.snippet.channelTitle
+                    )
+                }
+                // Dedupe repeated IDs in YouTube search results.
+                var seen = Set(candidates.map(\.id))
+                for video in newVideos where seen.insert(video.id).inserted {
+                    candidates.append(video)
+                }
+                youtubeVideoCandidates[rank] = candidates
+            } catch {
+                youtubePendingPoseRank = rank
+                youtubeSearchError = error.localizedDescription
+                youtubeErrorShown = true
+                return
+            }
+        }
+
+        guard !candidates.isEmpty else {
+            youtubeVideoNotices[rank] = "No alternative embedded tutorials were found for this pose."
+            return
+        }
+
+        if index >= candidates.count { index = 0 }
+        let current = selectedTutorial(for: pose).id
+        var replacement: YogaTutorialChoice?
+        for _ in 0..<candidates.count {
+            let option = candidates[index % candidates.count]
+            index += 1
+            if option.id != current {
+                replacement = option
+                break
+            }
+        }
+        guard let replacement else {
+            youtubeVideoNotices[rank] = "No different video was available."
+            return
+        }
+
+        var saved = storedTutorials
+        saved[String(rank)] = replacement
+        guard let data = try? JSONEncoder().encode(saved),
+              let json = String(data: data, encoding: .utf8) else { return }
+        tutorialOverridesJSON = json
+        youtubeNextCandidate[rank] = index
+        youtubeVideoNotices[rank] = "Switched tutorial · tap 🔄 to try another"
+    }
+
+    private func searchForTutorials(
+        named name: String,
+        key: String,
+        pageToken: String?
+    ) async throws -> YogaYouTubeSearchResponse {
+        let cleanName = name.replacingOccurrences(of: "—", with: " ")
+            .replacingOccurrences(of: "/", with: " ")
+        var components = URLComponents(string: "https://www.googleapis.com/youtube/v3/search")!
+        var params = [
+            URLQueryItem(name: "part", value: "snippet"),
+            URLQueryItem(name: "type", value: "video"),
+            URLQueryItem(name: "videoEmbeddable", value: "true"),
+            URLQueryItem(name: "safeSearch", value: "moderate"),
+            URLQueryItem(name: "relevanceLanguage", value: "en"),
+            URLQueryItem(name: "maxResults", value: "25"),
+            URLQueryItem(name: "q", value: "\(cleanName) yoga pose tutorial"),
+            URLQueryItem(name: "key", value: key)
+        ]
+        if let pageToken, !pageToken.isEmpty {
+            params.append(URLQueryItem(name: "pageToken", value: pageToken))
+        }
+        components.queryItems = params
+        guard let url = components.url else {
+            throw YogaVideoSearchFailure.message("Couldn't prepare the YouTube search.")
+        }
+        var request = URLRequest(url: url)
+        request.timeoutInterval = 15
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse else {
+            throw YogaVideoSearchFailure.message("YouTube didn't respond. Try again.")
+        }
+        guard (200...299).contains(http.statusCode) else {
+            let serverError = try? JSONDecoder().decode(YogaYouTubeErrorResponse.self, from: data)
+            throw YogaVideoSearchFailure.message(
+                serverError?.error.message ??
+                "YouTube search failed (HTTP \(http.statusCode)). Check your API key and daily search quota."
+            )
+        }
+        return try JSONDecoder().decode(YogaYouTubeSearchResponse.self, from: data)
+    }
+
+    private enum YogaVideoSearchFailure: LocalizedError {
+        case message(String)
+        var errorDescription: String? {
+            switch self { case .message(let text): return text }
+        }
     }
 
     private func poseTags(rank: Int) -> some View {
