@@ -63,7 +63,7 @@ struct CreateMusicHomeView: View {
                            icon: "waveform.path", destination: QuickCreateIdeasView())
                 StudioLink(title: "Song arrangement laboratory",
                            subtitle: "Entrances, exits, textures and transitions",
-                           icon: "square.stack.3d.up", destination: CreateSongLabView())
+                           icon: "square.stack.3d.up", destination: MusicArrangementLabsView())
                 StudioLink(title: "Work on an existing song",
                            subtitle: "Continue a song plan you've already started",
                            icon: "slider.horizontal.3", destination: CreateSongLabView())
