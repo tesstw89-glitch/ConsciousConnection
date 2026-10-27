@@ -21,7 +21,145 @@ struct YogaPoseDay: Identifiable {
     }
 }
 
+
+// YOGA_STUDIO_CATEGORIES_CHAKRAS_V1: audited 98-pose taxonomy.
+private struct YogaPoseTags {
+    let categories: [String]
+    let chakras: [String]
+    static let empty = YogaPoseTags(categories: [], chakras: [])
+}
+
 private enum YogaPoseDayCatalog {
+    // Fixed shuffle: each of the first 91 source poses exactly once.
+    // The seven advanced poses 92–98 retain their original final positions.
+    static let mixedFirst91Ranks: [Int] = [
+        5, 2, 86, 44, 90, 26, 35, 30, 7, 72, 74, 81, 39, 42, 70, 41, 33, 20, 80, 65, 28, 62, 68, 73, 14, 4, 31, 34, 52, 77, 8, 71, 1, 37, 91, 25, 67, 58, 40, 83, 69, 16, 48, 23, 17, 51, 79, 75, 9, 50, 18, 78, 32, 59, 19, 61, 55, 46, 29, 24, 47, 64, 88, 82, 22, 36, 21, 76, 49, 10, 3, 45, 84, 15, 85, 53, 60, 12, 27, 6, 57, 56, 66, 89, 87, 43, 11, 38, 63, 13, 54
+    ]
+
+    static let functionalCategories: [String] = ["Relax & Restore", "Release & Mobilise", "Stretch & Lengthen", "Open & Expand", "Ground & Centre", "Invigorate & Flow", "Strength & Stability", "Balance & Focus"]
+    static let chakraNames: [String] = ["Root", "Sacral", "Solar Plexus", "Heart", "Throat", "Third Eye", "Crown"]
+
+    static let tags: [Int: YogaPoseTags] = [
+        1: YogaPoseTags(categories: ["Relax & Restore", "Ground & Centre"], chakras: ["Crown", "Third Eye"]),
+        2: YogaPoseTags(categories: ["Relax & Restore", "Stretch & Lengthen"], chakras: ["Crown", "Third Eye"]),
+        3: YogaPoseTags(categories: ["Ground & Centre", "Relax & Restore"], chakras: ["Root", "Third Eye"]),
+        4: YogaPoseTags(categories: ["Relax & Restore", "Release & Mobilise"], chakras: ["Sacral", "Root"]),
+        5: YogaPoseTags(categories: ["Relax & Restore", "Release & Mobilise"], chakras: ["Sacral", "Root"]),
+        6: YogaPoseTags(categories: ["Release & Mobilise", "Relax & Restore"], chakras: ["Sacral", "Root"]),
+        7: YogaPoseTags(categories: ["Relax & Restore", "Release & Mobilise", "Stretch & Lengthen"], chakras: ["Sacral", "Third Eye"]),
+        8: YogaPoseTags(categories: ["Ground & Centre", "Strength & Stability"], chakras: ["Root", "Solar Plexus"]),
+        9: YogaPoseTags(categories: ["Release & Mobilise", "Relax & Restore"], chakras: ["Throat", "Third Eye"]),
+        10: YogaPoseTags(categories: ["Release & Mobilise", "Relax & Restore"], chakras: ["Throat", "Heart"]),
+        11: YogaPoseTags(categories: ["Release & Mobilise", "Ground & Centre"], chakras: ["Sacral", "Solar Plexus"]),
+        12: YogaPoseTags(categories: ["Release & Mobilise", "Relax & Restore"], chakras: ["Heart", "Sacral"]),
+        13: YogaPoseTags(categories: ["Release & Mobilise", "Ground & Centre"], chakras: ["Heart", "Sacral", "Throat"]),
+        14: YogaPoseTags(categories: ["Relax & Restore", "Stretch & Lengthen"], chakras: ["Third Eye", "Crown"]),
+        15: YogaPoseTags(categories: ["Relax & Restore", "Stretch & Lengthen", "Open & Expand"], chakras: ["Third Eye", "Sacral"]),
+        16: YogaPoseTags(categories: ["Ground & Centre", "Balance & Focus"], chakras: ["Root", "Crown"]),
+        17: YogaPoseTags(categories: ["Open & Expand", "Invigorate & Flow", "Ground & Centre"], chakras: ["Heart", "Crown"]),
+        18: YogaPoseTags(categories: ["Ground & Centre", "Strength & Stability", "Stretch & Lengthen"], chakras: ["Root", "Solar Plexus"]),
+        19: YogaPoseTags(categories: ["Stretch & Lengthen", "Open & Expand"], chakras: ["Heart", "Throat"]),
+        20: YogaPoseTags(categories: ["Release & Mobilise", "Stretch & Lengthen"], chakras: ["Solar Plexus", "Sacral"]),
+        21: YogaPoseTags(categories: ["Stretch & Lengthen", "Relax & Restore"], chakras: ["Third Eye", "Sacral"]),
+        22: YogaPoseTags(categories: ["Strength & Stability"], chakras: ["Solar Plexus", "Root"]),
+        23: YogaPoseTags(categories: ["Stretch & Lengthen", "Relax & Restore", "Open & Expand"], chakras: ["Sacral", "Root"]),
+        24: YogaPoseTags(categories: ["Stretch & Lengthen", "Open & Expand"], chakras: ["Sacral", "Root"]),
+        25: YogaPoseTags(categories: ["Relax & Restore", "Open & Expand", "Stretch & Lengthen"], chakras: ["Sacral", "Root"]),
+        26: YogaPoseTags(categories: ["Stretch & Lengthen", "Ground & Centre"], chakras: ["Root", "Solar Plexus"]),
+        27: YogaPoseTags(categories: ["Stretch & Lengthen", "Relax & Restore"], chakras: ["Third Eye", "Root"]),
+        28: YogaPoseTags(categories: ["Ground & Centre", "Open & Expand", "Invigorate & Flow"], chakras: ["Root", "Heart"]),
+        29: YogaPoseTags(categories: ["Stretch & Lengthen", "Ground & Centre"], chakras: ["Third Eye", "Root"]),
+        30: YogaPoseTags(categories: ["Release & Mobilise", "Stretch & Lengthen"], chakras: ["Sacral", "Heart"]),
+        31: YogaPoseTags(categories: ["Release & Mobilise", "Stretch & Lengthen", "Relax & Restore"], chakras: ["Heart", "Throat"]),
+        32: YogaPoseTags(categories: ["Stretch & Lengthen", "Open & Expand", "Relax & Restore"], chakras: ["Heart", "Third Eye"]),
+        33: YogaPoseTags(categories: ["Open & Expand", "Strength & Stability"], chakras: ["Heart", "Solar Plexus"]),
+        34: YogaPoseTags(categories: ["Open & Expand", "Strength & Stability"], chakras: ["Heart", "Solar Plexus"]),
+        35: YogaPoseTags(categories: ["Invigorate & Flow", "Open & Expand", "Strength & Stability"], chakras: ["Solar Plexus", "Heart"]),
+        36: YogaPoseTags(categories: ["Stretch & Lengthen", "Relax & Restore"], chakras: ["Third Eye", "Root"]),
+        37: YogaPoseTags(categories: ["Stretch & Lengthen", "Open & Expand"], chakras: ["Sacral", "Third Eye"]),
+        38: YogaPoseTags(categories: ["Open & Expand", "Stretch & Lengthen", "Release & Mobilise"], chakras: ["Sacral", "Root"]),
+        39: YogaPoseTags(categories: ["Stretch & Lengthen", "Relax & Restore"], chakras: ["Third Eye", "Sacral"]),
+        40: YogaPoseTags(categories: ["Stretch & Lengthen", "Ground & Centre"], chakras: ["Root", "Sacral"]),
+        41: YogaPoseTags(categories: ["Open & Expand", "Stretch & Lengthen", "Invigorate & Flow"], chakras: ["Sacral", "Root"]),
+        42: YogaPoseTags(categories: ["Invigorate & Flow", "Open & Expand", "Strength & Stability"], chakras: ["Root", "Sacral", "Solar Plexus"]),
+        43: YogaPoseTags(categories: ["Strength & Stability", "Open & Expand"], chakras: ["Heart", "Throat"]),
+        44: YogaPoseTags(categories: ["Open & Expand", "Stretch & Lengthen", "Invigorate & Flow"], chakras: ["Heart", "Sacral"]),
+        45: YogaPoseTags(categories: ["Stretch & Lengthen"], chakras: ["Root", "Sacral"]),
+        46: YogaPoseTags(categories: ["Invigorate & Flow", "Strength & Stability", "Stretch & Lengthen"], chakras: ["Third Eye", "Solar Plexus"]),
+        47: YogaPoseTags(categories: ["Strength & Stability", "Ground & Centre"], chakras: ["Solar Plexus", "Root"]),
+        48: YogaPoseTags(categories: ["Invigorate & Flow", "Strength & Stability", "Balance & Focus"], chakras: ["Solar Plexus", "Root"]),
+        49: YogaPoseTags(categories: ["Open & Expand", "Invigorate & Flow", "Balance & Focus"], chakras: ["Sacral", "Solar Plexus"]),
+        50: YogaPoseTags(categories: ["Strength & Stability", "Invigorate & Flow", "Balance & Focus"], chakras: ["Solar Plexus", "Sacral"]),
+        51: YogaPoseTags(categories: ["Balance & Focus", "Strength & Stability", "Ground & Centre"], chakras: ["Solar Plexus", "Root", "Third Eye"]),
+        52: YogaPoseTags(categories: ["Strength & Stability", "Open & Expand"], chakras: ["Solar Plexus", "Heart"]),
+        53: YogaPoseTags(categories: ["Strength & Stability", "Open & Expand", "Invigorate & Flow"], chakras: ["Solar Plexus", "Heart"]),
+        54: YogaPoseTags(categories: ["Invigorate & Flow", "Strength & Stability", "Balance & Focus"], chakras: ["Root", "Solar Plexus"]),
+        55: YogaPoseTags(categories: ["Invigorate & Flow", "Strength & Stability", "Ground & Centre"], chakras: ["Root", "Sacral"]),
+        56: YogaPoseTags(categories: ["Open & Expand", "Invigorate & Flow", "Stretch & Lengthen"], chakras: ["Heart", "Root"]),
+        57: YogaPoseTags(categories: ["Stretch & Lengthen", "Balance & Focus", "Open & Expand"], chakras: ["Root", "Heart"]),
+        58: YogaPoseTags(categories: ["Strength & Stability", "Stretch & Lengthen", "Invigorate & Flow"], chakras: ["Solar Plexus", "Root"]),
+        59: YogaPoseTags(categories: ["Strength & Stability", "Open & Expand", "Ground & Centre"], chakras: ["Sacral", "Root"]),
+        60: YogaPoseTags(categories: ["Invigorate & Flow", "Release & Mobilise", "Strength & Stability"], chakras: ["Sacral", "Solar Plexus"]),
+        61: YogaPoseTags(categories: ["Stretch & Lengthen", "Open & Expand", "Ground & Centre"], chakras: ["Root", "Sacral"]),
+        62: YogaPoseTags(categories: ["Stretch & Lengthen", "Balance & Focus", "Ground & Centre"], chakras: ["Root", "Third Eye"]),
+        63: YogaPoseTags(categories: ["Stretch & Lengthen", "Open & Expand", "Relax & Restore"], chakras: ["Sacral", "Heart"]),
+        64: YogaPoseTags(categories: ["Release & Mobilise", "Stretch & Lengthen", "Ground & Centre"], chakras: ["Solar Plexus", "Sacral"]),
+        65: YogaPoseTags(categories: ["Stretch & Lengthen", "Open & Expand"], chakras: ["Sacral", "Root"]),
+        66: YogaPoseTags(categories: ["Strength & Stability", "Balance & Focus", "Invigorate & Flow"], chakras: ["Solar Plexus", "Third Eye"]),
+        67: YogaPoseTags(categories: ["Balance & Focus", "Ground & Centre"], chakras: ["Root", "Third Eye"]),
+        68: YogaPoseTags(categories: ["Balance & Focus", "Ground & Centre"], chakras: ["Root", "Third Eye"]),
+        69: YogaPoseTags(categories: ["Balance & Focus", "Strength & Stability"], chakras: ["Root", "Third Eye"]),
+        70: YogaPoseTags(categories: ["Strength & Stability", "Balance & Focus"], chakras: ["Solar Plexus", "Root"]),
+        71: YogaPoseTags(categories: ["Balance & Focus", "Stretch & Lengthen"], chakras: ["Root", "Third Eye"]),
+        72: YogaPoseTags(categories: ["Strength & Stability", "Open & Expand", "Release & Mobilise"], chakras: ["Root", "Sacral"]),
+        73: YogaPoseTags(categories: ["Open & Expand", "Balance & Focus", "Stretch & Lengthen"], chakras: ["Heart", "Sacral"]),
+        74: YogaPoseTags(categories: ["Release & Mobilise", "Balance & Focus", "Stretch & Lengthen"], chakras: ["Solar Plexus", "Heart"]),
+        75: YogaPoseTags(categories: ["Stretch & Lengthen", "Open & Expand", "Release & Mobilise"], chakras: ["Solar Plexus", "Third Eye"]),
+        76: YogaPoseTags(categories: ["Balance & Focus", "Invigorate & Flow", "Release & Mobilise"], chakras: ["Solar Plexus", "Root", "Third Eye"]),
+        77: YogaPoseTags(categories: ["Balance & Focus", "Open & Expand", "Stretch & Lengthen"], chakras: ["Heart", "Root"]),
+        78: YogaPoseTags(categories: ["Stretch & Lengthen", "Open & Expand", "Balance & Focus"], chakras: ["Heart", "Root", "Third Eye"]),
+        79: YogaPoseTags(categories: ["Open & Expand", "Stretch & Lengthen", "Strength & Stability"], chakras: ["Heart", "Solar Plexus"]),
+        80: YogaPoseTags(categories: ["Stretch & Lengthen", "Open & Expand", "Relax & Restore"], chakras: ["Sacral", "Third Eye"]),
+        81: YogaPoseTags(categories: ["Balance & Focus", "Strength & Stability", "Stretch & Lengthen"], chakras: ["Root", "Solar Plexus", "Third Eye"]),
+        82: YogaPoseTags(categories: ["Strength & Stability", "Balance & Focus"], chakras: ["Solar Plexus", "Heart"]),
+        83: YogaPoseTags(categories: ["Strength & Stability", "Invigorate & Flow"], chakras: ["Solar Plexus", "Root"]),
+        84: YogaPoseTags(categories: ["Open & Expand", "Strength & Stability", "Invigorate & Flow"], chakras: ["Heart", "Throat"]),
+        85: YogaPoseTags(categories: ["Strength & Stability", "Open & Expand"], chakras: ["Heart", "Solar Plexus"]),
+        86: YogaPoseTags(categories: ["Open & Expand", "Strength & Stability", "Balance & Focus"], chakras: ["Heart", "Solar Plexus"]),
+        87: YogaPoseTags(categories: ["Open & Expand", "Strength & Stability"], chakras: ["Heart", "Solar Plexus"]),
+        88: YogaPoseTags(categories: ["Open & Expand", "Stretch & Lengthen"], chakras: ["Heart", "Throat"]),
+        89: YogaPoseTags(categories: ["Open & Expand", "Stretch & Lengthen"], chakras: ["Throat", "Heart"]),
+        90: YogaPoseTags(categories: ["Balance & Focus", "Strength & Stability", "Invigorate & Flow"], chakras: ["Third Eye", "Root", "Solar Plexus"]),
+        91: YogaPoseTags(categories: ["Balance & Focus", "Release & Mobilise", "Stretch & Lengthen"], chakras: ["Solar Plexus", "Third Eye", "Root"]),
+        92: YogaPoseTags(categories: ["Open & Expand", "Strength & Stability", "Balance & Focus"], chakras: ["Heart", "Solar Plexus"]),
+        93: YogaPoseTags(categories: ["Ground & Centre", "Open & Expand", "Relax & Restore"], chakras: ["Crown", "Root", "Third Eye"]),
+        94: YogaPoseTags(categories: ["Open & Expand", "Strength & Stability", "Invigorate & Flow"], chakras: ["Heart", "Solar Plexus"]),
+        95: YogaPoseTags(categories: ["Stretch & Lengthen"], chakras: ["Crown", "Third Eye"]),
+        96: YogaPoseTags(categories: ["Balance & Focus", "Strength & Stability"], chakras: ["Throat", "Crown"]),
+        97: YogaPoseTags(categories: ["Stretch & Lengthen", "Strength & Stability"], chakras: ["Throat", "Third Eye"]),
+        98: YogaPoseTags(categories: ["Balance & Focus", "Strength & Stability"], chakras: ["Third Eye", "Solar Plexus", "Root"]),
+    ]
+
+    static func validSavedOrder(_ saved: String) -> [Int]? {
+        let ranks = saved.split(separator: ",").compactMap { Int($0) }
+        guard ranks.count == 98,
+              Set(ranks) == Set(1...98),
+              Array(ranks.suffix(7)) == Array(92...98) else { return nil }
+        return ranks
+    }
+
+    static func order(saved: String, completedCount: Int) -> [Int] {
+        if let existing = validSavedOrder(saved) { return existing }
+
+        // Preserve original positions of days already completed before this
+        // update. Shuffle only the not-yet-completed part of the first cycle.
+        let completed = completedCount < 98 ? min(max(completedCount, 0), 91) : 0
+        let preserved = completed > 0 ? Array(1...completed) : []
+        let upcoming = mixedFirst91Ranks.filter { $0 > completed }
+        return preserved + upcoming + Array(92...98)
+    }
+
+
     // Exactly the user's 98-row spreadsheet order, including identified
     // Variation / Sequence / Related references (not all exact tutorials).
     static let poses: [YogaPoseDay] = [
@@ -910,24 +1048,30 @@ private enum YogaPoseDayCatalog {
     ]
 }
 
+// YOGA_STUDIO_SWAP_FILTERS_V1
+// The banner remains on StrengthLab's main page; the sheet handles swapping.
 struct YogaPoseDayBanner: View {
     @AppStorage("strengthlab.yogaPoseDay.completedCount.v1")
     private var completedCount = 0
 
-    @State private var selectedPose: YogaPoseDay?
-    @State private var selectedDayNumber = 1
+    @AppStorage("strengthlab.yogaPoseDay.fixedOrder.v2")
+    private var savedPoseOrder = ""
+
+    @State private var showingStudio = false
 
     private var normalizedCount: Int { max(0, completedCount) }
     private var dayNumber: Int { normalizedCount + 1 }
+    private var orderedRanks: [Int] {
+        YogaPoseDayCatalog.order(saved: savedPoseOrder, completedCount: normalizedCount)
+    }
     private var pose: YogaPoseDay {
-        YogaPoseDayCatalog.poses[normalizedCount % YogaPoseDayCatalog.poses.count]
+        YogaPoseDayCatalog.poses[orderedRanks[normalizedCount % 98] - 1]
     }
 
     var body: some View {
         Button {
-            // Freeze this day's tutorial for the duration of the sheet.
-            selectedDayNumber = dayNumber
-            selectedPose = pose
+            saveInitialOrderIfNeeded()
+            showingStudio = true
         } label: {
             HStack(spacing: 12) {
                 Image(systemName: "figure.yoga")
@@ -946,7 +1090,6 @@ struct YogaPoseDayBanner: View {
                 }
 
                 Spacer(minLength: 4)
-
                 Image(systemName: "chevron.right")
                     .font(.system(size: 14, weight: .bold))
             }
@@ -960,128 +1103,373 @@ struct YogaPoseDayBanner: View {
             .contentShape(RoundedRectangle(cornerRadius: 18))
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Yoga Pose a Day. Day \(dayNumber). \(pose.title). Open video")
-        .sheet(item: $selectedPose) { pose in
-            YogaPoseDayPlayerView(
-                dayNumber: selectedDayNumber,
-                pose: pose
-            )
+        .accessibilityLabel("Yoga Pose a Day. Day \(dayNumber). \(pose.title). Open yoga studio")
+        .onAppear { saveInitialOrderIfNeeded() }
+        .sheet(isPresented: $showingStudio) {
+            YogaPoseDayStudioView(dayNumber: dayNumber)
         }
+    }
+
+    private func saveInitialOrderIfNeeded() {
+        guard YogaPoseDayCatalog.validSavedOrder(savedPoseOrder) == nil else { return }
+        savedPoseOrder = YogaPoseDayCatalog.order(
+            saved: "", completedCount: normalizedCount
+        ).map(String.init).joined(separator: ",")
     }
 }
 
-private struct YogaPoseDayPlayerView: View {
+private struct YogaPoseDayStudioView: View {
     @Environment(\.dismiss) private var dismiss
+
     @AppStorage("strengthlab.yogaPoseDay.completedCount.v1")
     private var completedCount = 0
 
+    @AppStorage("strengthlab.yogaPoseDay.fixedOrder.v2")
+    private var savedPoseOrder = ""
+
     let dayNumber: Int
-    let pose: YogaPoseDay
+
+    @State private var showingChoices = false
+    @State private var previewIndex: Int?
+    @State private var categoryFilters: Set<String> = []
+    @State private var chakraFilters: Set<String> = []
+
+    private var cycleIndex: Int { (dayNumber - 1) % 98 }
+    private var order: [Int] {
+        YogaPoseDayCatalog.order(saved: savedPoseOrder, completedCount: max(0, completedCount))
+    }
+    private var pose: YogaPoseDay {
+        YogaPoseDayCatalog.poses[order[cycleIndex] - 1]
+    }
+    private var canSwap: Bool {
+        cycleIndex < 90 && completedCount == dayNumber - 1
+    }
+    private var futureIndices: [Int] {
+        guard canSwap else { return [] }
+        return Array((cycleIndex + 1)..<91)
+    }
+    private var matchingIndices: [Int] {
+        futureIndices.filter { index in
+            let tags = YogaPoseDayCatalog.tags[order[index]] ?? .empty
+            let categoryMatch = categoryFilters.isEmpty ||
+                !categoryFilters.isDisjoint(with: tags.categories)
+            let chakraMatch = chakraFilters.isEmpty ||
+                !chakraFilters.isDisjoint(with: tags.chakras)
+            return categoryMatch && chakraMatch
+        }
+    }
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 18) {
-                    VStack(alignment: .leading, spacing: 7) {
-                        Text("YOGA POSE A DAY · DAY \(dayNumber)")
-                            .font(StrengthLabFigmaTheme.bold(12))
-                            .foregroundStyle(StrengthLabFigmaTheme.coral)
-                        Text(pose.title)
-                            .font(StrengthLabFigmaTheme.bold(23))
-                            .foregroundStyle(StrengthLabFigmaTheme.ink)
-                            .fixedSize(horizontal: false, vertical: true)
-                        Text("Tutorial: \(pose.videoTitle) · \(pose.instructor)")
-                            .font(StrengthLabFigmaTheme.regular(13))
-                            .foregroundStyle(StrengthLabFigmaTheme.muted)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-
-                    YogaPoseYouTubePlayer(videoID: pose.videoID)
-                        .frame(height: 230)
-                        .background(.black)
-                        .clipShape(RoundedRectangle(cornerRadius: 15))
-                        .accessibilityLabel("Embedded YouTube tutorial for \(pose.title)")
-
-                    Text("Use the player’s full-screen button if you like. Exit full screen to return to your completion tick below.")
-                        .font(StrengthLabFigmaTheme.regular(12))
-                        .foregroundStyle(StrengthLabFigmaTheme.muted)
-                        .fixedSize(horizontal: false, vertical: true)
-
-                    if pose.match != "Direct" {
-                        Label("\(pose.match) reference — \(pose.note.isEmpty ? "This video is not an exact standalone tutorial for this variation." : pose.note)", systemImage: "info.circle")
-                            .font(StrengthLabFigmaTheme.regular(12))
-                            .foregroundStyle(StrengthLabFigmaTheme.ink)
-                            .padding(12)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(StrengthLabFigmaTheme.blush, in: RoundedRectangle(cornerRadius: 12))
-                    }
-
-                    if let watchURL = pose.watchURL {
-                        Link(destination: watchURL) {
-                            Label("Watch on YouTube if embedding is unavailable", systemImage: "play.rectangle")
-                                .font(StrengthLabFigmaTheme.medium(13))
-                                .foregroundStyle(StrengthLabFigmaTheme.coral)
-                        }
-                    }
-
-                    Text("You can tick this at any time. Watching to the end is not required. After Day 98 the sequence repeats, continuing as Day 99.")
-                        .font(StrengthLabFigmaTheme.regular(12))
-                        .foregroundStyle(StrengthLabFigmaTheme.muted)
-                        .fixedSize(horizontal: false, vertical: true)
+            Group {
+                if let index = previewIndex {
+                    candidatePreview(at: index)
+                } else if showingChoices {
+                    swapChoices
+                } else {
+                    todayScreen
                 }
-                .padding(24)
             }
-            .safeAreaInset(edge: .bottom, spacing: 0) {
-                VStack(spacing: 0) {
-                    Divider()
-                    Button {
-                        // Only the currently presented day may advance progress.
-                        // Double taps, stale sheets and repeat presentations cannot
-                        // accidentally skip a pose.
-                        guard completedCount == dayNumber - 1 else {
-                            dismiss()
-                            return
-                        }
-                        completedCount = dayNumber
-                        dismiss()
-                    } label: {
-                        HStack(spacing: 12) {
-                            Image(systemName: "checkmark.circle.fill")
-                                .font(.system(size: 26, weight: .semibold))
-                            Text("Mark Day \(dayNumber) Complete")
-                                .font(StrengthLabFigmaTheme.bold(16))
-                            Spacer(minLength: 0)
-                        }
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 18)
-                        .frame(maxWidth: .infinity, minHeight: 60)
-                        .background(
-                            StrengthLabFigmaTheme.coralGradient,
-                            in: RoundedRectangle(cornerRadius: 16)
-                        )
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(completedCount != dayNumber - 1)
-                    .accessibilityHint("Complete this pose and immediately advance the global banner to the next day")
-
-                }
-                .padding(.horizontal, 24)
-                .padding(.vertical, 12)
-                .background(Color.white)
-            }
-            .background(Color.white.ignoresSafeArea())
-            .navigationTitle("Yoga Pose a Day")
+            .navigationTitle(previewIndex != nil ? "Preview pose" :
+                             showingChoices ? "Swap out" : "Yoga Pose a Day")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") { dismiss() }
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        if previewIndex != nil {
+                            previewIndex = nil
+                        } else if showingChoices {
+                            showingChoices = false
+                        } else {
+                            dismiss()
+                        }
+                    } label: {
+                        Image(systemName: previewIndex != nil || showingChoices
+                              ? "chevron.left" : "xmark")
+                    }
+                    .accessibilityLabel(previewIndex != nil ? "Back to filters" :
+                                        showingChoices ? "Back to today's pose" : "Close")
                 }
             }
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                if !showingChoices && previewIndex == nil {
+                    completionBar
+                }
+            }
+            .background(Color.white.ignoresSafeArea())
             .preferredColorScheme(.light)
             .tint(StrengthLabFigmaTheme.coral)
         }
         .presentationDetents([.large])
         .presentationDragIndicator(.visible)
+    }
+
+    private var todayScreen: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 17) {
+                Text("YOGA POSE A DAY · DAY \(dayNumber)")
+                    .font(StrengthLabFigmaTheme.bold(12))
+                    .foregroundStyle(StrengthLabFigmaTheme.coral)
+                Text(pose.title)
+                    .font(StrengthLabFigmaTheme.bold(24))
+                    .foregroundStyle(StrengthLabFigmaTheme.ink)
+                yogaVideo(for: pose)
+                Text("Tutorial: \(pose.videoTitle) · \(pose.instructor)")
+                    .font(StrengthLabFigmaTheme.regular(13))
+                    .foregroundStyle(StrengthLabFigmaTheme.muted)
+
+                poseTags(rank: pose.rank)
+
+                if pose.match != "Direct" {
+                    Label("\(pose.match) reference — \(pose.note.isEmpty ? "Tutorial may demonstrate a related variation." : pose.note)", systemImage: "info.circle")
+                        .font(StrengthLabFigmaTheme.regular(12))
+                        .padding(12)
+                        .background(StrengthLabFigmaTheme.blush,
+                                    in: RoundedRectangle(cornerRadius: 12))
+                }
+                if let url = pose.watchURL {
+                    Link(destination: url) {
+                        Label("Watch on YouTube if embedding is unavailable",
+                              systemImage: "play.rectangle")
+                            .font(StrengthLabFigmaTheme.medium(13))
+                    }
+                }
+
+                if canSwap {
+                    Button {
+                        showingChoices = true
+                    } label: {
+                        Label("Swap out", systemImage: "arrow.left.arrow.right")
+                            .font(StrengthLabFigmaTheme.bold(16))
+                            .frame(maxWidth: .infinity, minHeight: 54)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    Text("Choose an upcoming pose. The two poses exchange days; neither is lost.")
+                        .font(StrengthLabFigmaTheme.regular(12))
+                        .foregroundStyle(StrengthLabFigmaTheme.muted)
+                } else {
+                    Text("The seven advanced poses stay in Days 92–98. Completed days are locked to protect your progress.")
+                        .font(StrengthLabFigmaTheme.regular(12))
+                        .foregroundStyle(StrengthLabFigmaTheme.muted)
+                }
+            }
+            .padding(22)
+        }
+    }
+
+    private var completionBar: some View {
+        VStack(spacing: 0) {
+            Divider()
+            Button {
+                // Don't allow a stale sheet to skip a day.
+                guard completedCount == dayNumber - 1 else {
+                    dismiss()
+                    return
+                }
+                completedCount = dayNumber
+                dismiss()
+            } label: {
+                Label("Mark Day \(dayNumber) Complete", systemImage: "checkmark.circle.fill")
+                    .font(StrengthLabFigmaTheme.bold(16))
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity, minHeight: 58)
+                    .background(StrengthLabFigmaTheme.coralGradient,
+                                in: RoundedRectangle(cornerRadius: 16))
+            }
+            .disabled(completedCount != dayNumber - 1)
+            .buttonStyle(.plain)
+            .padding(.horizontal, 22)
+            .padding(.vertical, 12)
+        }
+        .background(Color.white)
+    }
+
+    private var swapChoices: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 17) {
+                Text("Swap out \(pose.title)")
+                    .font(StrengthLabFigmaTheme.bold(21))
+                Text("Filter upcoming poses by how you want to feel, the chakra you want to work with, or both.")
+                    .font(StrengthLabFigmaTheme.regular(13))
+                    .foregroundStyle(StrengthLabFigmaTheme.muted)
+
+                HStack {
+                    Text("Categories").font(StrengthLabFigmaTheme.bold(16))
+                    Spacer()
+                    if !categoryFilters.isEmpty {
+                        Button("Clear") { categoryFilters.removeAll() }
+                    }
+                }
+                filterButtons(YogaPoseDayCatalog.functionalCategories,
+                              selection: $categoryFilters)
+
+                HStack {
+                    Text("Chakras").font(StrengthLabFigmaTheme.bold(16))
+                    Spacer()
+                    if !chakraFilters.isEmpty {
+                        Button("Clear") { chakraFilters.removeAll() }
+                    }
+                }
+                filterButtons(YogaPoseDayCatalog.chakraNames,
+                              selection: $chakraFilters)
+
+                Text("\(matchingIndices.count) available pose\(matchingIndices.count == 1 ? "" : "s")")
+                    .font(StrengthLabFigmaTheme.bold(14))
+                    .foregroundStyle(StrengthLabFigmaTheme.ink)
+
+                if matchingIndices.isEmpty {
+                    ContentUnavailableView("No matching poses",
+                        systemImage: "line.3.horizontal.decrease.circle",
+                        description: Text("Remove one or more filters to see more options."))
+                } else {
+                    LazyVStack(spacing: 9) {
+                        ForEach(matchingIndices, id: \.self) { index in
+                            let option = YogaPoseDayCatalog.poses[order[index] - 1]
+                            Button {
+                                previewIndex = index
+                            } label: {
+                                HStack(spacing: 12) {
+                                    VStack(alignment: .leading, spacing: 5) {
+                                        Text(option.title)
+                                            .font(StrengthLabFigmaTheme.bold(15))
+                                            .foregroundStyle(StrengthLabFigmaTheme.ink)
+                                            .multilineTextAlignment(.leading)
+                                        Text("Currently Day \(index + 1) · \((YogaPoseDayCatalog.tags[option.rank] ?? .empty).categories.first ?? "Yoga")")
+                                            .font(StrengthLabFigmaTheme.regular(12))
+                                            .foregroundStyle(StrengthLabFigmaTheme.muted)
+                                    }
+                                    Spacer()
+                                    Image(systemName: "play.circle.fill")
+                                        .font(.title2)
+                                }
+                                .padding(14)
+                                .background(StrengthLabFigmaTheme.blush,
+                                            in: RoundedRectangle(cornerRadius: 15))
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+            }
+            .padding(20)
+        }
+    }
+
+    private func filterButtons(_ options: [String], selection: Binding<Set<String>>) -> some View {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 138), spacing: 7)], spacing: 8) {
+            ForEach(options, id: \.self) { value in
+                let isSelected = selection.wrappedValue.contains(value)
+                Button {
+                    var updated = selection.wrappedValue
+                    if isSelected { updated.remove(value) }
+                    else { updated.insert(value) }
+                    selection.wrappedValue = updated
+                } label: {
+                    Text(value)
+                        .font(StrengthLabFigmaTheme.medium(12))
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: .infinity, minHeight: 40)
+                        .padding(.horizontal, 5)
+                        .foregroundStyle(isSelected ? Color.white : StrengthLabFigmaTheme.ink)
+                        .background(isSelected ? StrengthLabFigmaTheme.coral : StrengthLabFigmaTheme.blush,
+                                    in: RoundedRectangle(cornerRadius: 12))
+                }
+                .buttonStyle(.plain)
+                .accessibilityAddTraits(isSelected ? .isSelected : [])
+            }
+        }
+    }
+
+    private func candidatePreview(at index: Int) -> some View {
+        let candidate = YogaPoseDayCatalog.poses[order[index] - 1]
+        return ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                Text("DAY \(dayNumber) · SWAP PREVIEW")
+                    .font(StrengthLabFigmaTheme.bold(12))
+                    .foregroundStyle(StrengthLabFigmaTheme.coral)
+                Text(candidate.title)
+                    .font(StrengthLabFigmaTheme.bold(24))
+                    .foregroundStyle(StrengthLabFigmaTheme.ink)
+
+                // Confirm / cancel sit to the right of the video.
+                HStack(alignment: .top, spacing: 10) {
+                    yogaVideo(for: candidate)
+                        .frame(maxWidth: .infinity)
+                    VStack(spacing: 12) {
+                        Button {
+                            confirmSwap(with: index)
+                        } label: {
+                            Image(systemName: "checkmark")
+                                .font(.system(size: 23, weight: .bold))
+                                .foregroundStyle(.white)
+                                .frame(width: 54, height: 54)
+                                .background(Color.green, in: Circle())
+                        }
+                        .accessibilityLabel("Confirm pose swap")
+
+                        Button {
+                            previewIndex = nil
+                        } label: {
+                            Image(systemName: "xmark")
+                                .font(.system(size: 21, weight: .bold))
+                                .foregroundStyle(StrengthLabFigmaTheme.ink)
+                                .frame(width: 54, height: 54)
+                                .background(StrengthLabFigmaTheme.blush, in: Circle())
+                        }
+                        .accessibilityLabel("Back to filtered poses")
+                    }
+                    .buttonStyle(.plain)
+                }
+
+                Text("Tutorial: \(candidate.videoTitle) · \(candidate.instructor)")
+                    .font(StrengthLabFigmaTheme.regular(13))
+                    .foregroundStyle(StrengthLabFigmaTheme.muted)
+                poseTags(rank: candidate.rank)
+                if candidate.match != "Direct" {
+                    Label("\(candidate.match) reference — \(candidate.note.isEmpty ? "This video may show a related variation." : candidate.note)", systemImage: "info.circle")
+                        .font(StrengthLabFigmaTheme.regular(12))
+                        .padding(12)
+                        .background(StrengthLabFigmaTheme.blush,
+                                    in: RoundedRectangle(cornerRadius: 12))
+                }
+                Text("✓ moves this pose to today. \(pose.title) moves to Day \(index + 1). X returns to your filters.")
+                    .font(StrengthLabFigmaTheme.regular(13))
+                    .foregroundStyle(StrengthLabFigmaTheme.muted)
+            }
+            .padding(20)
+        }
+    }
+
+    private func yogaVideo(for candidate: YogaPoseDay) -> some View {
+        YogaPoseYouTubePlayer(videoID: candidate.videoID)
+            .frame(height: 215)
+            .background(Color.black)
+            .clipShape(RoundedRectangle(cornerRadius: 14))
+            .id(candidate.rank)
+    }
+
+    private func poseTags(rank: Int) -> some View {
+        let tags = YogaPoseDayCatalog.tags[rank] ?? .empty
+        return VStack(alignment: .leading, spacing: 6) {
+            Text("Categories: \(tags.categories.joined(separator: " · "))")
+            Text("Chakras: \(tags.chakras.joined(separator: " · "))")
+        }
+        .font(StrengthLabFigmaTheme.regular(12))
+        .foregroundStyle(StrengthLabFigmaTheme.muted)
+    }
+
+    private func confirmSwap(with index: Int) {
+        // Don't allow edits to completed positions or the reserved advanced week.
+        guard completedCount == dayNumber - 1,
+              cycleIndex < 91,
+              index > cycleIndex, index < 91 else { return }
+        var updated = order
+        updated.swapAt(cycleIndex, index)
+        guard Set(updated) == Set(1...98),
+              Array(updated.suffix(7)) == Array(92...98) else { return }
+        savedPoseOrder = updated.map(String.init).joined(separator: ",")
+        previewIndex = nil
+        showingChoices = false
     }
 }
 
