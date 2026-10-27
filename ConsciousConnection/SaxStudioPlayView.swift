@@ -244,8 +244,8 @@ struct SaxStudioPlayView: View {
             step = max(0, tick) % notes.count
         }
         .onChange(of: tempo) { _, _ in restartIfPlaying() }
-        .onChange(of: rate) { _, _ in step = 0 }
-        .onChange(of: sequence) { _, _ in step = 0 }
+        .onChange(of: rate) { _, _ in restartIfPlaying() }
+        .onChange(of: sequence) { _, _ in restartIfPlaying() }
         .onDisappear {
             player.stop()
             setGlobalBackButtonHidden(false)
@@ -350,7 +350,7 @@ struct SaxStudioPlayView: View {
                     .scaledToFit()
             } else {
                 VStack(spacing: 10) {
-                    Image(systemName: "saxophone")
+                    Image(systemName: "music.note")
                         .font(.largeTitle)
                     Text("Missing fingering image \(name)")
                         .font(.caption)
