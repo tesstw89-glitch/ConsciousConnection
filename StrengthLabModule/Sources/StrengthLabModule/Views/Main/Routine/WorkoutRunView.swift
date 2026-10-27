@@ -11,6 +11,7 @@ private enum StrengthLabWorkoutPhase:
 {
     case exercise
     case rest
+    case extraDecision
     case complete
 }
 
@@ -113,6 +114,10 @@ struct WorkoutRunView:
     private var summaryLookupToken =
         UUID()
 
+    // STRENGTHLAB_WORKOUT_UX_OCT27_V1
+    // These extra sets only exist for this workout, never in its saved template.
+    @State private var extraSets: [SetDeckSet] = []
+
 
     private var topSafeAreaInset:
         CGFloat
@@ -174,11 +179,12 @@ struct WorkoutRunView:
             return []
         }
 
-        return
-            orderedSets(
-                for:
-                    currentExercise
-            )
+        let scheduled = orderedSets(for: currentExercise)
+        // A bonus set is only attached to the final exercise of this session.
+        if playbackPositions.last?.exercise == currentExerciseIndex {
+            return scheduled + extraSets
+        }
+        return scheduled
     }
 
 
@@ -217,7 +223,7 @@ struct WorkoutRunView:
                     exercise
             )
             .count
-        }
+        } + extraSets.count
     }
 
 
@@ -231,6 +237,9 @@ struct WorkoutRunView:
             case .rest:
                 restScreen
 
+            case .extraDecision:
+                extraDecisionScreen
+
             case .complete:
                 completionScreen
             }
@@ -239,6 +248,13 @@ struct WorkoutRunView:
             .light
         )
         .onAppear {
+            // STRENGTHLAB_WORKOUT_MUSIC_V1
+            do {
+                try AVAudioSession.sharedInstance()
+                    .setCategory(.ambient, mode: .default)
+            } catch {
+                print("Music mixing: \(error.localizedDescription)")
+            }
             moveToFirstPlayableSet()
         }
         .task {
@@ -339,8 +355,11 @@ struct WorkoutRunView:
                             setCount:
                                 currentSets
                                     .count,
-                            onDone:
-                                completeCurrentSet
+                            onReturn: {
+                                withAnimation(.snappy(duration: 0.3)) {
+                                    detailsShown = false
+                                }
+                            }
                         )
                         .transition(
                             .move(
@@ -352,32 +371,16 @@ struct WorkoutRunView:
                                     .opacity
                             )
                         )
-                        .gesture(
-                            DragGesture(
-                                minimumDistance:
-                                    35
-                            )
-                            .onEnded {
-                                value in
-
-                                if
-                                    value
-                                        .translation
-                                        .height
-                                    >
-                                    55
-                                {
-                                    withAnimation(
-                                        .snappy(
-                                            duration:
-                                                0.32
-                                        )
-                                    ) {
-                                        detailsShown =
-                                            false
+                        .simultaneousGesture(
+                            DragGesture(minimumDistance: 35)
+                                .onEnded { value in
+                                    if value.translation.height > 90 &&
+                                       abs(value.translation.width) < value.translation.height {
+                                        withAnimation(.snappy(duration: 0.32)) {
+                                            detailsShown = false
+                                        }
                                     }
                                 }
-                            }
                         )
 
                     } else {
@@ -581,25 +584,41 @@ struct WorkoutRunView:
                     )
             )
 
-            Text(
-                instructionText(
-                    for:
-                        set
+            HStack(alignment: .center, spacing: 12) {
+                Text(
+                    instructionText(
+                        for:
+                            set
+                    )
                 )
-            )
-            .font(
-                StrengthLabFigmaTheme
-                    .medium(18)
-            )
-            .foregroundStyle(
-                Color.white
-            )
-            .fixedSize(
-                horizontal:
-                    false,
-                vertical:
-                    true
-            )
+                .font(
+                    StrengthLabFigmaTheme
+                        .medium(18)
+                )
+                .foregroundStyle(
+                    Color.white
+                )
+                .fixedSize(
+                    horizontal:
+                        false,
+                    vertical:
+                        true
+                )
+
+                Button {
+                    withAnimation(.snappy(duration: 0.32)) {
+                        detailsShown = true
+                    }
+                } label: {
+                    Image(systemName: "plus.circle.fill")
+                        .font(.system(size: 28, weight: .semibold))
+                        .foregroundStyle(Color.white)
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Edit reps, weight and set details")
+            }
 
             if set.setType == .duration,
                let seconds = set.targetDuration,
@@ -955,6 +974,56 @@ struct WorkoutRunView:
                 darkText:
                     true
             )
+        }
+    }
+
+
+    // MARK: - Extra Set or Finish?
+
+    private var extraDecisionScreen: some View {
+        ZStack {
+            StrengthLabFigmaTheme.paleBlush.ignoresSafeArea()
+
+            VStack(spacing: 24) {
+                Spacer()
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 58))
+                    .foregroundStyle(StrengthLabFigmaTheme.coral)
+
+                Text("All planned sets done!")
+                    .font(StrengthLabFigmaTheme.bold(27))
+                    .foregroundStyle(StrengthLabFigmaTheme.ink)
+                    .multilineTextAlignment(.center)
+
+                Text("Want one more set of your final exercise, or ready to finish?")
+                    .font(StrengthLabFigmaTheme.medium(16))
+                    .foregroundStyle(StrengthLabFigmaTheme.muted)
+                    .multilineTextAlignment(.center)
+
+                Button(action: addExtraSet) {
+                    Label("Add an extra set?", systemImage: "plus.circle.fill")
+                        .font(StrengthLabFigmaTheme.bold(17))
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 58)
+                        .foregroundStyle(.white)
+                        .background(StrengthLabFigmaTheme.coralGradient, in: RoundedRectangle(cornerRadius: 18))
+                }
+                .buttonStyle(.plain)
+
+                Button {
+                    finishWorkout(endedEarly: false)
+                } label: {
+                    Text("End workout now")
+                        .font(StrengthLabFigmaTheme.bold(17))
+                        .foregroundStyle(StrengthLabFigmaTheme.ink)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 58)
+                        .background(.white, in: RoundedRectangle(cornerRadius: 18))
+                }
+                .buttonStyle(.plain)
+                Spacer()
+            }
+            .padding(.horizontal, 25)
         }
     }
 
@@ -1664,15 +1733,8 @@ struct WorkoutRunView:
         try?
             modelContext.save()
 
-        guard
-            let next =
-                nextPosition()
-        else {
-            finishWorkout(
-                endedEarly:
-                    false
-            )
-
+        guard let next = nextPosition() else {
+            showExtraSetDecision()
             return
         }
 
@@ -1726,6 +1788,41 @@ struct WorkoutRunView:
         }
     }
 
+
+    private func showExtraSetDecision() {
+        timedEndDate = nil
+        timedRemaining = nil
+        restEndDate = nil
+        detailsShown = false
+        withAnimation(.snappy(duration: 0.3)) {
+            phase = .extraDecision
+        }
+    }
+
+    private func addExtraSet() {
+        guard let last = playbackPositions.last,
+              exercises.indices.contains(last.exercise),
+              let previous = currentSet else {
+            finishWorkout(endedEarly: false)
+            return
+        }
+        let scheduledCount = orderedSets(for: exercises[last.exercise]).count
+        let index = scheduledCount + extraSets.count
+        let extra = SetDeckSet(
+            setType: previous.setType,
+            targetReps: previous.targetReps,
+            weight: previous.weight,
+            targetDuration: previous.targetDuration,
+            setDescription: previous.setDescription,
+            rpe: previous.rpe,
+            restTimeInSeconds: 0,
+            orderIndex: index
+        )
+        // Do NOT set extra.exercise or insert extra into modelContext:
+        // that would permanently alter the saved workout template.
+        extraSets.append(extra)
+        goTo(exerciseIndex: last.exercise, setIndex: index)
+    }
 
     private func finishWorkout(
         endedEarly:
@@ -2030,6 +2127,26 @@ struct WorkoutRunView:
             }
         }
 
+        // Store an extra performance against the final planned set, not as
+        // a newly programmed set. The history note identifies it as extra.
+        if let last = playbackPositions.last,
+           exercises.indices.contains(last.exercise),
+           let source = orderedSets(for: exercises[last.exercise]).last {
+            for extra in extraSets where completedSetIDs.contains(extra.uuid) {
+                _ = exerciseManager.recordHistory(
+                    for: source,
+                    completedDate: completedAt,
+                    actualReps: extra.targetReps,
+                    actualWeight: extra.weight,
+                    actualWeightUnit: nil,
+                    actualDuration: extra.setType == .duration ? extra.targetDuration : nil,
+                    actualDescription: extra.setDescription,
+                    actualRpe: extra.rpe,
+                    note: "Extra set · \(workout.name)"
+                )
+            }
+        }
+
         historyCommitted =
             true
     }
@@ -2100,6 +2217,15 @@ struct WorkoutRunView:
                     ),
             !description.isEmpty
         {
+            // A copied note like "16 reps" must not override the live target.
+            if (set.setType == .reps || set.setType == .amap),
+               let reps = set.targetReps,
+               description.range(
+                   of: #"^\s*\d+\s*reps?\s*$"#,
+                   options: [.regularExpression, .caseInsensitive]
+               ) != nil {
+                return "\(reps) reps"
+            }
             return description
         }
 
@@ -2474,7 +2600,7 @@ private struct WorkoutLiveSetEditor:
     let setCount:
         Int
 
-    let onDone:
+    let onReturn:
         () -> Void
 
 
@@ -2487,7 +2613,7 @@ private struct WorkoutLiveSetEditor:
             Int,
         setCount:
             Int,
-        onDone:
+        onReturn:
             @escaping () -> Void
     ) {
         self.exercise =
@@ -2502,8 +2628,8 @@ private struct WorkoutLiveSetEditor:
         self.setCount =
             setCount
 
-        self.onDone =
-            onDone
+        self.onReturn =
+            onReturn
     }
 
 
@@ -2564,6 +2690,14 @@ private struct WorkoutLiveSetEditor:
                                 .muted
                         )
                     }
+
+                    Button(action: onReturn) {
+                        Label("Back to exercise", systemImage: "chevron.down.circle.fill")
+                            .font(StrengthLabFigmaTheme.bold(15))
+                            .foregroundStyle(StrengthLabFigmaTheme.coral)
+                            .padding(.vertical, 10)
+                    }
+                    .buttonStyle(.plain)
 
                     Text(
                         "Swipe down to return to the demo"
@@ -2708,43 +2842,7 @@ private struct WorkoutLiveSetEditor:
                 .hidden
             )
 
-            Button(
-                action:
-                    onDone
-            ) {
-                Image(
-                    systemName:
-                        "checkmark"
-                )
-                .font(
-                    .system(
-                        size: 26,
-                        weight: .bold
-                    )
-                )
-                .foregroundStyle(
-                    .white
-                )
-                .frame(
-                    width: 72,
-                    height: 72
-                )
-                .background(
-                    StrengthLabFigmaTheme
-                        .coralGradient,
-                    in:
-                        Circle()
-                )
-            }
-            .buttonStyle(.plain)
-            .padding(
-                .trailing,
-                22
-            )
-            .padding(
-                .bottom,
-                22
-            )
+
         }
     }
 

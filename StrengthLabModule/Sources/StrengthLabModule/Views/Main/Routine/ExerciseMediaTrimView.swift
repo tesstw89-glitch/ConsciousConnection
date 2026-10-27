@@ -1299,6 +1299,8 @@ private struct TrimmedVideoPlayer:
     let url: URL
     let start: Double
     let end: Double
+    // STRENGTHLAB_SILENT_DEMO_V1
+    var muteForWorkout = false
 
     @State
     private var player =
@@ -1346,6 +1348,7 @@ private struct TrimmedVideoPlayer:
     }
 
     private func configure() {
+        player.isMuted = muteForWorkout
         let item =
             AVPlayerItem(
                 url: url
@@ -1571,7 +1574,8 @@ struct ExerciseMediaPlaybackView:
                         exercise
                             .videoTrimEnd
                     ??
-                    999999
+                    999999,
+                    muteForWorkout: true
                 )
 
             } else {

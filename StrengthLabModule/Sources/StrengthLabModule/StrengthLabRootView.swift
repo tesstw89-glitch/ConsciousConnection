@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import AVFoundation
 
 /// StrengthLab embedded in ConsciousConnection (not a second app).
 @MainActor
@@ -67,6 +68,16 @@ public struct StrengthLabRootView: View {
             }
         }
         .preferredColorScheme(.dark)
+
+        .onAppear {
+            // STRENGTHLAB_BACKGROUND_MUSIC_V1
+            do {
+                try AVAudioSession.sharedInstance()
+                    .setCategory(.ambient, mode: .default)
+            } catch {
+                print("Music mixing: \(error.localizedDescription)")
+            }
+        }
     }
 }
 
