@@ -5,7 +5,6 @@ struct FrontPageView: View {
 
     @EnvironmentObject private var router: AppRouter
 
-    @State private var showingCreatePlaceholder = false
     @State private var isGettingReady = true
 
     // MARK: - Front page background controls
@@ -75,7 +74,7 @@ struct FrontPageView: View {
                     }
 
                     frontButton(asset: "Create") {
-                        showingCreatePlaceholder = true
+                        router.path.append(.createHome)
                     }
 
                     frontButton(asset: "Live") {
@@ -94,14 +93,6 @@ struct FrontPageView: View {
         }
         .navigationBarBackButtonHidden(true)
 
-        .alert(
-            "Create",
-            isPresented: $showingCreatePlaceholder
-        ) {
-            Button("OK", role: .cancel) { }
-        } message: {
-            Text("We'll build this bit next.")
-        }
 
         // Keep your existing little startup experience.
         .overlay {

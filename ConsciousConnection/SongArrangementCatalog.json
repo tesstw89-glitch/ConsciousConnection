@@ -1,0 +1,261 @@
+{
+  "schema": 1,
+  "source": "Rye Daze Song Laboratory — Collection 02, 22 October 2026",
+  "labs": [
+    {
+      "id": "arrangement-05",
+      "number": 5,
+      "title": "Two Worlds Collide",
+      "inspiration": "Hiatus Kaiyote × The Comet Is Coming × Flying Lotus · 56 bars",
+      "idea": "Start with a loose, organic jazz-funk groove. Gradually infiltrate it with electronic elements until the song becomes something completely different.",
+      "challenge": "Make the transformation feel intentional. Which elements should change gradually, and which should arrive as a complete surprise?",
+      "bars": [
+        {
+          "first": 1,
+          "last": 8,
+          "instruction": "Create a drum groove with a loose, human feel. Add a syncopated bassline and short, rhythmic chord stabs using your pads."
+        },
+        {
+          "first": 9,
+          "last": 16,
+          "instruction": "Introduce a melodic hook. Add a second percussion layer that plays around the main drum rhythm."
+        },
+        {
+          "first": 17,
+          "last": 24,
+          "instruction": "Create an electronic drum pattern with a noticeably different rhythmic character. Introduce tiny fragments of it between the original drum hits."
+        },
+        {
+          "first": 25,
+          "last": 32,
+          "instruction": "Gradually remove the organic drums. Bring in a new synth texture. In bars 31–32, remove the bass and let a sound effect or processed melodic fragment carry you into the next section."
+        },
+        {
+          "first": 33,
+          "last": 40,
+          "instruction": "Introduce the full electronic drum pattern, a new bassline and a different approach to the chord rhythm. Reintroduce fragments of your original melody, perhaps chopped or processed."
+        },
+        {
+          "first": 41,
+          "last": 48,
+          "instruction": "Bring back the original bassline beneath the electronic drums. Add some of the earlier percussion. Experiment with combining the two rhythmic identities."
+        },
+        {
+          "first": 49,
+          "last": 56,
+          "instruction": "Create a final hybrid groove. Strip away its layers over the last four bars until one recognisable element remains."
+        }
+      ]
+    },
+    {
+      "id": "arrangement-06",
+      "number": 6,
+      "title": "The False Beginning",
+      "inspiration": "King Krule × Connan Mockasin × BADBADNOTGOOD · 40 bars",
+      "idea": "Convince the listener that they've understood your song, then reveal something completely unexpected.",
+      "challenge": "Practise an abrupt transition that still feels musically connected. Use at least one recognisable element to bridge the two sections.",
+      "bars": [
+        {
+          "first": 1,
+          "last": 8,
+          "instruction": "Introduce a warm chord progression, simple bassline and steady drum groove. Add a small melodic motif. Make it feel like a perfectly plausible opening."
+        },
+        {
+          "first": 9,
+          "last": 16,
+          "instruction": "Develop the groove with a countermelody or additional percussion. Let the listener settle into it."
+        },
+        {
+          "first": 17,
+          "last": 20,
+          "instruction": "Start creating tension. Remove a familiar element, change the bass rhythm and introduce a strange background sound."
+        },
+        {
+          "first": 21,
+          "last": 24,
+          "instruction": "Completely disrupt the arrangement. Cut the drums, distort or filter the chords, and allow an unfamiliar rhythmic fragment to emerge."
+        },
+        {
+          "first": 25,
+          "last": 32,
+          "instruction": "Launch into a substantially different groove. Give the bass a new role and introduce a new melodic idea."
+        },
+        {
+          "first": 33,
+          "last": 40,
+          "instruction": "Reintroduce the melody from the opening, but place it inside this new groove. Finish with a deliberate ending rather than a fade."
+        }
+      ]
+    },
+    {
+      "id": "arrangement-07",
+      "number": 7,
+      "title": "The Dub Tunnel",
+      "inspiration": "King Tubby × Floating Points × Nubiyan Twist · 48 bars",
+      "idea": "Use effects, space and subtraction to transform a groove without writing an entirely new song.",
+      "challenge": "Make a sparse section just as interesting as the full arrangement. The effects aren't decoration — they're participating in the composition.",
+      "bars": [
+        {
+          "first": 1,
+          "last": 8,
+          "instruction": "Build a rhythm section with bass, drums and spacious chord stabs."
+        },
+        {
+          "first": 9,
+          "last": 16,
+          "instruction": "Introduce a short melody or rhythmic hook. Add a subtle atmospheric texture."
+        },
+        {
+          "first": 17,
+          "last": 24,
+          "instruction": "Start removing drum elements. Send selected chord stabs or melodic fragments into delays. Create moments where the echoes answer the instruments."
+        },
+        {
+          "first": 25,
+          "last": 32,
+          "instruction": "Strip the arrangement down to bass, sparse percussion and echoes. Automate filters and reverbs so the texture keeps evolving."
+        },
+        {
+          "first": 33,
+          "last": 40,
+          "instruction": "Introduce a new rhythmic variation. Change the timing or placement of the chord stabs while maintaining the original harmonic identity."
+        },
+        {
+          "first": 41,
+          "last": 48,
+          "instruction": "Restore the full groove. Bring the original hook back, then finish by letting one delayed fragment decay into silence."
+        }
+      ]
+    },
+    {
+      "id": "arrangement-08",
+      "number": 8,
+      "title": "The Bassline Changes Everything",
+      "inspiration": "Thundercat × Robert Glasper × FKJ · 48 bars",
+      "idea": "Make the bassline the principal driver of your arrangement. Everything else responds to it.",
+      "challenge": "Learn how much musical development you can create by changing the bass part while keeping other elements recognisable.",
+      "bars": [
+        {
+          "first": 1,
+          "last": 8,
+          "instruction": "Start with bass and percussion only. Create a bassline with a recognisable rhythmic personality."
+        },
+        {
+          "first": 9,
+          "last": 16,
+          "instruction": "Introduce your chord pads. Let the chords interact rhythmically with the bass rather than simply holding sustained notes."
+        },
+        {
+          "first": 17,
+          "last": 24,
+          "instruction": "Add a melodic hook. In the final two bars, change the ending of your bass phrase to announce a transition."
+        },
+        {
+          "first": 25,
+          "last": 32,
+          "instruction": "Create a contrasting bassline using a different register, rhythm or articulation. Keep some of the existing chords or melody so the listener can hear the difference."
+        },
+        {
+          "first": 33,
+          "last": 40,
+          "instruction": "Change the drum groove to support the new bassline. Introduce a melodic variation."
+        },
+        {
+          "first": 41,
+          "last": 48,
+          "instruction": "Return to the original bassline but retain the newer drum rhythm. Experiment with a call-and-response ending between bass and melody."
+        }
+      ]
+    },
+    {
+      "id": "arrangement-09",
+      "number": 9,
+      "title": "The Rhythmic Relay",
+      "inspiration": "Sons of Kemet × Orchestra Baobab × broken beat · 56 bars",
+      "idea": "A repeating rhythmic idea travels between instruments, changing character as it goes.",
+      "challenge": "Develop continuity between sections without depending on an unchanged chord progression or repeating eight-bar loop.",
+      "bars": [
+        {
+          "first": 1,
+          "last": 8,
+          "instruction": "Create a percussion groove using two or three contrasting sounds. Give one sound a distinctive repeating rhythmic phrase."
+        },
+        {
+          "first": 9,
+          "last": 16,
+          "instruction": "Add drums and bass. Introduce a chord part that leaves space for the percussion."
+        },
+        {
+          "first": 17,
+          "last": 24,
+          "instruction": "Transfer the rhythmic phrase from percussion to short chord stabs. Alter or mute the original percussion part so you're not merely doubling it."
+        },
+        {
+          "first": 25,
+          "last": 32,
+          "instruction": "Introduce a melody that echoes the rhythmic phrase. Change the drum accents to support the new melodic emphasis."
+        },
+        {
+          "first": 33,
+          "last": 40,
+          "instruction": "Remove the chord rhythm. Transfer the phrase into the bassline, and create a contrasting section with a sparser drum groove."
+        },
+        {
+          "first": 41,
+          "last": 48,
+          "instruction": "Build a call-and-response between bass, percussion and melody. Leave gaps rather than allowing every part to play simultaneously."
+        },
+        {
+          "first": 49,
+          "last": 56,
+          "instruction": "Return to the first groove. Choose one version of the rhythmic phrase to dominate the final section, then create an ending around it."
+        }
+      ]
+    },
+    {
+      "id": "arrangement-10",
+      "number": 10,
+      "title": "The Ghost in the Machine",
+      "inspiration": "Flying Lotus × Machinedrum × psychedelic jazz · 40 bars",
+      "idea": "Create an entire song where seemingly insignificant background sounds gradually reveal a hidden musical structure. This one is particularly inspired by your experiments with XLN XO.",
+      "challenge": "Turn sound design into composition. Make the textures meaningful to the song's structure, not simply atmospheric embellishments.",
+      "bars": [
+        {
+          "first": 1,
+          "last": 8,
+          "instruction": "Create an XO pattern using glitches, mechanical noises, vinyl sounds or field recordings instead of normal drums. Add atmospheric chord pads."
+        },
+        {
+          "first": 9,
+          "last": 16,
+          "instruction": "Introduce conventional drums and a bassline. Keep the XO pattern underneath, acting as an unusual percussion layer."
+        },
+        {
+          "first": 17,
+          "last": 20,
+          "instruction": "Add a short melodic phrase. Experiment with processing one or two notes into unusual textures."
+        },
+        {
+          "first": 21,
+          "last": 24,
+          "instruction": "Remove the main drums. Rearrange your XO pattern so different sounds now emphasise the rhythm."
+        },
+        {
+          "first": 25,
+          "last": 32,
+          "instruction": "Introduce a contrasting bassline and rhythmic chord part. Repurpose a sound from your original XO pattern as an obvious rhythmic hook."
+        },
+        {
+          "first": 33,
+          "last": 36,
+          "instruction": "Gradually merge elements of the original groove with the contrasting section."
+        },
+        {
+          "first": 37,
+          "last": 40,
+          "instruction": "Remove the conventional instruments, leaving only the texture pattern. Finish by isolating a single sound from the introduction."
+        }
+      ]
+    }
+  ]
+}

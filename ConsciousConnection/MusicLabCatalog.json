@@ -1,0 +1,2161 @@
+{
+  "schema": 1,
+  "source": "October 2026 Saxophone Studio and Keys Studio music-first curriculum drafts",
+  "labs": [
+    {
+      "id": "keys-01",
+      "instrument": "keys",
+      "number": 1,
+      "category": "THE VOCABULARY OF SOUL",
+      "title": "A minor ninth can be a universe",
+      "subtitle": "B minor • jazz-hip-hop / Rhodes soul",
+      "tonal": "B minor • jazz-hip-hop / Rhodes soul",
+      "progression": "Bm9 × 2 | Gmaj9 × 2 | Em9 × 2 | F♯7(♭9) × 2",
+      "groove": "84 BPM · 4/4 · 8 bars",
+      "goal": "i → VI → iv → V in B minor. Learn the difference between a beautiful colour chord and an actual progression: the F♯ dominant creates a reason to return home.",
+      "palette": "Bm9: B D F♯ A C♯ · Gmaj9: G B D F♯ A · Em9: E G B D F♯ · F♯7(♭9): F♯ A♯ C♯ E G",
+      "saxChords": "",
+      "backing": "Fat, round bass establishes B–G–E–F♯, with sparse pickups into bar 1. Dusty swung drums; no harmonic keys in the backing.",
+      "steps": [
+        "3 MIN / ARRIVE Build Bm9 as a sound: try a dense grip, a spread grip, and one with the root removed while bass holds B.",
+        "7 MIN / BUILD Move Bm9 → Gmaj9 while keeping B, D, F♯ or A wherever they already are. Change as few fingers as possible.",
+        "6 MIN / ALTER Play the entire four-chord loop. Notice A♯ in F♯7(♭9) pulling to B. First play long chords; then give each chord a different rhythmic entrance.",
+        "11 MIN / PLAY + RECORD Take four recorded passes: understated, syncopated, higher register, and a version with one chord withheld. Do not change all four chords at once.",
+        "3 MIN / KEEP Listen back, label the best take, and make a one-sentence note about what changed the feeling of the progression."
+      ],
+      "bringHome": "Save an eight-bar MIDI clip containing one progression and two contrasting voicings of the tonic.",
+      "extension": "Optional second sound: use Bm11 instead of Bm9, then decide if the extra E improves your song.",
+      "chords": [
+        {
+          "symbol": "Bm9",
+          "bars": 2,
+          "notes": [
+            "B",
+            "D",
+            "F♯",
+            "A",
+            "C♯"
+          ]
+        },
+        {
+          "symbol": "Gmaj9",
+          "bars": 2,
+          "notes": [
+            "G",
+            "B",
+            "D",
+            "F♯",
+            "A"
+          ]
+        },
+        {
+          "symbol": "Em9",
+          "bars": 2,
+          "notes": [
+            "E",
+            "G",
+            "B",
+            "D",
+            "F♯"
+          ]
+        },
+        {
+          "symbol": "F♯7(♭9)",
+          "bars": 2,
+          "notes": [
+            "F♯",
+            "A♯",
+            "C♯",
+            "E",
+            "G"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "keys-02",
+      "instrument": "keys",
+      "number": 2,
+      "category": "HARMONIC PERCEPTION",
+      "title": "Same seven notes, different sun",
+      "subtitle": "C major ↔ A minor • spacious neo-soul",
+      "tonal": "C major ↔ A minor • spacious neo-soul",
+      "progression": "Cmaj9 × 4 | Am9 × 4 | Fmaj9 × 4 | G13sus4 × 4",
+      "groove": "78 BPM · 4/4 · 16 bars",
+      "goal": "Relative major and minor share a pitch collection but not a centre of gravity. The bass and your resolution decide whether a chord feels like home.",
+      "palette": "Cmaj9: C E G B D · Am9: A C E G B · Fmaj9: F A C E G · G13sus4: G C D F A E",
+      "saxChords": "",
+      "backing": "Wide, melodic bass descends into an A centre, then frames F and G; restrained drums, little fills, huge gaps between kick and snare.",
+      "steps": [
+        "3 MIN / ARRIVE Play Cmaj9 and Am9 slowly. Hear which notes are common: C, E, G and B. Keep them still when the root moves.",
+        "7 MIN / BUILD Try two versions of the first eight bars: one where C sounds settled, another where A sounds like the emotional destination.",
+        "6 MIN / ALTER Add the Fmaj9 → G13sus4 journey. On G, feel the suspended C and F before deciding whether you want a sharper G7 resolution.",
+        "11 MIN / PLAY + RECORD Improvise three eight-bar harmonic stories by changing register, spacing, and the point at which you resolve. No new chord required.",
+        "3 MIN / KEEP Listen back, label the best take, and make a one-sentence note about what changed the feeling of the progression."
+      ],
+      "bringHome": "Record a C-major version and an A-minor-centred version of the same chord material.",
+      "extension": "Transfer only if useful: swap the opening to Am9 and test how the narrative changes.",
+      "chords": [
+        {
+          "symbol": "Cmaj9",
+          "bars": 4,
+          "notes": [
+            "C",
+            "E",
+            "G",
+            "B",
+            "D"
+          ]
+        },
+        {
+          "symbol": "Am9",
+          "bars": 4,
+          "notes": [
+            "A",
+            "C",
+            "E",
+            "G",
+            "B"
+          ]
+        },
+        {
+          "symbol": "Fmaj9",
+          "bars": 4,
+          "notes": [
+            "F",
+            "A",
+            "C",
+            "E",
+            "G"
+          ]
+        },
+        {
+          "symbol": "G13sus4",
+          "bars": 4,
+          "notes": [
+            "G",
+            "C",
+            "D",
+            "F",
+            "A",
+            "E"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "keys-03",
+      "instrument": "keys",
+      "number": 3,
+      "category": "MODAL HARMONY",
+      "title": "The Dorian lift",
+      "subtitle": "F♯ Dorian • astral broken beat",
+      "tonal": "F♯ Dorian • astral broken beat",
+      "progression": "F♯m11 × 4 | B13 × 4",
+      "groove": "94 BPM · 4/4 · 8 bars",
+      "goal": "This is not ordinary F♯ natural minor. The B13 chord carries D♯, the raised sixth that opens F♯ Dorian into a more luminous space.",
+      "palette": "F♯m11: F♯ A C♯ E B · B13: B D♯ F♯ A C♯ G♯. The essential colour contrast is D natural versus D♯.",
+      "saxChords": "",
+      "backing": "Rubbery F♯–B groove with broken snare placements and little electronic clicks; bass leaves space for chord extensions.",
+      "steps": [
+        "3 MIN / ARRIVE Find a F♯m7 core, then add the 9th G♯ and 11th B separately. Decide which colour is worth keeping.",
+        "7 MIN / BUILD Move between the two chords while retaining F♯, A, C♯ and/or G♯ as common tones where available. Let D♯ shine inside B13.",
+        "6 MIN / ALTER Contrast two musical takes: one with a D-natural Aeolian flavour, one with the clear D♯ Dorian colour. Hear the difference before naming it.",
+        "11 MIN / PLAY + RECORD Create a hypnotic eight-bar progression with only these two roots. Shift the chord attacks around the bass rather than adding harmony.",
+        "3 MIN / KEEP Listen back, label the best take, and make a one-sentence note about what changed the feeling of the progression."
+      ],
+      "bringHome": "One convincing two-chord MIDI groove in which the modal colour is audible.",
+      "extension": "Do not pad this into four chords unless the music genuinely asks for it.",
+      "chords": [
+        {
+          "symbol": "F♯m11",
+          "bars": 4,
+          "notes": [
+            "F♯",
+            "A",
+            "C♯",
+            "E",
+            "B"
+          ]
+        },
+        {
+          "symbol": "B13",
+          "bars": 4,
+          "notes": [
+            "B",
+            "D♯",
+            "F♯",
+            "A",
+            "C♯",
+            "G♯"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "keys-04",
+      "instrument": "keys",
+      "number": 4,
+      "category": "VOICE-LEADING",
+      "title": "Move by millimetres",
+      "subtitle": "D major • Glasper-adjacent contemporary jazz soul",
+      "tonal": "D major • Glasper-adjacent contemporary jazz soul",
+      "progression": "Dmaj9 × 2 | Bm11 × 2 | Gmaj9 × 2 | A13sus4 × 2",
+      "groove": "80 BPM · 4/4 · 8 bars",
+      "goal": "Four changes need not mean four separate keyboard hand shapes. Smooth voice- leading gives lush harmony its inevitability.",
+      "palette": "Dmaj9: D F♯ A C♯ E · Bm11: B D F♯ A C♯ E · Gmaj9: G B D F♯ A · A13sus4: A D E G B F♯",
+      "saxChords": "",
+      "backing": "Melodic, unhurried bass outlines D–B–G–A. Warm kick, crackly snare and brushed high percussion; bass notes ring across chord changes.",
+      "steps": [
+        "3 MIN / ARRIVE Play Dmaj9 in one comfortable register. Circle tones that can stay still in Bm11: D, F♯, A, C♯ and E.",
+        "7 MIN / BUILD Design the most economical voicing path through all four chords. Do not jump to a new root-position shape at each change.",
+        "6 MIN / ALTER Repeat the progression starting higher; compare whether an inner voice or top voice now becomes a melody.",
+        "11 MIN / PLAY + RECORD Record with a fixed top-note thread, then with a moving top note. Make a four- bar phrase feel like an argument and an answer.",
+        "3 MIN / KEEP Listen back, label the best take, and make a one-sentence note about what changed the feeling of the progression."
+      ],
+      "bringHome": "Save a MIDI clip where the top voice sounds intentionally composed across all chord changes.",
+      "extension": "Optional: revoice the last chord as A7 and see whether the cadence becomes too definite.",
+      "chords": [
+        {
+          "symbol": "Dmaj9",
+          "bars": 2,
+          "notes": [
+            "D",
+            "F♯",
+            "A",
+            "C♯",
+            "E"
+          ]
+        },
+        {
+          "symbol": "Bm11",
+          "bars": 2,
+          "notes": [
+            "B",
+            "D",
+            "F♯",
+            "A",
+            "C♯",
+            "E"
+          ]
+        },
+        {
+          "symbol": "Gmaj9",
+          "bars": 2,
+          "notes": [
+            "G",
+            "B",
+            "D",
+            "F♯",
+            "A"
+          ]
+        },
+        {
+          "symbol": "A13sus4",
+          "bars": 2,
+          "notes": [
+            "A",
+            "D",
+            "E",
+            "G",
+            "B",
+            "F♯"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "keys-05",
+      "instrument": "keys",
+      "number": 5,
+      "category": "ROOTLESS HARMONY",
+      "title": "Let the bass do the heavy lifting",
+      "subtitle": "B♭ Dorian • low-slung jazz funk",
+      "tonal": "B♭ Dorian • low-slung jazz funk",
+      "progression": "B♭m11 × 4 | E♭13 × 4",
+      "groove": "96 BPM · 4/4 · 8 bars",
+      "goal": "The bassist owns the roots. You learn to comp with colour tones instead of doubling low notes, making the keyboard feel lighter but more sophisticated.",
+      "palette": "B♭m11: B♭ D♭ F A♭ E♭ · E♭13: E♭ G B♭ D♭ F C. Rootless starting colours: D♭–F– A♭–E♭ and G–D♭–F–C.",
+      "saxChords": "",
+      "backing": "Thick B♭/E♭ syncopation with fingerstyle notes and occasional octaves; chunky broken funk kit, sparse claps.",
+      "steps": [
+        "3 MIN / ARRIVE Play each chord with its root. Remove the root once the bass locks in. Does the chord still have the same identity?",
+        "7 MIN / BUILD Keep each keyboard voicing mostly in the midrange so it does not fight the electric bass.",
+        "6 MIN / ALTER On E♭13, hear the G natural against the B♭ minor world: the lift distinguishes Dorian from natural minor.",
+        "11 MIN / PLAY + RECORD Build a groove with three short chord stabs and one long sustain per two-bar phrase, then invert the ratio.",
+        "3 MIN / KEEP Listen back, label the best take, and make a one-sentence note about what changed the feeling of the progression."
+      ],
+      "bringHome": "Save one rootless accompaniment MIDI clip that feels like a conversation with the bass.",
+      "extension": "Do not treat omitted roots as a law: play a root when the arrangement actually benefits.",
+      "chords": [
+        {
+          "symbol": "B♭m11",
+          "bars": 4,
+          "notes": [
+            "B♭",
+            "D♭",
+            "F",
+            "A♭",
+            "E♭"
+          ]
+        },
+        {
+          "symbol": "E♭13",
+          "bars": 4,
+          "notes": [
+            "E♭",
+            "G",
+            "B♭",
+            "D♭",
+            "F",
+            "C"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "keys-06",
+      "instrument": "keys",
+      "number": 6,
+      "category": "COMPING RHYTHM",
+      "title": "Chords are percussion too",
+      "subtitle": "A Dorian • Hiatus Kaiyote–leaning broken beat",
+      "tonal": "A Dorian • Hiatus Kaiyote–leaning broken beat",
+      "progression": "Am9 × 4 | D13 × 4",
+      "groove": "103 BPM · 4/4 · 8 bars",
+      "goal": "A harmonic part can get its personality from placement, duration and silence. D13 introduces the F♯ that gives the A minor centre a Dorian lift.",
+      "palette": "Am9: A C E G B · D13: D F♯ A C E B · Try tight middle-voice stabs before full chords.",
+      "saxChords": "",
+      "backing": "Lopsided 3+3+2 accents in the drums, busy but economical A–D electric bass. No clicky quantised rigidity.",
+      "steps": [
+        "3 MIN / ARRIVE Hold Am9 for four whole beats. Now repeat it as one-beat, half-beat and offbeat stabs without moving a finger.",
+        "7 MIN / BUILD Play a repeating 3+3+2 eighth-note accent cell; deliberately move the first attack one eighth note later.",
+        "6 MIN / ALTER Keep the rhythmic cell identical through Am9 → D13. Then preserve the harmony but reverse the accents.",
+        "11 MIN / PLAY + RECORD Record three choruses: busy keys / almost empty keys / a carefully designed middle ground. Listen against kick and snare.",
+        "3 MIN / KEEP Listen back, label the best take, and make a one-sentence note about what changed the feeling of the progression."
+      ],
+      "bringHome": "A compelling two-bar comping motif with one displaced variation.",
+      "extension": "Use velocity differences to create ghosted chord attacks in MIDI.",
+      "chords": [
+        {
+          "symbol": "Am9",
+          "bars": 4,
+          "notes": [
+            "A",
+            "C",
+            "E",
+            "G",
+            "B"
+          ]
+        },
+        {
+          "symbol": "D13",
+          "bars": 4,
+          "notes": [
+            "D",
+            "F♯",
+            "A",
+            "C",
+            "E",
+            "B"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "keys-07",
+      "instrument": "keys",
+      "number": 7,
+      "category": "MAJOR-KEY RICHNESS",
+      "title": "Let the light in",
+      "subtitle": "D♭ major • warm R&B / soul",
+      "tonal": "D♭ major • warm R&B / soul",
+      "progression": "D♭maj9 × 2 | G♭maj9 × 2 | E♭m9 × 2 | A♭13 × 2",
+      "groove": "72 dotted-quarter BPM · 6/8 · 8 bars",
+      "goal": "I → IV → ii → V is familiar in function yet fresh through voicing and phrasing. A bright key can still sound intimate or strange.",
+      "palette": "D♭maj9: D♭ F A♭ C E♭ · G♭maj9: G♭ B♭ D♭ F A♭ · E♭m9: E♭ G♭ B♭ D♭ F · A♭13: A♭ C E♭ G♭ B♭ F",
+      "saxChords": "",
+      "backing": "Rolling bass that feels the 6/8 in two dotted-quarter pulses; tender cross-stick, room tone, little kick.",
+      "steps": [
+        "3 MIN / ARRIVE Hear D♭maj9 as home. Try the third F and seventh C on top before adding extensions.",
+        "7 MIN / BUILD Connect D♭maj9 → G♭maj9 using shared tones. Then let the low bass, not your lowest keyboard note, signal the move.",
+        "6 MIN / ALTER Give the 6/8 groove a spoken feel: some chords on pulse 1, some on pulse 2, and some just before the bar.",
+        "11 MIN / PLAY + RECORD Play a gentle eight-bar statement, then a more urgent version without changing chord identities.",
+        "3 MIN / KEEP Listen back, label the best take, and make a one-sentence note about what changed the feeling of the progression."
+      ],
+      "bringHome": "One 6/8 harmonic sketch with an emotionally clear return to D♭.",
+      "extension": "Try A♭13sus4 before A♭13 if you want a longer breath before the resolution.",
+      "chords": [
+        {
+          "symbol": "D♭maj9",
+          "bars": 2,
+          "notes": [
+            "D♭",
+            "F",
+            "A♭",
+            "C",
+            "E♭"
+          ]
+        },
+        {
+          "symbol": "G♭maj9",
+          "bars": 2,
+          "notes": [
+            "G♭",
+            "B♭",
+            "D♭",
+            "F",
+            "A♭"
+          ]
+        },
+        {
+          "symbol": "E♭m9",
+          "bars": 2,
+          "notes": [
+            "E♭",
+            "G♭",
+            "B♭",
+            "D♭",
+            "F"
+          ]
+        },
+        {
+          "symbol": "A♭13",
+          "bars": 2,
+          "notes": [
+            "A♭",
+            "C",
+            "E♭",
+            "G♭",
+            "B♭",
+            "F"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "keys-08",
+      "instrument": "keys",
+      "number": 8,
+      "category": "BORROWED CHORDS",
+      "title": "When the major key remembers sorrow",
+      "subtitle": "D major with minor iv • bittersweet soul",
+      "tonal": "D major with minor iv • bittersweet soul",
+      "progression": "Dmaj9 × 4 | Gmaj9 × 2 | Gm9 × 2 | D6/9 × 4",
+      "groove": "79 BPM · 4/4 · 12 bars",
+      "goal": "The borrowed G minor chord is outside D major. Gmaj9 → Gm9 darkens the fourth while D remains the home; it is a striking songwriting device.",
+      "palette": "Gmaj9: G B D F♯ A · Gm9: G B♭ D F A. Hear B → B♭ and F♯ → F; then D6/9: D F♯ A B E.",
+      "saxChords": "",
+      "backing": "A slow D–G–G–D shape, leaving a sustained bass under the G-major to G-minor colour change. Patient backbeat and warm sub.",
+      "steps": [
+        "3 MIN / ARRIVE Play Gmaj9 → Gm9 without changing register. Move only the notes that actually need to move.",
+        "7 MIN / BUILD Return to D6/9, hearing the B and F♯ warm the harmony again without making it syrupy.",
+        "6 MIN / ALTER Test three placements for the borrowed chord: two bars, one bar, or a fleeting pickup. Which tells the strongest story?",
+        "11 MIN / PLAY + RECORD Create an A section that sounds hopeful and a tiny borrowed-minor moment that makes the return feel earned.",
+        "3 MIN / KEEP Listen back, label the best take, and make a one-sentence note about what changed the feeling of the progression."
+      ],
+      "bringHome": "A twelve-bar MIDI passage that communicates a major-to-minor shadow clearly.",
+      "extension": "Learn the sound first; “modal interchange” is just the name for the borrowing.",
+      "chords": [
+        {
+          "symbol": "Dmaj9",
+          "bars": 4,
+          "notes": [
+            "D",
+            "F♯",
+            "A",
+            "C♯",
+            "E"
+          ]
+        },
+        {
+          "symbol": "Gmaj9",
+          "bars": 2,
+          "notes": [
+            "G",
+            "B",
+            "D",
+            "F♯",
+            "A"
+          ]
+        },
+        {
+          "symbol": "Gm9",
+          "bars": 2,
+          "notes": [
+            "G",
+            "B♭",
+            "D",
+            "F",
+            "A"
+          ]
+        },
+        {
+          "symbol": "D6/9",
+          "bars": 4,
+          "notes": [
+            "D",
+            "F♯",
+            "A",
+            "B",
+            "E"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "keys-09",
+      "instrument": "keys",
+      "number": 9,
+      "category": "FUNCTIONAL JAZZ",
+      "title": "A cadence with invisible threads",
+      "subtitle": "A major • contemporary jazz, not a piano exam",
+      "tonal": "A major • contemporary jazz, not a piano exam",
+      "progression": "Bm9 × 2 | E13 × 2 | Amaj9 × 4",
+      "groove": "92 BPM · 4/4 · 8 bars",
+      "goal": "This is a real ii–V–I, but the lesson is not to run scales. Follow two moving voices and hear tension settle into a major tonic.",
+      "palette": "Bm9: B D F♯ A C♯ · E13: E G♯ B D F♯ C♯ · Amaj9: A C♯ E G♯ B. Guide lines: D→D→C♯ and A→G♯→G♯.",
+      "saxChords": "",
+      "backing": "Explicit B–E–A roots with a drummer that breathes; brushed hi-hats, supple ride, slightly late snare.",
+      "steps": [
+        "3 MIN / ARRIVE Play only D→D→C♯ above the bass. Hear the harmony even without full chords.",
+        "7 MIN / BUILD Add A→G♯→G♯ as another voice. These are small, deliberate movements; then fill the middle voices around them.",
+        "6 MIN / ALTER Create one voiced cadence beginning with a very low top voice and another with a high floating top voice.",
+        "11 MIN / PLAY + RECORD Comp for three passes: sparse shells, full extended chords, and a variation with a held common tone.",
+        "3 MIN / KEEP Listen back, label the best take, and make a one-sentence note about what changed the feeling of the progression."
+      ],
+      "bringHome": "Two musically distinct ii–V–I voicings, both joined by intentional voice-leading.",
+      "extension": "Try E7(♭9) once; keep it only if that bite belongs to your piece.",
+      "chords": [
+        {
+          "symbol": "Bm9",
+          "bars": 2,
+          "notes": [
+            "B",
+            "D",
+            "F♯",
+            "A",
+            "C♯"
+          ]
+        },
+        {
+          "symbol": "E13",
+          "bars": 2,
+          "notes": [
+            "E",
+            "G♯",
+            "B",
+            "D",
+            "F♯",
+            "C♯"
+          ]
+        },
+        {
+          "symbol": "Amaj9",
+          "bars": 4,
+          "notes": [
+            "A",
+            "C♯",
+            "E",
+            "G♯",
+            "B"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "keys-10",
+      "instrument": "keys",
+      "number": 10,
+      "category": "MINOR-KEY FUNCTIONAL HARMONY",
+      "title": "The dark doorway home",
+      "subtitle": "A minor • cinematic / minor jazz cadence",
+      "tonal": "A minor • cinematic / minor jazz cadence",
+      "progression": "Bm7♭5 × 2 | E7(♭9) × 2 | Am9 × 4",
+      "groove": "82 BPM · 4/4 · 8 bars",
+      "goal": "A minor iiø–V–i works differently from the major cadence. The leading tone G♯ inside E7 wants to resolve upward to A.",
+      "palette": "Bm7♭5: B D F A · E7(♭9): E G♯ B D F · Am9: A C E G B. Listen for F→F→E and G♯→A.",
+      "saxChords": "",
+      "backing": "B–E–A movement with half-time cinematic drums, bowed-like synth-bass bloom on final A, no harmonic pad.",
+      "steps": [
+        "3 MIN / ARRIVE Play the half-diminished chord and identify the flattened fifth F by ear. This is not Bm7.",
+        "7 MIN / BUILD Find the G♯ in E7(♭9) and guide it to A. Make the arrival clear even at whisper volume.",
+        "6 MIN / ALTER Try E7 without the ♭9, then restore F. Is the added tension convincing or overdramatic?",
+        "11 MIN / PLAY + RECORD Compose an eight-bar prelude that repeats the cadence but saves its strongest Am9 voicing for the second time.",
+        "3 MIN / KEEP Listen back, label the best take, and make a one-sentence note about what changed the feeling of the progression."
+      ],
+      "bringHome": "A minor-key resolving progression that sounds unmistakably different from Lab 09.",
+      "extension": "Transpose later into B minor only if you want a darker original track, not because of a quota.",
+      "chords": [
+        {
+          "symbol": "Bm7♭5",
+          "bars": 2,
+          "notes": [
+            "B",
+            "D",
+            "F",
+            "A"
+          ]
+        },
+        {
+          "symbol": "E7(♭9)",
+          "bars": 2,
+          "notes": [
+            "E",
+            "G♯",
+            "B",
+            "D",
+            "F"
+          ]
+        },
+        {
+          "symbol": "Am9",
+          "bars": 4,
+          "notes": [
+            "A",
+            "C",
+            "E",
+            "G",
+            "B"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "keys-11",
+      "instrument": "keys",
+      "number": 11,
+      "category": "PEDALS AND SUSPENDED SPACE",
+      "title": "Keep the floor still",
+      "subtitle": "E minor • cosmic, restrained, modal",
+      "tonal": "E minor • cosmic, restrained, modal",
+      "progression": "Em11 × 2 | Cmaj9(♯11)/E × 2 | Am11/E × 2 | Em11 × 2",
+      "groove": "76 BPM · 4/4 · 8 bars",
+      "goal": "A single low E can support a journey through chord colours. Harmony changes above a fixed bass pedal; roots no longer have to walk.",
+      "palette": "Em11: E G B D F♯ A · Cmaj9(♯11): C E G B D F♯ · Am11: A C E G B D. The E bass stays underneath.",
+      "saxChords": "",
+      "backing": "Deep sustained E pedal, tiny rhythmic E pickups; toms and cymbal swells make the eight bars slowly breathe.",
+      "steps": [
+        "3 MIN / ARRIVE Sustain E in the backing. Change the notes above it very slowly; notice shared tones across all three chord worlds.",
+        "7 MIN / BUILD Keep one keyboard top note fixed while moving the inside voices. Then reverse: fixed inside, changing top.",
+        "6 MIN / ALTER Try a voicing that contains no E even though E remains in the bass. Can you still hear the centre?",
+        "11 MIN / PLAY + RECORD Make two versions: floating and ominous. Change octave, duration and density rather than the progression.",
+        "3 MIN / KEEP Listen back, label the best take, and make a one-sentence note about what changed the feeling of the progression."
+      ],
+      "bringHome": "A modal progression that moves unmistakably despite the unchanging bass note.",
+      "extension": "Use a synth texture for the MIDI notes, but still play the actual harmony live.",
+      "chords": [
+        {
+          "symbol": "Em11",
+          "bars": 2,
+          "notes": [
+            "E",
+            "G",
+            "B",
+            "D",
+            "F♯",
+            "A"
+          ]
+        },
+        {
+          "symbol": "Cmaj9(♯11)/E",
+          "bars": 2,
+          "notes": [
+            "C",
+            "E",
+            "G",
+            "B",
+            "D",
+            "F♯"
+          ]
+        },
+        {
+          "symbol": "Am11/E",
+          "bars": 2,
+          "notes": [
+            "A",
+            "C",
+            "E",
+            "G",
+            "B",
+            "D"
+          ]
+        },
+        {
+          "symbol": "Em11",
+          "bars": 2,
+          "notes": [
+            "E",
+            "G",
+            "B",
+            "D",
+            "F♯",
+            "A"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "keys-12",
+      "instrument": "keys",
+      "number": 12,
+      "category": "MODAL DARKNESS",
+      "title": "Phrygian gravity",
+      "subtitle": "E Phrygian • ritualistic space jazz",
+      "tonal": "E Phrygian • ritualistic space jazz",
+      "progression": "Em7 × 2 | Fmaj7(♯11)/E × 2 | G6/E × 2 | Fmaj7/E × 2",
+      "groove": "81 BPM · 4/4 · 8 bars",
+      "goal": "E Phrygian has F natural, a semitone above E. The bass never abandons E; the F is a colour of tension, not a new tonic.",
+      "palette": "Em7: E G B D · Fmaj7(♯11): F A C E B · G6: G B D E · Fmaj7: F A C E. E stays below them all.",
+      "saxChords": "",
+      "backing": "Steady E sub pulse, asymmetrical floor tom, dry rimshots and metallic noises. The groove must not imply F as a new home.",
+      "steps": [
+        "3 MIN / ARRIVE Against bass E, hold F then release to E. Name how that tiny distance changes the atmosphere.",
+        "7 MIN / BUILD Use only two notes above E, then grow them into Em7 and Fmaj7(♯11)/E. Avoid huge blocks at first.",
+        "6 MIN / ALTER Try the transition Fmaj7(♯11)/E → G6/E and listen for the shared B and E.",
+        "11 MIN / PLAY + RECORD Record a dark modal scene with strategically placed silences; resist filling every bar with dramatic chords.",
+        "3 MIN / KEEP Listen back, label the best take, and make a one-sentence note about what changed the feeling of the progression."
+      ],
+      "bringHome": "An eight-bar harmonic world whose tension depends on the Phrygian second.",
+      "extension": "Contrast briefly with E Aeolian (F♯) so you know the Phrygian colour by ear.",
+      "chords": [
+        {
+          "symbol": "Em7",
+          "bars": 2,
+          "notes": [
+            "E",
+            "G",
+            "B",
+            "D"
+          ]
+        },
+        {
+          "symbol": "Fmaj7(♯11)/E",
+          "bars": 2,
+          "notes": [
+            "F",
+            "A",
+            "C",
+            "E",
+            "B"
+          ]
+        },
+        {
+          "symbol": "G6/E",
+          "bars": 2,
+          "notes": [
+            "G",
+            "B",
+            "D",
+            "E"
+          ]
+        },
+        {
+          "symbol": "Fmaj7/E",
+          "bars": 2,
+          "notes": [
+            "F",
+            "A",
+            "C",
+            "E"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "keys-13",
+      "instrument": "keys",
+      "number": 13,
+      "category": "LYDIAN HARMONY",
+      "title": "The ceiling opens",
+      "subtitle": "A Lydian • glassy fusion / floating pads",
+      "tonal": "A Lydian • glassy fusion / floating pads",
+      "progression": "Amaj9(♯11) × 2 | B/A × 2 | Emaj9/A × 2 | Amaj9(♯11) × 2",
+      "groove": "88 BPM · 4/4 · 8 bars",
+      "goal": "A Lydian has D♯ instead of D natural. These chords give you an expansive major sound without leaning on a conventional V–I cadence.",
+      "palette": "Amaj9(♯11): A C♯ E G♯ B D♯ · B/A: A bass with B D♯ F♯ · Emaj9/A: A bass with E G♯ B D♯ F♯.",
+      "saxChords": "",
+      "backing": "A pedal with tiny octave pushes; syncopated but light kit, bright shaker and long spaces. No harmonic cushion.",
+      "steps": [
+        "3 MIN / ARRIVE Compare D natural and D♯ against sustained A. Hear D♯ as brightness, not as a “wrong” note.",
+        "7 MIN / BUILD Voice Amaj9(♯11) with the D♯ inside, then as the highest pitch. Which sounds more futuristic?",
+        "6 MIN / ALTER Move into B/A and Emaj9/A without dropping A in the bass. Explore one constant upper voice.",
+        "11 MIN / PLAY + RECORD Build a crescendo by increasing chord-register height and rhythmic intensity, not by adding new roots.",
+        "3 MIN / KEEP Listen back, label the best take, and make a one-sentence note about what changed the feeling of the progression."
+      ],
+      "bringHome": "An eight-bar A-Lydian progression that remains centred even while floating.",
+      "extension": "Keep this modal: avoid resolving to a routine Dmaj9 unless you mean to leave Lydian.",
+      "chords": [
+        {
+          "symbol": "Amaj9(♯11)",
+          "bars": 2,
+          "notes": [
+            "A",
+            "C♯",
+            "E",
+            "G♯",
+            "B",
+            "D♯"
+          ]
+        },
+        {
+          "symbol": "B/A",
+          "bars": 2,
+          "notes": [
+            "B",
+            "D♯",
+            "F♯"
+          ]
+        },
+        {
+          "symbol": "Emaj9/A",
+          "bars": 2,
+          "notes": [
+            "E",
+            "G♯",
+            "B",
+            "D♯",
+            "F♯"
+          ]
+        },
+        {
+          "symbol": "Amaj9(♯11)",
+          "bars": 2,
+          "notes": [
+            "A",
+            "C♯",
+            "E",
+            "G♯",
+            "B",
+            "D♯"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "keys-14",
+      "instrument": "keys",
+      "number": 14,
+      "category": "KEYBOARD IN DANCE MUSIC",
+      "title": "The four-on-the-floor harmonic engine",
+      "subtitle": "G major • jazz-house / disco-soul",
+      "tonal": "G major • jazz-house / disco-soul",
+      "progression": "Gmaj9 × 2 | Bm7(add11) × 2 | Em9 × 2 | Cmaj9 × 2",
+      "groove": "122 BPM · 4/4 · 8 bars",
+      "goal": "A groove can keep moving without needing complicated functional cadences. Rhythmic consistency, short releases and tiny voicing shifts become your hook.",
+      "palette": "Gmaj9: G B D F♯ A · Bm7(add11): B D F♯ A E · Em9: E G B D F♯ · Cmaj9: C E G B D.",
+      "saxChords": "",
+      "backing": "Four-on-the-floor kick, alive swung hats, running G–B–E–C bass, brief bass gaps where the keyboard can punch.",
+      "steps": [
+        "3 MIN / ARRIVE Comp every chord on the offbeat eighths. Then omit half of those attacks and see which version grooves harder.",
+        "7 MIN / BUILD Choose one compact voicing per chord. Fit them into one register before using octave jumps as a hook.",
+        "6 MIN / ALTER Create a bass/key conversation: leave the first beat empty for the kick, then answer with chords.",
+        "11 MIN / PLAY + RECORD Record a loop, then make a B variation by subtracting notes and shifting rhythm. Same chords, new section.",
+        "3 MIN / KEEP Listen back, label the best take, and make a one-sentence note about what changed the feeling of the progression."
+      ],
+      "bringHome": "Two related dance-floor MIDI chord clips: the main groove and a contrasting breakdown.",
+      "extension": "Try the main progression on a drier, shorter synth sound and compare it with lush Rhodes.",
+      "chords": [
+        {
+          "symbol": "Gmaj9",
+          "bars": 2,
+          "notes": [
+            "G",
+            "B",
+            "D",
+            "F♯",
+            "A"
+          ]
+        },
+        {
+          "symbol": "Bm7(add11)",
+          "bars": 2,
+          "notes": [
+            "B",
+            "D",
+            "F♯",
+            "A",
+            "E"
+          ]
+        },
+        {
+          "symbol": "Em9",
+          "bars": 2,
+          "notes": [
+            "E",
+            "G",
+            "B",
+            "D",
+            "F♯"
+          ]
+        },
+        {
+          "symbol": "Cmaj9",
+          "bars": 2,
+          "notes": [
+            "C",
+            "E",
+            "G",
+            "B",
+            "D"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "keys-15",
+      "instrument": "keys",
+      "number": 15,
+      "category": "CHROMATIC HARMONY",
+      "title": "Step sideways into another room",
+      "subtitle": "F♯ minor • Flying Lotus–leaning cosmic jazz",
+      "tonal": "F♯ minor • Flying Lotus–leaning cosmic jazz",
+      "progression": "F♯m9 × 4 | Gm9 × 2 | F♯m9 × 2 | C♯7(♭9) × 4",
+      "groove": "98 BPM · 4/4 · 12 bars",
+      "goal": "Side-slipping lifts a voicing by a semitone, creates a controlled outside sound, then restores the home centre. This is not a new permanent key.",
+      "palette": "F♯m9: F♯ A C♯ E G♯ · Gm9: G B♭ D F A · C♯7(♭9): C♯ E♯ G♯ B D.",
+      "saxChords": "",
+      "backing": "Glitchy bass plays F♯ then jumps with the harmony to G for two bars; abrasive drum layers thin when F♯ returns.",
+      "steps": [
+        "3 MIN / ARRIVE Play a compact F♯m9 voicing. Transpose the entire hand shape one semitone to Gm9; return exactly.",
+        "7 MIN / BUILD Keep identical rhythm through the sideways movement so the harmonic shock is obvious.",
+        "6 MIN / ALTER Try Gm9 for one bar instead of two. Does the music feel more mischievous or simply rushed?",
+        "11 MIN / PLAY + RECORD Re-enter F♯m9 and turn the last four bars into a C♯ dominant build that leads back to F♯.",
+        "3 MIN / KEEP Listen back, label the best take, and make a one-sentence note about what changed the feeling of the progression."
+      ],
+      "bringHome": "One controlled outside-and-back passage, saved as MIDI and ready for an original song.",
+      "extension": "Chromatic moves are seasoning; try them once in a piece, not on every loop.",
+      "chords": [
+        {
+          "symbol": "F♯m9",
+          "bars": 4,
+          "notes": [
+            "F♯",
+            "A",
+            "C♯",
+            "E",
+            "G♯"
+          ]
+        },
+        {
+          "symbol": "Gm9",
+          "bars": 2,
+          "notes": [
+            "G",
+            "B♭",
+            "D",
+            "F",
+            "A"
+          ]
+        },
+        {
+          "symbol": "F♯m9",
+          "bars": 2,
+          "notes": [
+            "F♯",
+            "A",
+            "C♯",
+            "E",
+            "G♯"
+          ]
+        },
+        {
+          "symbol": "C♯7(♭9)",
+          "bars": 4,
+          "notes": [
+            "C♯",
+            "E♯",
+            "G♯",
+            "B",
+            "D"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "keys-16",
+      "instrument": "keys",
+      "number": 16,
+      "category": "UNEXPECTED CHORD RELATIONSHIPS",
+      "title": "Two worlds share a note",
+      "subtitle": "A major with a chromatic mediant • cinematic future soul",
+      "tonal": "A major with a chromatic mediant • cinematic future soul",
+      "progression": "Amaj9 × 2 | Cmaj9 × 2 | Dmaj9 × 2 | Amaj9 × 2",
+      "groove": "73 BPM · 4/4 · 8 bars",
+      "goal": "A major and C major are a chromatic-mediant pair: roots a minor third apart, same chord quality, one common triad tone E. A lovely abrupt shift can still feel intentional.",
+      "palette": "Amaj9: A C♯ E G♯ B · Cmaj9: C E G B D · Dmaj9: D F♯ A C♯ E. The held note E connects all three.",
+      "saxChords": "",
+      "backing": "Very low, slow-moving bass states each root with confidence; halftime drums, warbly percussion and measured silence.",
+      "steps": [
+        "3 MIN / ARRIVE Hold E as a common top tone while the accompaniment changes A → C → D → A.",
+        "7 MIN / BUILD Voice Amaj9 → Cmaj9 with E in an inner voice; see if you can move the other notes by small intervals.",
+        "6 MIN / ALTER Compare an abrupt hard cut into C with a soft pickup. Both are musically valid; which tells your story?",
+        "11 MIN / PLAY + RECORD Create a four-chord original colour progression by swapping one destination chord while preserving one meaningful common tone.",
+        "3 MIN / KEEP Listen back, label the best take, and make a one-sentence note about what changed the feeling of the progression."
+      ],
+      "bringHome": "One short progression that makes an apparently surprising chord change feel purposeful.",
+      "extension": "This is a colour experiment, not evidence that A and C belong to one diatonic scale.",
+      "chords": [
+        {
+          "symbol": "Amaj9",
+          "bars": 2,
+          "notes": [
+            "A",
+            "C♯",
+            "E",
+            "G♯",
+            "B"
+          ]
+        },
+        {
+          "symbol": "Cmaj9",
+          "bars": 2,
+          "notes": [
+            "C",
+            "E",
+            "G",
+            "B",
+            "D"
+          ]
+        },
+        {
+          "symbol": "Dmaj9",
+          "bars": 2,
+          "notes": [
+            "D",
+            "F♯",
+            "A",
+            "C♯",
+            "E"
+          ]
+        },
+        {
+          "symbol": "Amaj9",
+          "bars": 2,
+          "notes": [
+            "A",
+            "C♯",
+            "E",
+            "G♯",
+            "B"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "keys-17",
+      "instrument": "keys",
+      "number": 17,
+      "category": "SLASH CHORDS AND BASS MOTION",
+      "title": "The bass writes the journey",
+      "subtitle": "C major • slinky neo-soul / soundtrack groove",
+      "tonal": "C major • slinky neo-soul / soundtrack groove",
+      "progression": "Cmaj9/E × 2 | Dm9/F × 2 | Fmaj9/A × 2 | G13/B × 2",
+      "groove": "90 BPM · 4/4 · 8 bars",
+      "goal": "In slash chords the bass note deliberately differs from, or specifies an inversion of, the upper chord. The motion E–F–A–B feels like its own melody.",
+      "palette": "Upper chords: C E G B D · D F A C E · F A C E G · G B D F A E. Bass notes: E, F, A, B respectively.",
+      "saxChords": "",
+      "backing": "A melodic bass part articulates E–F–A–B across the form, with enough silence to make each inversion audible. Dry broken drums.",
+      "steps": [
+        "3 MIN / ARRIVE Play the upper chords alone and hear their colour; then let the bass introduce E, F, A and B underneath.",
+        "7 MIN / BUILD Notice how a chord can feel different even when the keyboard voicing stays identical and only the bass changes.",
+        "6 MIN / ALTER Build a connecting top-note phrase, but let the bass remain the strongest melodic through-line.",
+        "11 MIN / PLAY + RECORD Try replacing G13/B with G13 (G in bass). Decide which ending wants to return to C.",
+        "3 MIN / KEEP Listen back, label the best take, and make a one-sentence note about what changed the feeling of the progression."
+      ],
+      "bringHome": "A slash-chord progression with a clearly audible bass-line story.",
+      "extension": "Treat slash notation as an arranging instruction, not a demand to double the bass with your left hand.",
+      "chords": [
+        {
+          "symbol": "Cmaj9/E",
+          "bars": 2,
+          "notes": [
+            "C",
+            "E",
+            "G",
+            "B",
+            "D"
+          ]
+        },
+        {
+          "symbol": "Dm9/F",
+          "bars": 2,
+          "notes": [
+            "D",
+            "F",
+            "A",
+            "C",
+            "E"
+          ]
+        },
+        {
+          "symbol": "Fmaj9/A",
+          "bars": 2,
+          "notes": [
+            "F",
+            "A",
+            "C",
+            "E",
+            "G"
+          ]
+        },
+        {
+          "symbol": "G13/B",
+          "bars": 2,
+          "notes": [
+            "G",
+            "B",
+            "D",
+            "F",
+            "A",
+            "E"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "keys-18",
+      "instrument": "keys",
+      "number": 18,
+      "category": "METRE AND CHORD PHRASING",
+      "title": "Five beats, one groove",
+      "subtitle": "E minor • live cosmic jazz in 5/4",
+      "tonal": "E minor • live cosmic jazz in 5/4",
+      "progression": "Em11 × 2 | Am9 × 2 | B7(♭9) × 2 | Em11 × 2",
+      "groove": "101 BPM · 5/4 · 8 bars",
+      "goal": "A progression is rhythmic as well as harmonic. Group 5/4 as 3+2, then 2+3; the chords stay the same but the story shifts.",
+      "palette": "Em11: E G B D F♯ A · Am9: A C E G B · B7(♭9): B D♯ F♯ A C. D♯ leads upward to E.",
+      "saxChords": "",
+      "backing": "Steady E–A–B–E pulse with grouped accents; punchy live kit whose five beats feel danced rather than counted.",
+      "steps": [
+        "3 MIN / ARRIVE Tap 3+2 over one Em11. Play the chord only on beats 1 and 4; then try beats 1 and 3 as a 2+3 answer.",
+        "7 MIN / BUILD Add Am9 and B7(♭9), keeping your groupings consistent while the roots move.",
+        "6 MIN / ALTER Design a version where the chord change comes before the downbeat as a rhythmic anticipation.",
+        "11 MIN / PLAY + RECORD Record a flowing eight-bar cycle, then a second with one bar deliberately empty before the final arrival.",
+        "3 MIN / KEEP Listen back, label the best take, and make a one-sentence note about what changed the feeling of the progression."
+      ],
+      "bringHome": "A 5/4 keyboard groove whose pulse feels natural, not like five squares in a row.",
+      "extension": "You can also work in straight 4/4 later; the rhythmic capability is the point here.",
+      "chords": [
+        {
+          "symbol": "Em11",
+          "bars": 2,
+          "notes": [
+            "E",
+            "G",
+            "B",
+            "D",
+            "F♯",
+            "A"
+          ]
+        },
+        {
+          "symbol": "Am9",
+          "bars": 2,
+          "notes": [
+            "A",
+            "C",
+            "E",
+            "G",
+            "B"
+          ]
+        },
+        {
+          "symbol": "B7(♭9)",
+          "bars": 2,
+          "notes": [
+            "B",
+            "D♯",
+            "F♯",
+            "A",
+            "C"
+          ]
+        },
+        {
+          "symbol": "Em11",
+          "bars": 2,
+          "notes": [
+            "E",
+            "G",
+            "B",
+            "D",
+            "F♯",
+            "A"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "keys-19",
+      "instrument": "keys",
+      "number": 19,
+      "category": "FROM LOOP TO SONG",
+      "title": "Build an entire harmonic journey",
+      "subtitle": "B♭ minor / D♭ major • Rye Daze performance lab",
+      "tonal": "B♭ minor / D♭ major • Rye Daze performance lab",
+      "progression": "A: B♭m9 | G♭maj9 | E♭m9 | F7(♭9) → B: D♭maj9 | E♭m9 | A♭13 | D♭maj9",
+      "groove": "88 BPM · 4/4 · 48 bars",
+      "goal": "You can return to the same chords and still have a new section. Register, density, voicing, timing, bass emphasis and a shift from minor to relative major can carry a full song.",
+      "palette": "B♭m9: B♭ D♭ F A♭ C · G♭maj9: G♭ B♭ D♭ F A♭ · E♭m9: E♭ G♭ B♭ D♭ F · F7(♭9): F A C E♭ G♭ · D♭maj9: D♭ F A♭ C E♭ · A♭13: A♭ C E♭ G♭ B♭ F.",
+      "saxChords": "",
+      "backing": "Produce drums+bass for 48 bars: intro hints; A full groove; A development; B changes emphasis to D♭; return restores B♭ with one new bass or drum feature. No keyboard harmony printed into the backing.",
+      "steps": [
+        "3 MIN / ARRIVE Write an eight-bar A loop in B♭ minor. Play three alternative voicings for the first chord and select one.",
+        "7 MIN / BUILD Write B in the relative major D♭. Keep at least one recognisable rhythmic or top-note identity from A.",
+        "6 MIN / ALTER Plan a 48-bar form: INTRO 1–8 / A 9–24 / A DEVELOPMENT 25–32 / B 33–40 / RETURN 41– 48.",
+        "11 MIN / PLAY + RECORD Record the whole chord part as MIDI. Create contrast with missing chords, register and movement rather than endless new material.",
+        "3 MIN / KEEP Listen back, label the best take, and make a one-sentence note about what changed the feeling of the progression."
+      ],
+      "bringHome": "A complete 48-bar harmony performance ready for bass, drums, sax, vocals and production.",
+      "extension": "This is a working song sketch, not an exam. If the best piece breaks the blueprint, follow the piece. Learning happens when the sounds become yours These 19 labs are a curated music-first collection, not a staircase you must climb in order. You can choose by emotion (dark / bright / suspended / groovy), by a real song you are making, or by the musical ability you want to train today. Do not multiply practice sessions by all ten favourite minor/major tonics. Transpose only when a different register or tonal centre genuinely serves a piece. Suggested creative workflow in ConsciousConnection 1. Choose PRACTICE AN INSTRUMENT → KEYS STUDIO. 2. Select a lab by the capability you want (harmonic colour, voice-leading, groove or structure). 3. Load its saved Ableton rhythm-section bed and choose your own polyphonic sound. 4. Play, listen, alter, then record one good MIDI pass. 5. Save a clip with key, voicing idea, tempo and the groove feel. 6. If a clip becomes a song, open WORK ON AN EXISTING SONG rather than collecting endless loops. Minimal record-keeping A useful practice history could store: lab ID • musical centre • sound patch • one MIDI clip • the single voicing/progression discovery • link to song/project. No grades, no endless streaks, no pressure to be a virtuoso before you have permission to create. A final reminder The chord chart is the starting line. The point is the sound you choose to keep.",
+      "chords": [
+        {
+          "symbol": "B♭m9",
+          "bars": 0,
+          "notes": [
+            "B♭",
+            "D♭",
+            "F",
+            "A♭",
+            "C"
+          ]
+        },
+        {
+          "symbol": "G♭maj9",
+          "bars": 0,
+          "notes": [
+            "G♭",
+            "B♭",
+            "D♭",
+            "F",
+            "A♭"
+          ]
+        },
+        {
+          "symbol": "E♭m9",
+          "bars": 0,
+          "notes": [
+            "E♭",
+            "G♭",
+            "B♭",
+            "D♭",
+            "F"
+          ]
+        },
+        {
+          "symbol": "F7(♭9)",
+          "bars": 0,
+          "notes": [
+            "F",
+            "A",
+            "C",
+            "E♭",
+            "G♭"
+          ]
+        },
+        {
+          "symbol": "D♭maj9",
+          "bars": 0,
+          "notes": [
+            "D♭",
+            "F",
+            "A♭",
+            "C",
+            "E♭"
+          ]
+        },
+        {
+          "symbol": "E♭m9",
+          "bars": 0,
+          "notes": [
+            "E♭",
+            "G♭",
+            "B♭",
+            "D♭",
+            "F"
+          ]
+        },
+        {
+          "symbol": "A♭13",
+          "bars": 0,
+          "notes": [
+            "A♭",
+            "C",
+            "E♭",
+            "G♭",
+            "B♭",
+            "F"
+          ]
+        },
+        {
+          "symbol": "D♭maj9",
+          "bars": 0,
+          "notes": [
+            "D♭",
+            "F",
+            "A♭",
+            "C",
+            "E♭"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sax-01",
+      "instrument": "sax",
+      "number": 1,
+      "category": "EAR → SAX",
+      "title": "The phrase you can already hear",
+      "subtitle": "",
+      "tonal": "B minor → written G♯ minor",
+      "progression": "Bm9 × 8",
+      "groove": "86 BPM · 4/4 · Loose jazz-hip-hop · 8 bars",
+      "goal": "Translate music already present in your imagination into confident alto movement. This is not a lesson in singing or inventing melody.",
+      "palette": "G♯ A♯ B C♯ D♯ E F♯",
+      "saxChords": "G♯ m9 × 8",
+      "backing": "Human drums with a lazy snare; electric bass holds the B centre with small responses; Rhodes plays Bm9 sparingly; soft tape/noise textures. No answering lead instrument.",
+      "steps": [
+        "3 MIN · ARRIVE Find a comfortable G♯ and B. Play both with the rhythmic feel of the track rather than an isolated schoolbook tone.",
+        "7 MIN · HANDS CATCH UP Move between written G♯–B–D♯ and G♯–A♯–B–C♯, first in your middle register then in a second comfortable register. Change direction as often as you like; correct only the transitions that catch.",
+        "5 MIN · IMAGINE → PLAY Hear a short 3–6-note phrase internally (or vocalise it if useful). Play it on the alto; take as many attempts as needed, then reproduce it starting on a different beat.",
+        "12 MIN · WITH THE BAND Four minutes using short answers to the bass, four minutes developing one imagined phrase, four minutes completely free. Do not fill every bar.",
+        "3 MIN · CAPTURE Record a phrase you really heard before you played it, and identify one physical movement worth revisiting."
+      ],
+      "bringHome": "A recorded melodic idea that genuinely began in your imagination.",
+      "extension": "Try later: concert F♯ minor or B♭ minor, each with a purpose-built full backing.",
+      "chords": [
+        {
+          "symbol": "Bm9",
+          "bars": 8,
+          "notes": []
+        }
+      ]
+    },
+    {
+      "id": "sax-02",
+      "instrument": "sax",
+      "number": 2,
+      "category": "INSTRUMENTAL FREEDOM",
+      "title": "The instrument as a landscape",
+      "subtitle": "",
+      "tonal": "F♯minor → written D♯ minor",
+      "progression": "F♯m9 × 8",
+      "groove": "76 BPM · 4/4 · Sparse modal jazz · 8 bars",
+      "goal": "Improve physical orientation in all registers so a note or interval can be found without taking a familiar scale run first.",
+      "palette": "D♯ E♯ F♯ G♯ A♯ B C♯",
+      "saxChords": "D♯ m9 × 8",
+      "backing": "Long bass pedal centred on F♯, quiet low tom and broken cymbal details, Rhodes suspended voicings. The backing must be sparse enough to hear half-step motion clearly.",
+      "steps": [
+        "4 MIN · SOUND MAP Begin near the lowest easy note and slowly ascend in chromatic steps through a comfortable range. No strained altissimo; keep notes even.",
+        "8 MIN · RANDOM DESTINATIONS Choose arbitrary written starting notes. Move +1 semitone, −2 semitones, +minor third, −perfect fourth. Say or imagine the destination before fingering it. Repeat around any troublesome register break.",
+        "4 MIN · HEAR THE INTERVAL Imagine two isolated notes and find both; alternate between a step and a leap, without anchoring everything to D♯.",
+        "11 MIN · WITH THE BAND Improvise phrases that begin in different parts of the horn. Use chromatic passing tones intentionally; the backing is D♯ minor, but this technical exercise is not restricted to its scale.",
+        "3 MIN · CAPTURE Write down the specific fingering or register shift that disrupted an otherwise musical idea."
+      ],
+      "bringHome": "Greater confidence starting from unfamiliar written notes and moving in unexpected directions.",
+      "extension": "Entirely portable across keys: it does not require ten separate printed copies.",
+      "chords": [
+        {
+          "symbol": "F♯m9",
+          "bars": 8,
+          "notes": []
+        }
+      ]
+    },
+    {
+      "id": "sax-03",
+      "instrument": "sax",
+      "number": 3,
+      "category": "SOUND AND EXPRESSION",
+      "title": "Make one note irresistible",
+      "subtitle": "",
+      "tonal": "D♭ major → written B♭ major",
+      "progression": "D♭maj9 × 8",
+      "groove": "70 BPM · 4/4 · Slow Rhodes soul · 8 bars",
+      "goal": "Use tone, breath, attack, intonation and length to make a tiny amount of melodic material compelling.",
+      "palette": "B♭ C D E♭ F G A",
+      "saxChords": "B♭maj9 × 8",
+      "backing": "Warm sustained Rhodes with long gaps; rounded melodic bass; deliberately minimal backbeat. Leave generous space for the alto attack and note decay.",
+      "steps": [
+        "5 MIN · ONE BEAUTIFUL SOUND Use written D, A and C, one at a time. Sustain each with a gentle dynamic swell, then practise three different beginnings to the same note.",
+        "8 MIN · SHAPE IT Play B♭–D–F–A at very soft, medium and full-but-relaxed dynamics. Repeat a four-note phrase legato, then with light separated attacks, then with a delayed entrance.",
+        "3 MIN · PRE-HEAR EXPRESSION Imagine an intimate version of the phrase and an urgent version. Keep the pitches identical; use the horn to express the difference.",
+        "11 MIN · WITH THE BAND Build a solo with no more than four distinct written notes for the first chorus. Add notes only when expression and phrasing call for them.",
+        "3 MIN · CAPTURE Record two performances of one phrase that sound emotionally different without altering its notes."
+      ],
+      "bringHome": "A deliberate, expressive difference audible in two takes of the same melodic phrase.",
+      "extension": "An optional contrasting setting is concert A major; it needs its own voicing and bass production.",
+      "chords": [
+        {
+          "symbol": "D♭maj9",
+          "bars": 8,
+          "notes": []
+        }
+      ]
+    },
+    {
+      "id": "sax-04",
+      "instrument": "sax",
+      "number": 4,
+      "category": "GROOVE",
+      "title": "Break the beat",
+      "subtitle": "",
+      "tonal": "A minor → written F♯ minor",
+      "progression": "Am9 × 8",
+      "groove": "102 BPM · 4/4 · Broken beat / jazz-fusion · 8 bars",
+      "goal": "Make rhythm, placement and silence the main events—even with only one or two notes.",
+      "palette": "F♯ G♯ A B C♯ D E",
+      "saxChords": "F♯ m9 × 8",
+      "backing": "Broken, syncopated live-sounding kick and snare; active but simple A- centred bass; Rhodes on offbeats, not every downbeat. No melodic hook.",
+      "steps": [
+        "3 MIN · LOCK INTO THE GROOVE Play written F♯ as short offbeat stabs. Alternate leaving entire bars empty.",
+        "8 MIN · DISPLACE A CELL Take a 3+3+2 eighth-note accent pattern on F♯–A–C♯. Move the same cell one eighth later without changing its internal spacing; return to beat one on purpose.",
+        "4 MIN · HEAR BEFORE PLAYING Silently imagine one two-bar rhythm, then perform it on a single pitch before assigning it three pitches.",
+        "12 MIN · WITH THE BAND Four minutes one note; four minutes two notes and displacement; four minutes open note choice but preserve one rhythmic identity across choruses.",
+        "3 MIN · CAPTURE Save the cleanest two-bar rhythmic motif and a deliberately displaced version."
+      ],
+      "bringHome": "One groove-based motif that works in two different metric positions.",
+      "extension": "Try concert E minor later with a different broken-beat pattern.",
+      "chords": [
+        {
+          "symbol": "Am9",
+          "bars": 8,
+          "notes": []
+        }
+      ]
+    },
+    {
+      "id": "sax-05",
+      "instrument": "sax",
+      "number": 5,
+      "category": "MELODIC DEVELOPMENT",
+      "title": "Make a motif do the work",
+      "subtitle": "",
+      "tonal": "E minor → written C♯ minor",
+      "progression": "Em9 × 4 | Am9 × 4",
+      "groove": "91 BPM · 4/4 · Dusty jazz-hip-hop · 8 bars",
+      "goal": "Find out how far one recognisable idea can travel without dissolving into continuous new material.",
+      "palette": "C♯ D♯ E F♯ G♯ A B",
+      "saxChords": "C♯ m9 × 4 | F♯ m9 × 4",
+      "backing": "Crunchy but quiet kit; low electric bass clearly shifts E→A; two sparse Rhodes voicings; very light tape wobble.",
+      "steps": [
+        "4 MIN · CREATE THE SEED Choose one three- or four-note cell, such as written C♯–E–F♯–G♯. Practise it slowly until its rhythm feels unmistakable.",
+        "7 MIN · FIVE MUTATIONS Keep the contour but change one thing at a time: rhythm, final note, direction, register, or the point where the phrase begins.",
+        "4 MIN · HEAR A VARIATION Imagine a version that belongs over written F♯m9 instead of C ♯m9. Find it without adding a pile of unrelated notes.",
+        "12 MIN · WITH THE BAND Chorus 1: present the seed. Chorus 2: develop it over the second harmony. Chorus 3: briefly contrast it. Chorus 4: return to the original idea with a changed ending.",
+        "3 MIN · CAPTURE Label your original motif and the variation that sounds most convincing."
+      ],
+      "bringHome": "The beginning and end of a recorded improvisation sound connected.",
+      "extension": "This would also be valuable over B minor → E minor with its own track.",
+      "chords": [
+        {
+          "symbol": "Em9",
+          "bars": 4,
+          "notes": []
+        },
+        {
+          "symbol": "Am9",
+          "bars": 4,
+          "notes": []
+        }
+      ]
+    },
+    {
+      "id": "sax-06",
+      "instrument": "sax",
+      "number": 6,
+      "category": "PHRASING",
+      "title": "Conversation in six-eight",
+      "subtitle": "",
+      "tonal": "D♭ major → relative B♭ minor",
+      "progression": "D♭maj9 × 4 | B♭m9 × 4",
+      "groove": "72 dotted-quarter BPM · 6/8 · Rolling neo-soul · 8 bars",
+      "goal": "Make your improvisation sound like a dialogue, using timing and register to differentiate question from answer.",
+      "palette": "B♭ major notes: B♭ C D E♭ F G A. Relative minor: G A B♭ C D E♭ F (written).",
+      "saxChords": "B♭maj9 × 4 | Gm9 × 4",
+      "backing": "Gentle cross-stick and floor tom, suspended Rhodes, flowing bass that changes D♭→B♭. The groove is felt in two dotted-quarter pulses per bar.",
+      "steps": [
+        "3 MIN · FEEL SIX-EIGHT Play one sustained written B♭ across one bar, then enter on the fourth eighth-note of the following bar.",
+        "7 MIN · QUESTION AND ANSWER Play a two-bar question using B♭–D–F. Answer over written Gm9 using G– B♭–D, either in a different register or with a contrasting rhythm.",
+        "5 MIN · INVENT THE RESPONSE Play a short question, pause, and hear its answer before touching the horn again.",
+        "12 MIN · WITH THE BAND For two choruses use strict two-bar call / two-bar response. For the next two, vary phrase lengths while retaining a conversational feeling.",
+        "3 MIN · CAPTURE Save a pair of phrases that genuinely sound as though one prompted the other."
+      ],
+      "bringHome": "A clear question, a pause, and a musically related answer.",
+      "extension": "This single practice intentionally explores a favourite relative major/minor pair. No need to make two near-identical lessons.",
+      "chords": [
+        {
+          "symbol": "D♭maj9",
+          "bars": 4,
+          "notes": []
+        },
+        {
+          "symbol": "B♭m9",
+          "bars": 4,
+          "notes": []
+        }
+      ]
+    },
+    {
+      "id": "sax-07",
+      "instrument": "sax",
+      "number": 7,
+      "category": "CONTOUR AND REGISTER",
+      "title": "Draw the shape of a melody",
+      "subtitle": "",
+      "tonal": "D major → written B major",
+      "progression": "Dmaj9 × 4 | Gmaj9 × 4 | Dmaj9 × 4",
+      "groove": "83 BPM · 4/4 · Open contemporary jazz · 12 bars",
+      "goal": "Become deliberate about melodic rise, fall, repetition and the emotional effect of register.",
+      "palette": "B C♯ D♯ E F♯ G♯ A♯",
+      "saxChords": "Bmaj9 × 4 | Emaj9 × 4 | Bmaj9 × 4",
+      "backing": "Clear bass pedal/root moves D–G–D, patient kit, medium-long Rhodes chords. Thin the harmony during sax leaps.",
+      "steps": [
+        "4 MIN · REGISTER EASE Slowly connect written B–F♯–B across octaves only within a comfortable range; smooth the transitions and breathing.",
+        "7 MIN · CONTOUR DRAWINGS Create four shapes using any scale notes: rise then fall, fall then leap up, repeated plateau, and a single large arch. Play each without filling every interval in with a scale.",
+        "4 MIN · IMAGINE SHAPE FIRST Hear a high-point and a low-point before selecting notes; then find the phrase.",
+        "12 MIN · WITH THE BAND Make the first chorus narrow in range, the second higher and more spacious, and the third return to your starting range. Let the backing’s Gmaj9 section alter your destination notes.",
+        "3 MIN · CAPTURE Record a passage with a clear melodic high point, not simply a highest note reached by accident."
+      ],
+      "bringHome": "A solo that has an intentional contour and register journey.",
+      "extension": "Any key can support this, but D major is a beautiful starting sound.",
+      "chords": [
+        {
+          "symbol": "Dmaj9",
+          "bars": 4,
+          "notes": []
+        },
+        {
+          "symbol": "Gmaj9",
+          "bars": 4,
+          "notes": []
+        },
+        {
+          "symbol": "Dmaj9",
+          "bars": 4,
+          "notes": []
+        }
+      ]
+    },
+    {
+      "id": "sax-08",
+      "instrument": "sax",
+      "number": 8,
+      "category": "PENTATONIC LANGUAGE",
+      "title": "Minor pentatonic, no clichés",
+      "subtitle": "",
+      "tonal": "B♭ minor → written G minor",
+      "progression": "B♭m11 × 8",
+      "groove": "97 BPM · 4/4 · Low-slung jazz-funk · 8 bars",
+      "goal": "Use the compact pentatonic vocabulary for rhythm, phrasing and larger melodic shapes—not endless up-and-down pentatonic runs.",
+      "palette": "G minor pentatonic: G B♭ C D F",
+      "saxChords": "Gm11 × 8",
+      "backing": "Heavy, syncopated electric bass, roomy kit with broken accents, clipped minor-eleven electric-key stabs and air between phrases.",
+      "steps": [
+        "4 MIN · OWN THE FIVE NOTES Move between written G–B♭–C–D–F without always returning to G. Explore one familiar and one awkward register.",
+        "7 MIN · INTERVALS OVER LADDERS Practise the jumps G→D, B♭→F, C→G (in a higher register if comfortable), and descending answers, with uneven rhythmic lengths.",
+        "4 MIN · HEAR THREE-NOTE HOOKS Invent a tiny pentatonic hook and reproduce it at three different rhythmic positions.",
+        "12 MIN · WITH THE BAND Work in short conversational bursts. Try one chorus that never starts on the tonic, one that emphasises the fourth, and one that lets the groove lead all decisions.",
+        "3 MIN · CAPTURE Save a pentatonic motif whose character comes from rhythm and contour rather than speed."
+      ],
+      "bringHome": "A melodic hook you could imagine using in an actual Rye Daze track.",
+      "extension": "Optional second sound: B minor with a distinctly different groove.",
+      "chords": [
+        {
+          "symbol": "B♭m11",
+          "bars": 8,
+          "notes": []
+        }
+      ]
+    },
+    {
+      "id": "sax-09",
+      "instrument": "sax",
+      "number": 9,
+      "category": "PENTATONIC LANGUAGE",
+      "title": "Major pentatonic with bite",
+      "subtitle": "",
+      "tonal": "G major → written E major",
+      "progression": "Gmaj9 × 8",
+      "groove": "104 BPM · 4/4 · Bright syncopated fusion · 8 bars",
+      "goal": "Avoid syrupy scalar major phrasing; make the simple five-note colour sound modern and rhythmically restless.",
+      "palette": "E major pentatonic: E F♯ G♯ B C♯",
+      "saxChords": "Emaj9 × 8",
+      "backing": "Punchy broken drums, agile bass locked around G, clipped glassy Rhodes voicings; energetic but with melodic room.",
+      "steps": [
+        "3 MIN · FIVE PITCHES, VARIED TOUCH Warm up with E–F♯–G♯–B–C♯ using short accents, quiet ghost attacks and longer notes.",
+        "8 MIN · ANGULAR CONNECTIONS Try E→B→F♯→C♯ and G♯→E→C♯→B; move rhythms rather than always playing straight eighths.",
+        "4 MIN · INVENT A RIFF Hear a two-bar figure that a keyboard or guitar could double in a live set, and play it consistently.",
+        "12 MIN · WITH THE BAND Repeat the riff, then interrupt it with rests, then improvise answers over the same chord. Test whether one motif can survive several choruses.",
+        "3 MIN · CAPTURE Record a riff that would remain interesting if a drummer repeated it underneath."
+      ],
+      "bringHome": "A rhythmically alive, memorable major-pentatonic motif.",
+      "extension": "Explore concert C major as a second option only if it inspires a different piece of music.",
+      "chords": [
+        {
+          "symbol": "Gmaj9",
+          "bars": 8,
+          "notes": []
+        }
+      ]
+    },
+    {
+      "id": "sax-10",
+      "instrument": "sax",
+      "number": 10,
+      "category": "MODAL COLOUR",
+      "title": "Dorian after dark",
+      "subtitle": "",
+      "tonal": "B minor centre → G♯ Aeolian / G♯ Dorian",
+      "progression": "Bm9 × 4 | Gmaj7/B × 4 | Bm9 × 4 | E13/B × 4",
+      "groove": "92 BPM · 4/4 · Astral broken beat · 16 bars",
+      "goal": "Hear and play the difference between the natural-minor sixth and the Dorian natural sixth— not just memorise a new fingering.",
+      "palette": "Aeolian: G♯ A♯ B C♯ D♯ E F♯. Dorian: G♯ A♯ B C♯ D♯ E♯ F♯.",
+      "saxChords": "G♯ m9 × 4 | Emaj7/G♯ × 4 | G♯ m9 × 4 | C♯ 13/G♯ × 4",
+      "backing": "A sustained concert B bass centre beneath two harmonic atmospheres. First eight bars emphasise Aeolian G-natural; last eight use E13/B to bring out Dorian G ♯. Rhodes voicings should make the sixth audible without crowding the solo.",
+      "steps": [
+        "4 MIN · FIND THE COLOUR On alto, play E–E♯–F♯ slowly over a sustained written G♯ centre. Hear how each note behaves.",
+        "7 MIN · TWO LANDSCAPES In the first eight-bar environment, build G♯ minor phrases featuring E; in the final environment replace it with E♯, the Dorian sixth. Do not mix them unconsciously during the comparison.",
+        "4 MIN · HEAR THE PIVOT Imagine one phrase that changes only one note when the accompaniment shifts. Find both versions.",
+        "12 MIN · WITH THE BAND Alternate restrained Aeolian phrases and open Dorian phrases. Eventually make the mode shift a dramatic event in a continuing solo.",
+        "3 MIN · CAPTURE Record the same motif twice, with E then E♯, and listen to the change in colour."
+      ],
+      "bringHome": "An audible modal contrast using the changed sixth as a creative decision.",
+      "extension": "Revisit the Dorian colour in concert F♯ minor once this setting feels natural.",
+      "chords": [
+        {
+          "symbol": "Bm9",
+          "bars": 4,
+          "notes": []
+        },
+        {
+          "symbol": "Gmaj7/B",
+          "bars": 4,
+          "notes": []
+        },
+        {
+          "symbol": "Bm9",
+          "bars": 4,
+          "notes": []
+        },
+        {
+          "symbol": "E13/B",
+          "bars": 4,
+          "notes": []
+        }
+      ]
+    },
+    {
+      "id": "sax-11",
+      "instrument": "sax",
+      "number": 11,
+      "category": "MODAL COLOUR",
+      "title": "Lydian daylight",
+      "subtitle": "",
+      "tonal": "D Lydian → written B Lydian",
+      "progression": "Dmaj9(♯11) × 8",
+      "groove": "84 BPM · 4/4 · Floating cosmic jazz · 8 bars",
+      "goal": "Enjoy the floating tension of the Lydian raised fourth without making every phrase a scale demonstration.",
+      "palette": "B C♯ D♯ E♯ F♯ G♯ A♯",
+      "saxChords": "Bmaj9(♯ 11) × 8",
+      "backing": "Deep D-centred bass, glassy pads, soft swung/broken percussion; long chords with G♯ conspicuous in one chordal voice, not an intrusive keyboard melody.",
+      "steps": [
+        "4 MIN · MEET ♯4 Play written E then E♯ over the B-centred written harmony; hold E ♯ and listen to it alongside D♯ and F♯.",
+        "7 MIN · BUILD EXPRESSIVE FRAGMENTS Practise B–D♯–E♯–F♯ and A♯–G♯–E♯–D♯ at different dynamics; include wide leaps to the colour tone.",
+        "4 MIN · HEAR BEFORE FINGERING Imagine a phrase that briefly rests on E♯ rather than resolving immediately. Find it.",
+        "12 MIN · WITH THE BAND First chorus omit the E♯, second chorus highlight it, third chorus treat it as one expressive option among the whole collection.",
+        "3 MIN · CAPTURE Save a phrase whose character depends on the raised fourth, not on rapid playing."
+      ],
+      "bringHome": "A floating major-key phrase that makes Lydian colour unmistakable.",
+      "extension": "A second musical setting could be concert D♭ Lydian if a new track genuinely adds something.",
+      "chords": [
+        {
+          "symbol": "Dmaj9(♯11)",
+          "bars": 8,
+          "notes": []
+        }
+      ]
+    },
+    {
+      "id": "sax-12",
+      "instrument": "sax",
+      "number": 12,
+      "category": "MODAL COLOUR",
+      "title": "Phrygian gravity",
+      "subtitle": "",
+      "tonal": "E Phrygian → written C♯ Phrygian",
+      "progression": "Em7(add♭9) × 4 | Fmaj7(♯11)/E × 4",
+      "groove": "81 BPM · 4/4 · Dark ritualistic modal jazz · 8 bars",
+      "goal": "Use the semitone above the tonic as a source of tension, without confusing Phrygian with ordinary natural minor.",
+      "palette": "C♯ D E F♯ G♯ A B",
+      "saxChords": "C♯m7(add♭9) × 4 | Dmaj7(♯11)/C♯ × 4",
+      "backing": "Persistent low E pedal, sparse tom pattern, restrained distorted sub layer, almost static eerie chord cluster. The bass must not suggest a new F tonic.",
+      "steps": [
+        "4 MIN · KNOW THE DIFFERENCE Against written C♯, play D natural (Phrygian ♭2), then D♯ (natural minor 2), then return to D natural. Hear both, but keep the main Phrygian material separate.",
+        "7 MIN · SHAPE THE PULL Use C♯–D–E–C♯, B–A–G♯–F♯ and short pauses; aim for control rather than constant b2 repetition.",
+        "4 MIN · HEAR A DARK PHRASE Imagine a four-note question that touches D natural and a response that resolves to C♯.",
+        "12 MIN · WITH THE BAND Play in sparse fragments at first. Increase rhythmic density only when you can preserve the tonal gravity of the E bass pedal.",
+        "3 MIN · CAPTURE Record a motif where the ♭2 feels intentionally expressive, not like an accidental wrong note."
+      ],
+      "bringHome": "A compelling, grounded Phrygian phrase with deliberate ♭2 colour.",
+      "extension": "Try a more percussive E-Phrygian groove before adding a different tonic.",
+      "chords": [
+        {
+          "symbol": "Em7(add♭9)",
+          "bars": 4,
+          "notes": []
+        },
+        {
+          "symbol": "Fmaj7(♯11)/E",
+          "bars": 4,
+          "notes": []
+        }
+      ]
+    },
+    {
+      "id": "sax-13",
+      "instrument": "sax",
+      "number": 13,
+      "category": "BLUES LANGUAGE",
+      "title": "Minor blues storyteller",
+      "subtitle": "",
+      "tonal": "F♯minor blues → written D♯ minor blues",
+      "progression": "F♯m7 × 4 | Bm7 × 2 | F♯m7 × 2 | C♯7(♭9) × 1 | Bm7 × 1 | F♯m7 × 1 | C♯7(♭9) × 1",
+      "groove": "90 BPM · 4/4 · Slow greasy minor blues · 12 bars",
+      "goal": "Phrase in the blues language while hearing the changing harmony; blues is more than a scale shape.",
+      "palette": "Written D♯ minor pentatonic: D♯ F♯ G♯ A♯ C♯. Blues note: A natural.",
+      "saxChords": "D♯m7 × 4 | G♯m7 × 2 | D♯m7 × 2 | A♯7(♭9) × 1 | G♯m7 × 1 | D♯m7 × 1 | A♯7(♭9) × 1",
+      "backing": "Behind-the-beat drums, warm bass and electric-piano comping that clearly marks the twelve-bar form. Keep harmonic density low on the turnaround.",
+      "steps": [
+        "4 MIN · ONE EXPRESSIVE TURN Work written F♯–G♯–A–A♯ slowly, exploring articulation and the blue-note inflection without forcing pitch bends.",
+        "7 MIN · TWELVE-BAR TARGETS Locate D♯m7 chord tones, then G♯m7 tones. Hear the leading-tone colour that the A♯7 dominant introduces; avoid pretending all notes remain inside the blues scale.",
+        "4 MIN · CALL-AND-RESPONSE Imagine a one-bar blues question and a two-bar answer with a distinctive rhythmic ending.",
+        "12 MIN · WITH THE BAND Play at least three twelve-bar choruses: sparse statement, development, freer response to the iv and V chords.",
+        "3 MIN · CAPTURE Save a twelve-bar passage with a clear chorus shape and an expressive turnaround."
+      ],
+      "bringHome": "A chorus where blues articulation and harmonic movement both matter.",
+      "extension": "Possible later transposition: B♭ minor blues; build and check its turnaround separately.",
+      "chords": [
+        {
+          "symbol": "F♯m7",
+          "bars": 4,
+          "notes": []
+        },
+        {
+          "symbol": "Bm7",
+          "bars": 2,
+          "notes": []
+        },
+        {
+          "symbol": "F♯m7",
+          "bars": 2,
+          "notes": []
+        },
+        {
+          "symbol": "C♯7(♭9)",
+          "bars": 1,
+          "notes": []
+        },
+        {
+          "symbol": "Bm7",
+          "bars": 1,
+          "notes": []
+        },
+        {
+          "symbol": "F♯m7",
+          "bars": 1,
+          "notes": []
+        },
+        {
+          "symbol": "C♯7(♭9)",
+          "bars": 1,
+          "notes": []
+        }
+      ]
+    },
+    {
+      "id": "sax-14",
+      "instrument": "sax",
+      "number": 14,
+      "category": "BLUES LANGUAGE",
+      "title": "Dominant blues with teeth",
+      "subtitle": "",
+      "tonal": "G dominant blues → written E dominant blues",
+      "progression": "G7 × 4 | C7 × 2 | G7 × 2 | D7 × 1 | C7 × 1 | G7 × 1 | D7 × 1",
+      "groove": "112 BPM · swung 4/4 · Loose electric jazz-blues · 12 bars",
+      "goal": "Make the major/minor-third friction of dominant blues sound intentional and alive.",
+      "palette": "Written E minor-blues colour: E G A B♭ B D. Written E major-blues colour: E F ♯ G",
+      "saxChords": "E7 × 4 | A7 × 2 | E7 × 2 | B7 × 1 | A7 × 1 | E7 × 1 | B7 × 1",
+      "backing": "Punchy swing kit with some straight-eighth ambiguity, electric bass walking then anticipating roots, dry chordal comping. Not a Dorian or major-ninth ballad.",
+      "steps": [
+        "4 MIN · TWO THIRDS Against written E7, play G natural then G♯ with contrasting timing. Listen to the blues tension between minor and major-third colours.",
+        "7 MIN · CHORD-AWARE FRAGMENTS Practise E–G–G♯–B and D–B–G♯–E, then adjust landing tones when the progression reaches A7 and B7.",
+        "4 MIN · HEAR THE INFLECTION Imagine a blues answer using a delayed third rather than another predictable run.",
+        "12 MIN · WITH THE BAND Play three blues choruses. Keep at least one repeated phrase that changes slightly as I7, IV7 and V7 move past.",
+        "3 MIN · CAPTURE Record a blues phrase whose personality comes from timing and third-colour friction."
+      ],
+      "bringHome": "A three-chorus dominant blues improvisation that sounds distinct from the minor-blues lesson.",
+      "extension": "This deliberately uses G7, not Gmaj9, despite G being one of your favourite major tonics.",
+      "chords": [
+        {
+          "symbol": "G7",
+          "bars": 4,
+          "notes": []
+        },
+        {
+          "symbol": "C7",
+          "bars": 2,
+          "notes": []
+        },
+        {
+          "symbol": "G7",
+          "bars": 2,
+          "notes": []
+        },
+        {
+          "symbol": "D7",
+          "bars": 1,
+          "notes": []
+        },
+        {
+          "symbol": "C7",
+          "bars": 1,
+          "notes": []
+        },
+        {
+          "symbol": "G7",
+          "bars": 1,
+          "notes": []
+        },
+        {
+          "symbol": "D7",
+          "bars": 1,
+          "notes": []
+        }
+      ]
+    },
+    {
+      "id": "sax-15",
+      "instrument": "sax",
+      "number": 15,
+      "category": "HARMONIC PERCEPTION",
+      "title": "One collection, two homes",
+      "subtitle": "",
+      "tonal": "C major ↔ A minor (relative) → written A major ↔ F♯ minor",
+      "progression": "Cmaj9 × 8 | Am9 × 8",
+      "groove": "77 BPM · 4/4 · Spacious neo-soul · 16 bars",
+      "goal": "Hear how the same pitch collection behaves differently when the bass changes the centre of gravity.",
+      "palette": "Common written notes: A B C♯ D E F♯ G♯",
+      "saxChords": "Amaj9 × 8 | F♯ m9 × 8",
+      "backing": "The same drum atmosphere across both sections. Bass clearly changes root C→A; Rhodes changes chord voicings without introducing unrelated chromatic notes.",
+      "steps": [
+        "4 MIN · SAME NOTES, NEW HOME Play written A-major collection once ending on A; replay the same pitches resolving to F♯. Listen to the difference.",
+        "7 MIN · CHANGE THE ENDING Use the same four-note melodic opening, then compose two endings: one satisfying over written Amaj9, one satisfying over written F ♯m9.",
+        "4 MIN · SING OR IMAGINE THE GRAVITY Hear the root change; imagine one sustained note that feels stable in one section and unsettled in the other.",
+        "12 MIN · WITH THE BAND Keep one motif through the C-major/A-minor transition. Alter its resolution or timing to acknowledge the new harmonic centre.",
+        "3 MIN · CAPTURE Record paired resolutions of the same melodic idea."
+      ],
+      "bringHome": "Two contrasting resolutions drawn from the same seven-note collection.",
+      "extension": "This is a single paired exercise, not two artificial minor and major duplicates.",
+      "chords": [
+        {
+          "symbol": "Cmaj9",
+          "bars": 8,
+          "notes": []
+        },
+        {
+          "symbol": "Am9",
+          "bars": 8,
+          "notes": []
+        }
+      ]
+    },
+    {
+      "id": "sax-16",
+      "instrument": "sax",
+      "number": 16,
+      "category": "FUNCTIONAL HARMONY",
+      "title": "Follow the guide tones",
+      "subtitle": "",
+      "tonal": "A major ii–V–I → written F♯ major",
+      "progression": "Bm9 × 2 | E13 × 2 | Amaj9 × 4",
+      "groove": "94 BPM · 4/4 · Contemporary small-group jazz · 8 bars",
+      "goal": "Learn to hear the smallest movement that reveals a chord change; melody should stay connected through the cadence.",
+      "palette": "Written guide lines: B → B → A♯ (3rd→7th→3rd); F♯ → E♯ → E♯ (7th→3rd→7th).",
+      "saxChords": "G♯m9 × 2 | C♯13 × 2 | F♯maj9 × 4",
+      "backing": "Tight live kit, clear bass root movement B→E→A, Rhodes outlines 3rds/7ths but never doubles the sax’s target line as a lead.",
+      "steps": [
+        "3 MIN · IDENTIFY CHORD COLOUR Play written third and seventh for G♯m9, C♯13 and F♯maj9, with a short pause between chords.",
+        "8 MIN · TWO INVISIBLE LINES Practise B→B→A♯ and F♯→E♯→E♯ over the eight-bar form. Add passing notes only when the destinations remain audible.",
+        "4 MIN · PRE-HEAR THE ARRIVAL Imagine a two-bar phrase whose emotional arrival is written A ♯ or E ♯ over the last chord.",
+        "12 MIN · WITH THE BAND One chorus using a guide-tone skeleton; one chorus developing melody around it; one chorus freer while still acknowledging the resolution.",
+        "3 MIN · CAPTURE Record a phrase that makes the ii–V–I audible without outlining every chord from the root."
+      ],
+      "bringHome": "An improvisation that lands convincingly on F♯maj9 using voice-leading.",
+      "extension": "Another major ii–V–I may be useful in concert D, but only as later transposition practice.",
+      "chords": [
+        {
+          "symbol": "Bm9",
+          "bars": 2,
+          "notes": []
+        },
+        {
+          "symbol": "E13",
+          "bars": 2,
+          "notes": []
+        },
+        {
+          "symbol": "Amaj9",
+          "bars": 4,
+          "notes": []
+        }
+      ]
+    },
+    {
+      "id": "sax-17",
+      "instrument": "sax",
+      "number": 17,
+      "category": "FUNCTIONAL HARMONY",
+      "title": "Minor gravity",
+      "subtitle": "",
+      "tonal": "A minor iiø–V7(♭9)–i → written F♯ minor",
+      "progression": "Bm7♭5 × 2 | E7(♭9) × 2 | Am9 × 4",
+      "groove": "84 BPM · 4/4 · Dark cinematic jazz · 8 bars",
+      "goal": "Feel why minor cadences differ from major cadences: the diminished ii chord and raised leading tone transform the resolution.",
+      "palette": "Written G♯ø7: G♯ B D F♯. Written C♯7(♭9): C♯ E♯ G♯ B D. Written F♯m9: F♯ A C♯ E",
+      "saxChords": "G♯m7♭5 × 2 | C♯7(♭9) × 2 | F♯m9 × 4",
+      "backing": "Round bass marks B→E→A and Rhodes voices the diminished fifth and dominant flat ninth clearly. Low brushed/broken drums allow slow resolutions.",
+      "steps": [
+        "4 MIN · KNOW THE CHORD TONES Play written G♯–B–D–F♯ slowly. Move into written C♯7(♭9) and hear E♯ as the leading tone toward written F♯.",
+        "7 MIN · RESOLVE DELIBERATELY Practise the written movements D→D→C♯ (half-diminished fifth → dominant flat ninth → tonic fifth) and E♯→F♯ into the final chord, changing registers where comfortable.",
+        "4 MIN · IMAGINE ARRIVAL Hear a quiet phrase over the dominant that resolves to written F ♯ or A on the minor tonic.",
+        "12 MIN · WITH THE BAND Play first with simple chord-tone destinations, then build longer phrases spanning the whole cadence. Make silence before the tonic an expressive tool.",
+        "3 MIN · CAPTURE Record a resolution that could not be mistaken for a major ii–V–I."
+      ],
+      "bringHome": "A connected melodic cadence that clearly communicates minor gravity.",
+      "extension": "Possible alternate practice: concert B minor, with separately checked alto spelling.",
+      "chords": [
+        {
+          "symbol": "Bm7♭5",
+          "bars": 2,
+          "notes": []
+        },
+        {
+          "symbol": "E7(♭9)",
+          "bars": 2,
+          "notes": []
+        },
+        {
+          "symbol": "Am9",
+          "bars": 4,
+          "notes": []
+        }
+      ]
+    },
+    {
+      "id": "sax-18",
+      "instrument": "sax",
+      "number": 18,
+      "category": "HARMONIC COLOUR",
+      "title": "Borrow the shadow",
+      "subtitle": "",
+      "tonal": "D major with borrowed minor iv → written B major with minor iv",
+      "progression": "Dmaj9 × 4 | Gm9 × 4 | Dmaj9 × 4",
+      "groove": "79 BPM · 4/4 · Bittersweet Rhodes soul · 12 bars",
+      "goal": "Introduce borrowed harmony by listening to the emotional change, rather than memorising exotic scale names.",
+      "palette": "Written B major: B C♯ D♯ E F♯ G♯ A♯. Borrowed Em9: E G B D F♯.",
+      "saxChords": "Bmaj9 × 4 | Em9 × 4 | Bmaj9 × 4",
+      "backing": "Warm Rhodes with subtle tape movement, long bass D→G→D and a slow backbeat. The Em9/Gm9 moment should be striking and uncluttered.",
+      "steps": [
+        "4 MIN · HEAR THE COLOUR CHANGE Sustain written B then written D♯ across the first harmony. Listen to how written G natural and D natural sound as the backing changes to Em9.",
+        "7 MIN · TWO MELODIC VERSIONS Start with B–D♯–F♯, then answer using B–D–G on written Em9. Practise arriving at D♯ again when Bmaj9 returns.",
+        "4 MIN · PRE-HEAR THE RETURN Imagine a line that temporarily sounds darker without losing its way back to the major tonic.",
+        "12 MIN · WITH THE BAND Play one chorus using chord tones, a second featuring the borrowed G and D natural colours, and a final freer chorus with an expressive return home.",
+        "3 MIN · CAPTURE Save the most beautiful transition into or out of the minor iv."
+      ],
+      "bringHome": "A compelling major-to-borrowed-minor harmonic turn.",
+      "extension": "A later version in concert C major could explore borrowed Fm9 with a different groove.",
+      "chords": [
+        {
+          "symbol": "Dmaj9",
+          "bars": 4,
+          "notes": []
+        },
+        {
+          "symbol": "Gm9",
+          "bars": 4,
+          "notes": []
+        },
+        {
+          "symbol": "Dmaj9",
+          "bars": 4,
+          "notes": []
+        }
+      ]
+    },
+    {
+      "id": "sax-19",
+      "instrument": "sax",
+      "number": 19,
+      "category": "FUNCTIONAL HARMONY",
+      "title": "A temporary new destination",
+      "subtitle": "",
+      "tonal": "D major with V/V → V → I → written B major",
+      "progression": "Dmaj9 × 4 | E7 × 2 | A7 × 2 | Dmaj9 × 4",
+      "groove": "100 BPM · 4/4 · Punchy gospel-jazz fusion · 12 bars",
+      "goal": "Follow a brief tonicisation: a chord that temporarily makes the dominant sound like a destination.",
+      "palette": "Written B major notes: B C♯ D♯ E F♯ G♯ A♯. Introduced colour: E♯ (third of C ♯7).",
+      "saxChords": "Bmaj9 × 4 | C♯7 × 2 | F♯7 × 2 | Bmaj9 × 4",
+      "backing": "Energetic drums, elastic bass emphasising D→E→A→D, short keyboard stabs; the dominant chain must be audible without a competing horn figure.",
+      "steps": [
+        "3 MIN · IDENTIFY THE EXCEPTION Compare written E natural from B major with E♯ in C♯7. Hear why the raised note points toward F♯7.",
+        "8 MIN · VOICE-LEADING ARROWS Play written G♯→G♯→F♯ when possible as sustained/connecting tones; separately practise E♯→F♯ and A♯→B as directed arrivals.",
+        "4 MIN · IMAGINE THE PULL Hear a phrase that points to the written F♯7 chord, then another that makes the eventual written B tonic satisfying.",
+        "12 MIN · WITH THE BAND Use simple melodic statements first. On later choruses, use chromatic approaches to strengthen the pull through C♯7 and F♯7.",
+        "3 MIN · CAPTURE Record a melodic line that expresses both temporary and final resolutions."
+      ],
+      "bringHome": "An audible secondary-dominant chain rather than another generic ii–V–I.",
+      "extension": "Would also suit a bright concert A-major arrangement in a separate project.",
+      "chords": [
+        {
+          "symbol": "Dmaj9",
+          "bars": 4,
+          "notes": []
+        },
+        {
+          "symbol": "E7",
+          "bars": 2,
+          "notes": []
+        },
+        {
+          "symbol": "A7",
+          "bars": 2,
+          "notes": []
+        },
+        {
+          "symbol": "Dmaj9",
+          "bars": 4,
+          "notes": []
+        }
+      ]
+    },
+    {
+      "id": "sax-20",
+      "instrument": "sax",
+      "number": 20,
+      "category": "CHROMATIC COLOUR",
+      "title": "Step outside, then return",
+      "subtitle": "",
+      "tonal": "B minor with semitone side-slip → written G♯ minor / A minor",
+      "progression": "Bm9 × 8 | Cm9 × 2 | Bm9 × 6",
+      "groove": "96 BPM · 4/4 · Space-jazz with heavy bass · 16 bars",
+      "goal": "Learn to carry a motif temporarily outside its tonal home, without sounding lost.",
+      "palette": "Home: G♯ A♯ B C♯ D♯ E F♯. Side-slip: A B C D E F G.",
+      "saxChords": "G♯m9 × 8 | Am9 × 2 | G♯m9 × 6",
+      "backing": "Deep B-centred broken beat, clipped electric piano and synth haze. The whole band lifts one semitone to Cm9 for precisely two bars, then snaps back.",
+      "steps": [
+        "4 MIN · HALF-STEP SHIFT Play written G♯–B–D♯, then slide the same interval shape by a semitone to A–C–E and back. Hear the complete shift.",
+        "7 MIN · KEEP THE MOTIF INTACT Create a four-note riff in written G♯ minor. Practise moving all notes up a semitone, then back, while preserving rhythm.",
+        "4 MIN · ANTICIPATE THE SURPRISE Hear the exact moment the bass shifts; imagine the riff that will travel with it.",
+        "12 MIN · WITH THE BAND In chorus one stay mostly inside; in chorus two mirror the band’s side-slip; in chorus three anticipate the shift rhythmically and resolve confidently.",
+        "3 MIN · CAPTURE Record a two-bar chromatic departure and a satisfying return."
+      ],
+      "bringHome": "A controlled outside/inside move that strengthens rather than destroys the motif.",
+      "extension": "A second version could side-slip from concert B♭ minor to B minor and back.",
+      "chords": [
+        {
+          "symbol": "Bm9",
+          "bars": 8,
+          "notes": []
+        },
+        {
+          "symbol": "Cm9",
+          "bars": 2,
+          "notes": []
+        },
+        {
+          "symbol": "Bm9",
+          "bars": 6,
+          "notes": []
+        }
+      ]
+    },
+    {
+      "id": "sax-21",
+      "instrument": "sax",
+      "number": 21,
+      "category": "RHYTHM AND METRE",
+      "title": "Five-beat freedom",
+      "subtitle": "",
+      "tonal": "E minor → written C♯ minor",
+      "progression": "Em9 × 8 (5/4)",
+      "groove": "104 quarter-note BPM · 5/4 · Odd-metre broken beat · 8",
+      "goal": "Feel five as a grooving rhythmic space rather than mechanically counting to five.",
+      "palette": "C♯ D♯ E F♯ G♯ A B",
+      "saxChords": "C♯m9 × 8 (5/4)",
+      "backing": "Five-beat bass riff with explicit 3+2 phrasing for one section and 2+3 for another. Human percussion accentuates the grouping while the bass maintains the five-quarter pulse.",
+      "steps": [
+        "4 MIN · BODY PULSE Clap or tongue two groupings: 3+2 and 2+3 quarters. Then play one written C ♯ on their accent points.",
+        "7 MIN · RHYTHMIC CELLS Create one five-beat rhythm with 3+2 emphasis and one with 2+3, using only C ♯– E–G♯. Practise crossing a bar line without losing the pulse.",
+        "4 MIN · HEAR AN UNEVEN PHRASE Imagine a melodic idea with an unexpected entrance after beat three; perform it without an extra corrective beat.",
+        "12 MIN · WITH THE BAND Start sparse, leaving a full five-beat bar silent every few cycles. Later alternate grouping emphases and stretch phrases across two measures.",
+        "3 MIN · CAPTURE Record one confident two-bar phrase where five-quarter time feels natural."
+      ],
+      "bringHome": "A convincing musical phrase over 5/4 without audible counting or resetting.",
+      "extension": "Another home key is optional; changing rhythmic arrangement matters more than multiplying key versions.",
+      "chords": [
+        {
+          "symbol": "Em9 × 8 (5/4)",
+          "bars": 0,
+          "notes": []
+        }
+      ]
+    },
+    {
+      "id": "sax-22",
+      "instrument": "sax",
+      "number": 22,
+      "category": "PERFORMANCE INTEGRATION",
+      "title": "A complete musical journey",
+      "subtitle": "",
+      "tonal": "F♯ minor → written D♯ minor",
+      "progression": "F♯m9 × 4 | Dmaj9 × 4 | Bm11 × 4 | C♯7(♭9) × 4",
+      "groove": "95 BPM · 4/4 · Expansive cosmic jazz-fusion · 16 bars",
+      "goal": "Build a multi-chorus solo with an opening idea, development, contrast, harmonic awareness and an intentional ending.",
+      "palette": "Written tonic: D♯ minor (D♯ E♯ F♯ G♯ A♯ B C♯). Dominant uses raised leading tone",
+      "saxChords": "D♯m9 × 4 | Bmaj9 × 4 | G♯m11 × 4 | A♯7(♭9) × 4",
+      "backing": "Live-sounding broken drums, melodic-but-restrained electric bass, Rhodes/synth colour. Instrumentation subtly intensifies across 16 bars, but no lead melody or forced climactic drum fills.",
+      "steps": [
+        "3 MIN · CHOOSE THE OPENING Imagine one short phrase over written D♯m9; verify its fingering before beginning the long-form take.",
+        "7 MIN · MAP THE LANDMARKS Slowly find characteristic chord tones over written Bmaj9 and G ♯m11. Hear the altered leading tone into D♯ minor at the A♯7(♭9) turnaround.",
+        "4 MIN · PRE-HEAR THE ARC Picture a restrained beginning, one energetic peak and an ending that refers back to the opening; no need to pre-compose every note.",
+        "13 MIN · WITH THE BAND Play at least three connected choruses. Begin spacious; increase rhythmic density and register in the middle; return to the opening motif at the end.",
+        "3 MIN · CAPTURE Record a whole performance. Note the most alive moment and one specific physical or harmonic issue to revisit."
+      ],
+      "bringHome": "A multi-chorus solo that sounds like a developing musical statement rather than an exercise.",
+      "extension": "Revisit this progression with an entirely new solo arc rather than another identical backing.",
+      "chords": [
+        {
+          "symbol": "F♯m9",
+          "bars": 4,
+          "notes": []
+        },
+        {
+          "symbol": "Dmaj9",
+          "bars": 4,
+          "notes": []
+        },
+        {
+          "symbol": "Bm11",
+          "bars": 4,
+          "notes": []
+        },
+        {
+          "symbol": "C♯7(♭9)",
+          "bars": 4,
+          "notes": []
+        }
+      ]
+    }
+  ]
+}
