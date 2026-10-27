@@ -60,7 +60,7 @@ struct ConsciousConnectionApp: App {
                                 NutritionView()
 
                             case .createHome:
-                                CreateSongLabView()
+                                CreateMusicHomeView()
 
                             case .becomeHome:
                                 SectionHomeView(mode: .become)
