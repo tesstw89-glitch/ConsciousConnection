@@ -208,7 +208,7 @@ struct KeysStudioPlayView: View {
                     }.pickerStyle(.segmented)
 
                     Toggle("Hear piano chords", isOn: $hearPiano).tint(accent)
-                    Toggle("Leave the root to the bass", isOn: $omitRoot).tint(accent)
+                    Toggle("Use rootless chord voicings", isOn: $omitRoot).tint(accent)
                     Text("The piano sound uses the exact notes highlighted for each hand. Switch it off when you want to play those chords yourself.")
                         .font(.caption).foregroundStyle(.white.opacity(0.65))
 
