@@ -73,19 +73,28 @@ private struct ExquisHexagon: Shape {
 // Each of the twelve pitch classes has its own colour; every octave shares it.
 private enum ExquisNoteColours {
     // C, C♯, D, D♯, E, F, F♯, G, G♯, A, A♯, B.
+    // EXQUIS_SUNSET_PALETTE_V2: first seven HEX values match the supplied
+    // Sunset Glow palette. Five complementary shades complete twelve notes.
+    // Shared pitch classes retain their colour in every octave.
+    private static func hex(_ rgb: UInt32) -> Color {
+        Color(red: Double((rgb >> 16) & 0xFF) / 255.0,
+              green: Double((rgb >> 8) & 0xFF) / 255.0,
+              blue: Double(rgb & 0xFF) / 255.0)
+    }
+
     static let chromatic: [Color] = [
-        Color(red: 0.92, green: 0.26, blue: 0.33), // C · crimson
-        Color(red: 0.16, green: 0.72, blue: 0.44), // C♯ · green
-        Color(red: 1.00, green: 0.80, blue: 0.23), // D · yellow
-        Color(red: 0.30, green: 0.45, blue: 0.96), // D♯ · blue
-        Color(red: 0.99, green: 0.51, blue: 0.17), // E · orange
-        Color(red: 0.66, green: 0.34, blue: 0.90), // F · violet
-        Color(red: 0.15, green: 0.78, blue: 0.89), // F♯ · cyan
-        Color(red: 0.92, green: 0.31, blue: 0.72), // G · magenta
-        Color(red: 0.68, green: 0.84, blue: 0.21), // G♯ · lime
-        Color(red: 0.12, green: 0.54, blue: 0.58), // A · teal
-        Color(red: 1.00, green: 0.62, blue: 0.73), // A♯ · pink
-        Color(red: 0.70, green: 0.54, blue: 0.33)  // B · bronze
+        hex(0xF94144), // C  · coral red         · reference
+        hex(0xF3722C), // C♯ · sunset orange     · reference
+        hex(0xF8961E), // D  · amber             · reference
+        hex(0xF9C74F), // D♯ · golden yellow     · reference
+        hex(0x90BE6D), // E  · sage green        · reference
+        hex(0x43AA8B), // F  · sea green         · reference
+        hex(0x577590), // F♯ · slate blue        · reference
+        hex(0x238DAD), // G  · ocean blue        · new
+        hex(0x505EB2), // G♯ · indigo            · new
+        hex(0x8970C8), // A  · lavender          · new
+        hex(0xB863B3), // A♯ · orchid            · new
+        hex(0xD86D94)  // B  · dusty rose        · new
     ]
 
     static func colour(for pitchClass: Int) -> Color {
@@ -101,12 +110,12 @@ private enum ExquisNoteColours {
     }
 
     static func labelColour(for pitchClass: Int) -> Color {
-        // Choose dark lettering on the light-coloured pads.
+        // Choose label ink for readable contrast over the new HEX colours.
         switch ((pitchClass % 12) + 12) % 12 {
-        case 1, 2, 4, 6, 8, 10, 11:
-            return Color(red: 0.08, green: 0.11, blue: 0.15)
+        case 6, 8:
+            return .white // slate and indigo
         default:
-            return .white
+            return Color(red: 0.08, green: 0.11, blue: 0.15)
         }
     }
 }
