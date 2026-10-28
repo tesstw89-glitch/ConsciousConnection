@@ -132,10 +132,20 @@ def main():
         stop("Invalid Exquis note labels or coordinates.")
     if not image.read_bytes().startswith(b"\xff\xd8"):
         stop("The Exquis photo is not a JPEG.")
+    # The mapping uses normalized x/y coordinates, so exported copies of
+    # the same photo may have different pixel dimensions. Check the aspect
+    # ratio rather than insisting on the original image's exact dimensions.
     dimensions=subprocess.run(["sips","-g","pixelWidth","-g","pixelHeight",str(image)],
                               capture_output=True,text=True)
-    if "pixelWidth: 1754" not in dimensions.stdout or "pixelHeight: 1241" not in dimensions.stdout:
-        stop("The supplied Exquis image is not the calibrated 1754 x 1241 photo.")
+    import re
+    width_match=re.search(r"pixelWidth:\\s*(\\d+)",dimensions.stdout)
+    height_match=re.search(r"pixelHeight:\\s*(\\d+)",dimensions.stdout)
+    if dimensions.returncode or not width_match or not height_match:
+        stop("Could not read the Exquis photo dimensions.")
+    width,height=int(width_match.group(1)),int(height_match.group(1))
+    print(f"Exquis photo size: {width} x {height} pixels")
+    if width<100 or height<100 or abs(width/height - 1754/1241)>0.03:
+        stop("The Exquis photo has a different aspect ratio from the calibrated map.")
 
     p=one(p,'    @StateObject private var player = KeysStudioLoopPlayer()\n',
            '    @StateObject private var player = KeysStudioLoopPlayer()\n'
