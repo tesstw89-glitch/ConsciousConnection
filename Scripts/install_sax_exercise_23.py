@@ -73,18 +73,26 @@ def dedicate_play(sax):
         stop("The Sax Play view does not contain the passing-tone generator.")
     # Always start the dedicated exercise at the top, in B minor concert
     # (G-sharp minor written alto); user can choose another key immediately.
-    original = '        .onAppear {\n            let digits = lab.groove.prefix(while: { $0.isNumber })'
-    replacement = (
-        '        .onAppear {\n'
-        '            // SAX23_DEDICATED_PLAY_V1\n'
-        '            if lab.id == "sax-23" {\n'
-        '                sequence = .passing\n'
-        '                passingKey = .bMinor\n'
-        '                step = 0\n'
-        '            }\n'
-        '            let digits = lab.groove.prefix(while: { $0.isNumber })'
+    # Find the Play screen's own onAppear, not another locally customized
+    # view's lifecycle. Keep the user's existing onAppear body intact.
+    nav = '        .navigationTitle("Sax Play")'
+    if sax.count(nav) != 1:
+        stop("Could not identify the Sax Play navigation title.")
+    nav_end = sax.index(nav) + len(nav)
+    appear = '        .onAppear {'
+    pos = sax.find(appear, nav_end)
+    if pos < 0:
+        stop("Cannot identify the Sax Play startup handler.")
+    pos += len(appear)
+    insertion = (
+        '\n            // SAX23_DEDICATED_PLAY_V1'
+        '\n            if lab.id == "sax-23" {'
+        '\n                sequence = .passing'
+        '\n                passingKey = .bMinor'
+        '\n                step = 0'
+        '\n            }'
     )
-    sax = replace_one(sax, original, replacement, "Sax Play onAppear initialization")
+    sax = sax[:pos] + insertion + sax[pos:]
 
     # Exercise 23 must not show "Lesson phrase" / "All fingerings", and
     # the passing-tone option is hidden from other labs (it now has its own).
