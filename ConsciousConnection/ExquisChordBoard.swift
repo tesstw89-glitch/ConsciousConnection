@@ -57,8 +57,10 @@ struct ExquisChordBoard: View {
     private let ink = Color(red: 0.08, green: 0.11, blue: 0.15)
     private let mint = Color(red: 0.61, green: 0.92, blue: 0.80)
     private let gold = Color(red: 1, green: 0.84, blue: 0.28)
-    private let photoWidth: CGFloat = 1754
-    private let photoHeight: CGFloat = 1241
+    private var photoSize: CGSize {
+        UIImage(named: "ExquisBoard")?.size
+            ?? CGSize(width: 1754, height: 1241)
+    }
 
     private var chordPitchClasses: Set<Int> {
         Set(CuratedKeyboardShape.notes(
@@ -71,6 +73,8 @@ struct ExquisChordBoard: View {
 
     var body: some View {
         GeometryReader { geometry in
+            let photoWidth = max(1, photoSize.width)
+            let photoHeight = max(1, photoSize.height)
             let scale = min(geometry.size.width / photoWidth,
                             geometry.size.height / photoHeight)
             let w = photoWidth * scale
@@ -95,7 +99,8 @@ struct ExquisChordBoard: View {
                                         .stroke(ink.opacity(0.76),
                                                 lineWidth: max(0.8, scale * 2))
                                 }
-                                .frame(width: 109 * scale, height: 96 * scale)
+                                .frame(width: w * (109.0 / 1754.0),
+                                       height: h * (96.0 / 1241.0))
                                 .position(x: w * pad.x, y: h * pad.y)
                         }
                     }
