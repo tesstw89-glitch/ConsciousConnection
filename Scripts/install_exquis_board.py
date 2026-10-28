@@ -144,8 +144,16 @@ def main():
         stop("Could not read the Exquis photo dimensions.")
     width,height=int(width_match.group(1)),int(height_match.group(1))
     print(f"Exquis photo size: {width} x {height} pixels")
-    if width<100 or height<100 or abs(width/height - 1754/1241)>0.03:
-        stop("The Exquis photo has a different aspect ratio from the calibrated map.")
+    if width<100 or height<100:
+        stop("The Exquis photo resolution is too small.")
+    # A resized/cropped export may legitimately have another aspect ratio.
+    # The app now sizes its overlays using the actual image dimensions.
+    # The JSON coordinates still assume the same physical hex layout.
+    if abs(width/height - 1754/1241)>0.03:
+        print("NOTE: Different aspect ratio from the original calibrated photo.")
+        print("If the hexes don't line up, use the original 1754 x 1241 image instead.")
+    else:
+        print("Photo proportions match the original calibration.")
 
     p=one(p,'    @StateObject private var player = KeysStudioLoopPlayer()\n',
            '    @StateObject private var player = KeysStudioLoopPlayer()\n'
