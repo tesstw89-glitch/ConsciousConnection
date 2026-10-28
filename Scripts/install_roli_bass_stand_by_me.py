@@ -75,6 +75,9 @@ def main():
                 print("Tests could not be merged; app code was still installed.")
             else:
                 tests_to_insert = branch_tests[test_start:test_end].rstrip()
+                stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+                test_backup = test_file.with_name(test_file.name + f".before-roli-bass-{stamp}.bak")
+                test_backup.write_text(original_tests, encoding="utf-8")
                 test_file.write_text(
                     original_tests[:local_end].rstrip() + "\n\n    " +
                     tests_to_insert + "\n" + original_tests[local_end:],
