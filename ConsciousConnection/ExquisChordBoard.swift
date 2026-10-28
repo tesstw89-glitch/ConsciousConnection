@@ -19,7 +19,28 @@ private enum ExquisLayout {
               let data = try? Data(contentsOf: url),
               let decoded = try? JSONDecoder().decode(ExquisMapFile.self, from: data)
         else { return [] }
-        return decoded.keys
+        // Some copies of Exquis-keys.jpg are tightly cropped and dark.
+        // Their 61 hexagons have the SAME note order, but the calibration's
+        // normalised positions were measured on the original white image.
+        // Remap those positions onto the tightly cropped photo once.
+        let size = UIImage(named: "ExquisBoard")?.size ?? .zero
+        let cropped = size.height > 0 && size.width / size.height > 1.50
+        if !cropped { return decoded.keys }
+        let originalFirstX = 0.2069672131147541
+        let originalLastX = 0.7941176470588235
+        let originalFirstY = 0.2635651898447753
+        let originalLastY = 0.7413461798695499
+        let croppedFirstX = 0.07545
+        let croppedLastX = 0.93021
+        let croppedFirstY = 0.11253
+        let croppedLastY = 0.87356
+        return decoded.keys.map { pad in
+            let x = croppedFirstX + (pad.x - originalFirstX)
+                * (croppedLastX - croppedFirstX) / (originalLastX - originalFirstX)
+            let y = croppedFirstY + (pad.y - originalFirstY)
+                * (croppedLastY - croppedFirstY) / (originalLastY - originalFirstY)
+            return ExquisPad(idx: pad.idx, note: pad.note, x: x, y: y)
+        }
     }()
 }
 
@@ -81,6 +102,9 @@ struct ExquisChordBoard: View {
             let h = photoHeight * scale
             let active = chordPitchClasses
             let root = rootPitchClass
+            let cropped = photoWidth / photoHeight > 1.50
+            let hexWidth = cropped ? w * 0.094 : w * (109.0 / 1754.0)
+            let hexHeight = cropped ? h * 0.129 : h * (96.0 / 1241.0)
 
             ZStack {
                 ZStack(alignment: .topLeading) {
@@ -99,8 +123,7 @@ struct ExquisChordBoard: View {
                                         .stroke(ink.opacity(0.76),
                                                 lineWidth: max(0.8, scale * 2))
                                 }
-                                .frame(width: w * (109.0 / 1754.0),
-                                       height: h * (96.0 / 1241.0))
+                                .frame(width: hexWidth, height: hexHeight)
                                 .position(x: w * pad.x, y: h * pad.y)
                         }
                     }
