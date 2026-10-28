@@ -2,8 +2,9 @@
 """Safely install StrengthLab's Combine Workouts feature in a local checkout.
 
 Run from the ConsciousConnection repository root, after fetching the latest
-origin/main. Installs only the new workout-combination sheet and its hooks into
-WorkoutLibraryHomeView.swift. Does not merge branches or touch other files.
+origin/main. Installs the workout picker into WorkoutLibraryHomeView.swift
+rather than as a new Swift source file (which some cached Xcode/SwiftPM
+project graphs fail to detect). Does not merge branches or touch other files.
 """
 from __future__ import annotations
 
@@ -20,7 +21,8 @@ ROOT = Path.cwd()
 ROUTINE = Path("StrengthLabModule/Sources/StrengthLabModule/Views/Main/Routine")
 HOME = ROOT / ROUTINE / "WorkoutLibraryHomeView.swift"
 NEW_VIEW = ROOT / ROUTINE / "WorkoutCombineSheet.swift"
-REMOTE_NEW_VIEW = (ROUTINE / "WorkoutCombineSheet.swift").as_posix()
+REMOTE_HOME = (ROUTINE / "WorkoutLibraryHomeView.swift").as_posix()
+SHEET_MARKER = "// MARK: - Combine Workouts (kept in this compiled file for Xcode/SPM)"
 
 
 def fail(message: str) -> None:
@@ -32,18 +34,26 @@ if not HOME.is_file():
     fail("Run this script from the root of ~/Desktop/ConsciousConnection.")
 
 try:
-    new_view_content = subprocess.check_output(
-        ["git", "show", f"FETCH_HEAD:{REMOTE_NEW_VIEW}"],
+    latest_home = subprocess.check_output(
+        ["git", "show", f"FETCH_HEAD:{REMOTE_HOME}"],
         cwd=ROOT,
         text=True,
         stderr=subprocess.PIPE,
     )
 except (OSError, subprocess.CalledProcessError):
-    fail("The GitHub feature file was not found. Run 'git fetch origin main' first.")
+    fail("The GitHub feature source was not found. Run 'git fetch origin main' first.")
+
+if latest_home.count(SHEET_MARKER) != 1:
+    fail("The fetched GitHub source is missing the embedded workout picker. Nothing changed.")
+sheet_source = latest_home.split(SHEET_MARKER, 1)[1].strip()
+if not sheet_source.startswith("struct WorkoutCombineSheet: View {"):
+    fail("Unexpected workout picker source. Nothing changed.")
 
 source = HOME.read_text(encoding="utf-8")
-if NEW_VIEW.exists() and NEW_VIEW.read_text(encoding="utf-8") != new_view_content:
-    fail(f"{NEW_VIEW.relative_to(ROOT)} already exists and differs from GitHub. Nothing changed.")
+if NEW_VIEW.exists():
+    original_sheet = NEW_VIEW.read_text(encoding="utf-8").strip()
+    if original_sheet != ("import SwiftUI\n\n" + sheet_source).strip():
+        fail(f"{NEW_VIEW.relative_to(ROOT)} has local changes; not moving it automatically.")
 
 patches = [
     (
@@ -228,6 +238,9 @@ for label, before, after in patches:
     modified = modified.replace(before, after, 1)
     installed.append(label)
 
+if SHEET_MARKER not in modified:
+    modified = modified.rstrip() + "\n\n" + SHEET_MARKER + "\n\n" + sheet_source + "\n"
+
 if modified != source:
     backup = HOME.with_name(
         HOME.name + "." + datetime.now().strftime("%Y%m%d-%H%M%S") + ".before-combine.bak"
@@ -248,11 +261,16 @@ if modified != source:
 else:
     print("Workout-library changes were already installed.")
 
-if not NEW_VIEW.exists():
-    NEW_VIEW.write_text(new_view_content, encoding="utf-8")
-    print(f"Added: {NEW_VIEW.relative_to(ROOT)}")
-else:
-    print("Workout-combination sheet was already installed.")
+if NEW_VIEW.exists():
+    # Keep a backup of the old standalone source, but remove its .swift
+    # extension to avoid duplicate declarations if Xcode rescans sources.
+    archived = NEW_VIEW.with_name(NEW_VIEW.name + ".before-inline.bak")
+    if archived.exists():
+        archived = NEW_VIEW.with_name(
+            NEW_VIEW.name + "." + datetime.now().strftime("%Y%m%d-%H%M%S") + ".bak"
+        )
+    NEW_VIEW.rename(archived)
+    print(f"Archived old standalone sheet: {archived.relative_to(ROOT)}")
 
 print("\nDone! Rebuild ConsciousConnection in Xcode.")
 print("No git branches were merged and no unrelated files were replaced.")
