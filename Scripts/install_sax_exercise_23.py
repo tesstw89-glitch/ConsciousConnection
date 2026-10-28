@@ -233,8 +233,32 @@ def atomic_update(changes, originals):
         for path, tmp in staged:
             if path.read_bytes() != originals[path]:
                 stop("A project file changed during installation: " + path.name)
-        for path, tmp in staged:
-            os.replace(tmp, path)
+        applied = []
+        try:
+            for path, tmp in staged:
+                os.replace(tmp, path)
+                applied.append(path)
+        except OSError as error:
+            # Roll back earlier replacements from the unchanged in-memory
+            # originals. Never leave a partially installed Exercise 23.
+            failures = []
+            for path in reversed(applied):
+                try:
+                    fd, rollback = tempfile.mkstemp(
+                        prefix=".sax23.rollback.", dir=path.parent
+                    )
+                    os.fchmod(fd, path.stat().st_mode & 0o777)
+                    with os.fdopen(fd, "wb") as output:
+                        output.write(originals[path])
+                    os.replace(rollback, path)
+                except OSError as restore_error:
+                    failures.append(path.name + ": " + str(restore_error))
+            if failures:
+                sys.exit("WRITE FAILED: " + str(error)
+                         + "\nManual recovery may be required for: "
+                         + ", ".join(failures))
+            stop("Installation failed and the original files were restored: "
+                 + str(error))
     finally:
         for _, tmp in staged:
             if os.path.exists(tmp):
