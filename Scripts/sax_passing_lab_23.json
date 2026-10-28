@@ -1,0 +1,25 @@
+{
+  "id": "sax-23",
+  "instrument": "sax",
+  "number": 23,
+  "category": "SCALE TECHNIQUE",
+  "title": "Diatonic Passing Tones: Descend & Ascend",
+  "subtitle": "Ten favourite concert keys · full written alto range",
+  "tonal": "Choose 1 of 10 concert keys → automatically written for E♭ alto",
+  "progression": "A single major or natural-minor scale, transposed to written alto. The note pattern follows the key; no chromatic outside notes.",
+  "groove": "90 BPM · 4/4 · drum-only metronomic groove",
+  "goal": "Build fluent, even finger motion through overlapping descending three-note scale groups, then reverse direction at the lowest available scale tone and climb to the highest again.",
+  "palette": "Ten concert keys in favourite order: B minor / D major; F♯ minor / A major; A minor / C major; B♭ minor / D♭ major; E minor / G major. Written E♭ alto transposition appears in Play.",
+  "saxChords": "No chord changes. Follow the selected written major or natural-minor scale. Every three-note group contains two adjacent scale steps: e.g. written C major F–(E)–D, E–(D)–C, D–(C)–B.",
+  "backing": "A steady 4/4 drum groove, with adjustable tempo and note-change rate using Sax Play's existing drums. Fingering pictures appear one note at a time. No lead instrument or new audio required.",
+  "steps": [
+    "2 MIN · CHOOSE YOUR KEY Select one of the ten concert keys in Sax Play; read the corresponding written alto key before starting.",
+    "5 MIN · DESCEND Start on the highest written sax note that belongs to that scale. Play overlapping three-note groups: top–middle–bottom, then move the starting note down one scale step.",
+    "5 MIN · ASCEND At the lowest complete three-note group, reverse: bottom–middle–top, then shift the starting note up one scale step until you return to the highest note.",
+    "5 MIN · EVENNESS Repeat with the same air support and relaxed fingers. Move gradually from a comfortable note-change rate to a quicker one without rushing the crossing of the octave key.",
+    "3 MIN · REVIEW Note one awkward transition or register break. Repeat just that passage before another full down-and-up run."
+  ],
+  "bringHome": "One smooth descent and ascent in a chosen key, with accurate fingering and even tone through the registers.",
+  "extension": "Choose a second favourite key, or repeat the same key with contrasting articulation. Keep all passing notes inside its diatonic scale.",
+  "chords": []
+}
