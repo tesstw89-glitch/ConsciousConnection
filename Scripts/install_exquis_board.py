@@ -138,8 +138,8 @@ def main():
     dimensions=subprocess.run(["sips","-g","pixelWidth","-g","pixelHeight",str(image)],
                               capture_output=True,text=True)
     import re
-    width_match=re.search(r"pixelWidth:\\s*(\\d+)",dimensions.stdout)
-    height_match=re.search(r"pixelHeight:\\s*(\\d+)",dimensions.stdout)
+    width_match=re.search(r"pixelWidth:\s*(\d+)",dimensions.stdout)
+    height_match=re.search(r"pixelHeight:\s*(\d+)",dimensions.stdout)
     if dimensions.returncode or not width_match or not height_match:
         stop("Could not read the Exquis photo dimensions.")
     width,height=int(width_match.group(1)),int(height_match.group(1))
