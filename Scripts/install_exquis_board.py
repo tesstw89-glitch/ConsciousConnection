@@ -144,6 +144,8 @@ def main():
           '                    KeysBoardModePicker(selection: $boardMode)\n'
           '                    Toggle("Hear piano chords", isOn: $hearPiano)',
           "Play controls")
+    p=p.replace("The piano sound uses the exact notes highlighted for each hand. Switch it off when you want to play those chords yourself.",
+                "The optional piano preview plays the same chords with either keyboard display.")
     p=wrap_call(p,"CuratedMinilogueKeyboard","currentChordIndex","omitRoot",portrait=True)
     # Current landscape performance renderer has its own keyboard drawing.
     if "KeysPerformanceKeyboard(" in p:
@@ -177,6 +179,8 @@ def main():
         '            ScrollView(.horizontal, showsIndicators: false) {\n'
         '                HStack(spacing: 7) {',
         "Keys chord selector")
+    s=s.replace('Text("MINILOGUE · CHORD SHAPE")',
+                'Text(boardMode == "Exquis" ? "EXQUIS · CHORD SHAPE" : "MINILOGUE · CHORD SHAPE")')
     if "CuratedMinilogueKeyboard(" in s:
         s=wrap_call(s,"CuratedMinilogueKeyboard","chordIndex","rootless",portrait=True)
     elif "MinilogueChordDiagram(" in s:
