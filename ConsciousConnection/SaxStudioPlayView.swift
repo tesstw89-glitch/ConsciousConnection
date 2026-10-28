@@ -348,7 +348,8 @@ struct SaxStudioPlayView: View {
             VStack(alignment: .leading, spacing: 16) {
                 Text("SAX STUDIO / PLAY")
                     .font(.caption.bold()).tracking(1.6).foregroundStyle(mint)
-                Text(lab.title).font(.title2.bold()).foregroundStyle(.white)
+                Text(sequence == .passing ? "Diatonic passing tones" : lab.title)
+                    .font(.title2.bold()).foregroundStyle(.white)
                 Text("Alto sax WRITTEN pitch · \(metre.label) drums")
                     .font(.caption).foregroundStyle(.white.opacity(0.7))
 
@@ -415,7 +416,9 @@ struct SaxStudioPlayView: View {
                 if let error = player.error {
                     Text(error).font(.caption).foregroundStyle(.orange)
                 }
-                Text("Suggested lesson phrases are fingering drills, not prescribed solos. You can improvise freely over the drums. Turn sideways for performance mode.")
+                Text(sequence == .passing
+                     ? "Play overlapping three-note scale groups from your highest available written note to your lowest, then reverse and ascend. The middle note is the passing tone. Turn sideways for performance mode."
+                     : "Suggested lesson phrases are fingering drills, not prescribed solos. You can improvise freely over the drums. Turn sideways for performance mode.")
                     .font(.footnote).foregroundStyle(.white.opacity(0.68))
             }
             .padding(20)
