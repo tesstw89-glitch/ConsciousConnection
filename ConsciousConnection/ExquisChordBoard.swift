@@ -69,6 +69,30 @@ private struct ExquisHexagon: Shape {
     }
 }
 
+// EXQUIS_PITCH_CLASS_COLOURS_V1
+// Each of the twelve pitch classes has its own colour; every octave shares it.
+private enum ExquisNoteColours {
+    // C, C♯, D, D♯, E, F, F♯, G, G♯, A, A♯, B.
+    static let chromatic: [Color] = [
+        Color(red: 0.92, green: 0.26, blue: 0.33), // C · crimson
+        Color(red: 0.16, green: 0.72, blue: 0.44), // C♯ · green
+        Color(red: 1.00, green: 0.80, blue: 0.23), // D · yellow
+        Color(red: 0.30, green: 0.45, blue: 0.96), // D♯ · blue
+        Color(red: 0.99, green: 0.51, blue: 0.17), // E · orange
+        Color(red: 0.66, green: 0.34, blue: 0.90), // F · violet
+        Color(red: 0.15, green: 0.78, blue: 0.89), // F♯ · cyan
+        Color(red: 0.92, green: 0.31, blue: 0.72), // G · magenta
+        Color(red: 0.68, green: 0.84, blue: 0.21), // G♯ · lime
+        Color(red: 0.12, green: 0.54, blue: 0.58), // A · teal
+        Color(red: 1.00, green: 0.62, blue: 0.73), // A♯ · pink
+        Color(red: 0.70, green: 0.54, blue: 0.33)  // B · bronze
+    ]
+
+    static func colour(for pitchClass: Int) -> Color {
+        chromatic[((pitchClass % 12) + 12) % 12]
+    }
+}
+
 struct ExquisChordBoard: View {
     let labID: String
     let chordIndex: Int
@@ -76,8 +100,6 @@ struct ExquisChordBoard: View {
     let omitRoot: Bool
 
     private let ink = Color(red: 0.08, green: 0.11, blue: 0.15)
-    private let mint = Color(red: 0.61, green: 0.92, blue: 0.80)
-    private let gold = Color(red: 1, green: 0.84, blue: 0.28)
     private var photoSize: CGSize {
         UIImage(named: "ExquisBoard")?.size
             ?? CGSize(width: 1754, height: 1241)
@@ -117,11 +139,17 @@ struct ExquisChordBoard: View {
                            pc == root || active.contains(pc) {
                             let isRoot = pc == root
                             ExquisHexagon()
-                                .fill((isRoot ? gold : mint).opacity(isRoot ? 0.90 : 0.79))
+                                .fill(ExquisNoteColours.colour(for: pc).opacity(0.87))
                                 .overlay {
                                     ExquisHexagon()
-                                        .stroke(ink.opacity(0.76),
+                                        .stroke(ink.opacity(0.78),
                                                 lineWidth: max(0.8, scale * 2))
+                                }
+                                .overlay {
+                                    if isRoot {
+                                        ExquisHexagon()
+                                            .stroke(.white, lineWidth: max(1.8, scale * 3.5))
+                                    }
                                 }
                                 .frame(width: hexWidth, height: hexHeight)
                                 .position(x: w * pad.x, y: h * pad.y)
@@ -133,6 +161,6 @@ struct ExquisChordBoard: View {
             .frame(width: geometry.size.width, height: geometry.size.height)
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Exquis chord \(chord.symbol). Mint: chord notes. Gold: root.")
+        .accessibilityLabel("Exquis chord \(chord.symbol). Each note has its own colour across octaves. White outlines show root notes.")
     }
 }
