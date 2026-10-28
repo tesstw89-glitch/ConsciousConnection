@@ -216,6 +216,9 @@ struct WorkoutLibraryHomeView: View {
     @State
     private var showingCalendar = false
 
+    @State private var showingCombineWorkouts = false
+    @State private var pendingCombinedWorkout: WorkoutTemplate?
+
     @State private var programStore = StrengthLabProgramStore.shared
     @State private var showingPrograms = false
     @State private var newProgramName = ""
@@ -352,6 +355,17 @@ struct WorkoutLibraryHomeView: View {
         .sheet(isPresented: $showingPrograms) {
             programsSheet
         }
+        .sheet(isPresented: $showingCombineWorkouts, onDismiss: {
+            // Open the new workout for editing after the picker closes.
+            if let pendingCombinedWorkout {
+                editingWorkout = pendingCombinedWorkout
+                self.pendingCombinedWorkout = nil
+            }
+        }) {
+            WorkoutCombineSheet(workouts: workouts) { first, second, name in
+                combineWorkouts(first, second, named: name)
+            }
+        }
         .alert("Programme Error", isPresented: $showingProgramError) {
             Button("OK", role: .cancel) {}
         } message: {
@@ -484,6 +498,17 @@ struct WorkoutLibraryHomeView: View {
                     )
                 }
 
+                if workouts.count >= 2 {
+                    Button {
+                        showingCombineWorkouts = true
+                    } label: {
+                        Label(
+                            "Combine Workouts",
+                            systemImage: "square.on.square"
+                        )
+                    }
+                }
+
                 Button {
                     showingCalendar = true
                 } label: {
@@ -612,6 +637,20 @@ struct WorkoutLibraryHomeView: View {
                     )
             }
             .buttonStyle(.plain)
+
+            if workouts.count >= 2 {
+                Button {
+                    showingCombineWorkouts = true
+                } label: {
+                    Label("Combine Workouts", systemImage: "square.on.square")
+                        .font(StrengthLabFigmaTheme.medium(16))
+                        .foregroundStyle(StrengthLabFigmaTheme.coral)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 48)
+                }
+                .buttonStyle(.plain)
+                .padding(.top, 6)
+            }
         }
         .padding(24)
         .frame(
@@ -868,6 +907,67 @@ struct WorkoutLibraryHomeView: View {
             editingWorkout = workout
         } catch {
             showProgramError(error)
+        }
+    }
+
+    private func combineWorkouts(
+        _ first: WorkoutTemplate,
+        _ second: WorkoutTemplate,
+        named name: String
+    ) {
+        guard first.uuid != second.uuid else { return }
+        let title = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !title.isEmpty else { return }
+
+        // Copy models, never move them: each source retains its exercises,
+        // histories, schedules and programme membership.
+        let combined = WorkoutTemplate(name: title)
+        modelContext.insert(combined)
+
+        let firstExercises = cloneExercises(first.exercises ?? [])
+        let secondExercises = cloneExercises(second.exercises ?? [])
+
+        // Preserve supersets within each source, but do not accidentally
+        // link copied exercises to their originals or to the other source.
+        remapClonedSupersets(firstExercises)
+        remapClonedSupersets(secondExercises)
+
+        let allExercises = firstExercises + secondExercises
+        for (index, exercise) in allExercises.enumerated() {
+            exercise.orderIndex = index
+        }
+        combined.exercises = allExercises
+        combined.updatedAt = Date()
+
+        do {
+            try modelContext.save()
+            do {
+                try programStore.addWorkout(combined.uuid)
+            } catch {
+                // Avoid saving an unattached workout when the programme
+                // index cannot be updated.
+                modelContext.delete(combined)
+                try? modelContext.save()
+                throw error
+            }
+            pendingCombinedWorkout = combined
+            showingCombineWorkouts = false
+        } catch {
+            showProgramError(error)
+        }
+    }
+
+    private func remapClonedSupersets(_ exercises: [SetDeckExercise]) {
+        var groups: [UUID: UUID] = [:]
+        for exercise in exercises {
+            guard let oldID = exercise.supersetGroupID else { continue }
+            if let newID = groups[oldID] {
+                exercise.supersetGroupID = newID
+            } else {
+                let newID = UUID()
+                groups[oldID] = newID
+                exercise.supersetGroupID = newID
+            }
         }
     }
 
