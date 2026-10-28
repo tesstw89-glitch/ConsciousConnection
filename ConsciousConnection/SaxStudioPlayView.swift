@@ -12,7 +12,57 @@ private struct SaxPracticeNote {
 private enum SaxFingeringSequence: String, CaseIterable, Identifiable {
     case lesson = "Lesson phrase"
     case chromatic = "All fingerings"
+    case passing = "Passing tones"
     var id: String { rawValue }
+}
+
+// EXQUIS-independent SAX_PASSING_KEYS_V1: these are CONCERT key choices.
+// Every displayed and played fingering is a WRITTEN E-flat alto note.
+private enum SaxPassingKey: String, CaseIterable, Identifiable {
+    case bMinor = "B minor"
+    case dMajor = "D major"
+    case fSharpMinor = "F♯ minor"
+    case aMajor = "A major"
+    case aMinor = "A minor"
+    case cMajor = "C major"
+    case bFlatMinor = "B♭ minor"
+    case dFlatMajor = "D♭ major"
+    case eMinor = "E minor"
+    case gMajor = "G major"
+
+    var id: String { rawValue }
+
+    var writtenKey: String {
+        switch self {
+        case .bMinor: return "G♯ minor"
+        case .dMajor: return "B major"
+        case .fSharpMinor: return "D♯ minor"
+        case .aMajor: return "F♯ major"
+        case .aMinor: return "F♯ minor"
+        case .cMajor: return "A major"
+        case .bFlatMinor: return "G minor"
+        case .dFlatMajor: return "B♭ major"
+        case .eMinor: return "C♯ minor"
+        case .gMajor: return "E major"
+        }
+    }
+
+    // Correct diatonic spellings (including E♯ where appropriate).
+    // Minor keys use natural minor; major keys use the major scale.
+    var writtenScale: [String] {
+        switch self {
+        case .bMinor: return ["G♯", "A♯", "B", "C♯", "D♯", "E", "F♯"]
+        case .dMajor: return ["B", "C♯", "D♯", "E", "F♯", "G♯", "A♯"]
+        case .fSharpMinor: return ["D♯", "E♯", "F♯", "G♯", "A♯", "B", "C♯"]
+        case .aMajor: return ["F♯", "G♯", "A♯", "B", "C♯", "D♯", "E♯"]
+        case .aMinor: return ["F♯", "G♯", "A", "B", "C♯", "D", "E"]
+        case .cMajor: return ["A", "B", "C♯", "D", "E", "F♯", "G♯"]
+        case .bFlatMinor: return ["G", "A", "B♭", "C", "D", "E♭", "F"]
+        case .dFlatMajor: return ["B♭", "C", "D", "E♭", "F", "G", "A"]
+        case .eMinor: return ["C♯", "D♯", "E", "F♯", "G♯", "A", "B"]
+        case .gMajor: return ["E", "F♯", "G♯", "A", "B", "C♯", "D♯"]
+        }
+    }
 }
 
 private enum SaxFingeringRate: Int, CaseIterable, Identifiable {
@@ -108,6 +158,35 @@ private enum SaxFingeringDrills {
         (patterns[lab.id] ?? "").split(separator: " ").compactMap { parse(String($0)) }
     }
 
+    // SAX_DIATONIC_PASSING_V1: overlapping groups of three scale notes.
+    // Descend in key from the highest available written sax note and then
+    // ascend from the lowest. Each note is shown by the existing fingering
+    // diagrams; adjacent groups overlap by two scale degrees.
+    static func passingTones(_ concertKey: SaxPassingKey) -> [SaxPracticeNote] {
+        var namesByPitchClass: [Int: String] = [:]
+        for name in concertKey.writtenScale {
+            if let note = parse(name + "4") {
+                namesByPitchClass[note.midi % 12] = name
+            }
+        }
+        let scale: [SaxPracticeNote] = (58...90).compactMap { midi in
+            guard let name = namesByPitchClass[midi % 12] else { return nil }
+            return SaxPracticeNote(
+                midi: midi,
+                writtenName: name + String(midi / 12 - 1)
+            )
+        }
+        guard scale.count >= 3 else { return [] }
+        var result: [SaxPracticeNote] = []
+        for i in stride(from: scale.count - 1, through: 2, by: -1) {
+            result.append(contentsOf: [scale[i], scale[i - 1], scale[i - 2]])
+        }
+        for i in 0...(scale.count - 3) {
+            result.append(contentsOf: [scale[i], scale[i + 1], scale[i + 2]])
+        }
+        return result
+    }
+
     static let chromatic: [SaxPracticeNote] = {
         let names = ["C", "C♯", "D", "E♭", "E", "F",
                      "F♯", "G", "A♭", "A", "B♭", "B"]
@@ -187,6 +266,7 @@ struct SaxStudioPlayView: View {
     @State private var tempo = 90
     @State private var rate: SaxFingeringRate = .quarter
     @State private var sequence: SaxFingeringSequence = .lesson
+    @State private var passingKey: SaxPassingKey = .bMinor
     @State private var step = 0
     @State private var performanceDismissed = false
 
@@ -195,10 +275,20 @@ struct SaxStudioPlayView: View {
     private let background = Color(red: 0.08, green: 0.11, blue: 0.15)
     private var metre: SaxGrooveMeter { SaxGrooveMeter(lab) }
     private var notes: [SaxPracticeNote] {
-        let chosen = sequence == .lesson
-            ? SaxFingeringDrills.lesson(lab)
-            : SaxFingeringDrills.chromatic
+        let chosen: [SaxPracticeNote]
+        switch sequence {
+        case .lesson: chosen = SaxFingeringDrills.lesson(lab)
+        case .chromatic: chosen = SaxFingeringDrills.chromatic
+        case .passing: chosen = SaxFingeringDrills.passingTones(passingKey)
+        }
         return chosen.isEmpty ? SaxFingeringDrills.chromatic : chosen
+    }
+    private var passingGroup: String {
+        guard sequence == .passing else { return "" }
+        let list = notes
+        let offset = (max(0, step) / 3) * 3
+        return list[offset..<min(offset + 3, list.count)]
+            .map(\.writtenName).joined(separator: " – ")
     }
     private var current: SaxPracticeNote {
         let list = notes
@@ -246,6 +336,7 @@ struct SaxStudioPlayView: View {
         .onChange(of: tempo) { _, _ in restartIfPlaying() }
         .onChange(of: rate) { _, _ in restartIfPlaying() }
         .onChange(of: sequence) { _, _ in restartIfPlaying() }
+        .onChange(of: passingKey) { _, _ in restartIfPlaying() }
         .onDisappear {
             player.stop()
             setGlobalBackButtonHidden(false)
@@ -288,6 +379,22 @@ struct SaxStudioPlayView: View {
                 }
                 .pickerStyle(.segmented)
 
+                if sequence == .passing {
+                    HStack {
+                        Text("CONCERT KEY").font(.caption.bold()).foregroundStyle(mint)
+                        Spacer()
+                        Picker("Concert key", selection: $passingKey) {
+                            ForEach(SaxPassingKey.allCases) { key in
+                                Text(key.rawValue).tag(key)
+                            }
+                        }
+                        .tint(mint)
+                    }
+                    Text("Written alto: " + passingKey.writtenKey
+                         + " · Natural minor / major scale · top → bottom → top")
+                        .font(.caption).foregroundStyle(.white.opacity(0.72))
+                }
+
                 fingeringImage(maxHeight: 290)
 
                 HStack {
@@ -296,6 +403,12 @@ struct SaxStudioPlayView: View {
                     Spacer()
                     Text("\(step + 1) / \(notes.count)")
                         .font(.caption.monospacedDigit()).foregroundStyle(mint)
+                }
+                if sequence == .passing {
+                    Text(passingGroup)
+                        .font(.subheadline.bold())
+                        .foregroundStyle(mint)
+                        .accessibilityLabel("Three-note passing group: " + passingGroup)
                 }
                 playbackButton
 
@@ -318,6 +431,11 @@ struct SaxStudioPlayView: View {
                 Text(current.writtenName)
                     .font(.title2.bold())
                     .foregroundStyle(.white)
+                if sequence == .passing {
+                    Text(passingKey.rawValue + " concert · " + passingGroup)
+                        .font(.caption.bold())
+                        .foregroundStyle(mint)
+                }
                 Spacer(minLength: 0)
                 playbackButton
                     .padding(.bottom, 6)
