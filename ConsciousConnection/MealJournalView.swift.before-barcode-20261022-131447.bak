@@ -1,0 +1,515 @@
+import SwiftUI
+import Foundation
+
+// A separate food diary, without quantities or calories.
+// This intentionally does not change the kitchen inventory or its ticked selections.
+private struct JournalIngredient: Codable, Identifiable {
+    var name: String
+    var brand: String? = nil
+    var barcode: String? = nil
+    // Values, when present, are Open Food Facts per-100g reference data.
+    var proteinG: Double? = nil
+    var fibreG: Double? = nil
+    var carbohydrateG: Double? = nil
+    var ironMg: Double? = nil
+    var magnesiumMg: Double? = nil
+    var b12Micrograms: Double? = nil
+
+    var id: String {
+        if let barcode, !barcode.isEmpty { return "off:" + barcode }
+        return ((brand ?? "") + " " + name).lowercased().filter { $0.isLetter || $0.isNumber }
+    }
+
+    var displayName: String {
+        guard let brand, !brand.isEmpty, !name.lowercased().hasPrefix(brand.lowercased()) else {
+            return name
+        }
+        return "\(brand) \(name)"
+    }
+
+    var nutrientSummary: String {
+        var parts: [String] = []
+        if let proteinG { parts.append(String(format: "protein %.1f g", proteinG)) }
+        if let fibreG { parts.append(String(format: "fibre %.1f g", fibreG)) }
+        if let carbohydrateG { parts.append(String(format: "carbs %.1f g", carbohydrateG)) }
+        if let ironMg { parts.append(String(format: "iron %.2f mg", ironMg)) }
+        if let magnesiumMg { parts.append(String(format: "magnesium %.1f mg", magnesiumMg)) }
+        if let b12Micrograms { parts.append(String(format: "B12 %.2f µg", b12Micrograms)) }
+        return parts.joined(separator: " · ")
+    }
+
+    static func fromOpenFoodFacts(barcode: String, name: String, brand: String?, nutriments: [String: Any]?) -> Self {
+        func number(_ key: String) -> Double? {
+            guard let value = nutriments?[key] else { return nil }
+            if let n = value as? NSNumber { return n.doubleValue }
+            if let s = value as? String { return Double(s) }
+            return nil
+        }
+        return Self(name: name, brand: brand, barcode: barcode,
+                    proteinG: number("proteins_100g"), fibreG: number("fiber_100g"),
+                    carbohydrateG: number("carbohydrates_100g"),
+                    ironMg: number("iron_100g").map { $0 * 1_000 },
+                    magnesiumMg: number("magnesium_100g").map { $0 * 1_000 },
+                    b12Micrograms: number("vitamin-b12_100g").map { $0 * 1_000_000 })
+    }
+}
+
+private struct JournalMeal: Codable, Identifiable {
+    var id: UUID
+    var name: String
+    var mealType: String
+    var eatenAt: Date
+    var ingredients: [JournalIngredient]
+}
+
+struct MealJournalView: View {
+    @Environment(\.dismiss) private var dismiss
+    @AppStorage("nutrition.loggedMeals.v1") private var savedMealsJSON = ""
+    @State private var meals: [JournalMeal] = []
+    @State private var didLoad = false
+    @State private var showingEditor = false
+    @State private var editingID: UUID? = nil
+    @State private var draftName = ""
+    @State private var draftType = "Lunch"
+    @State private var draftDate = Date()
+    @State private var draftIngredients: [JournalIngredient] = []
+    @State private var manualIngredient = ""
+    @State private var showingProductFinder = false
+
+    private let mealTypes = ["Breakfast", "Lunch", "Dinner", "Snack"]
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 18) {
+                    Text("A gentle record of the meals you've enjoyed — not a calorie diary.")
+                        .foregroundStyle(.secondary)
+
+                    Button(action: startNew) {
+                        Label("Log a meal I've eaten", systemImage: "plus.circle.fill")
+                            .font(.headline)
+                            .frame(maxWidth: .infinity)
+                            .padding(15)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(Color(red: 0.11, green: 0.48, blue: 0.40))
+
+                    Text("My meals")
+                        .font(.title2.weight(.bold))
+
+                    if meals.isEmpty {
+                        ContentUnavailableView("No meals logged yet",
+                                               systemImage: "fork.knife",
+                                               description: Text("Add something you've already eaten, including meals from previous days."))
+                    } else {
+                        ForEach(meals.sorted { $0.eatenAt > $1.eatenAt }) { item in
+                            mealCard(item)
+                        }
+                    }
+                }
+                .padding(18)
+            }
+            .navigationTitle("Meals I've eaten")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") { dismiss() }
+                }
+            }
+            .onAppear(perform: loadSavedMeals)
+            .sheet(isPresented: $showingEditor) { editor }
+        }
+    }
+
+    private func mealCard(_ item: JournalMeal) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .top, spacing: 8) {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(item.name).font(.headline)
+                    Text("\(item.mealType) · \(item.eatenAt.formatted(date: .abbreviated, time: .shortened))")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer(minLength: 4)
+                Button("Edit") { edit(item) }
+                    .font(.subheadline)
+            }
+            ForEach(item.ingredients) { food in
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("• \(food.displayName)")
+                        .font(.subheadline)
+                    if !food.nutrientSummary.isEmpty {
+                        Text("Per 100 g (database): \(food.nutrientSummary)")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+            if item.ingredients.isEmpty {
+                Text("No ingredients recorded")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            HStack {
+                Spacer()
+                Menu {
+                    Button { edit(item) } label: {
+                        Label("Edit meal", systemImage: "pencil")
+                    }
+                    Button(role: .destructive) { delete(item) } label: {
+                        Label("Delete meal", systemImage: "trash")
+                    }
+                } label: {
+                    Label("More", systemImage: "ellipsis.circle")
+                        .font(.caption)
+                }
+            }
+        }
+        .padding(15)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
+    }
+
+    private var editor: some View {
+        NavigationStack {
+            Form {
+                Section("The meal") {
+                    TextField("Meal name, e.g. eggs on toast", text: $draftName)
+                        .textInputAutocapitalization(.sentences)
+                    Picker("Meal", selection: $draftType) {
+                        ForEach(mealTypes, id: \.self) { Text($0).tag($0) }
+                    }
+                    DatePicker("When you ate it", selection: $draftDate, in: ...Date(),
+                               displayedComponents: [.date, .hourAndMinute])
+                }
+                Section {
+                    Button {
+                        showingProductFinder = true
+                    } label: {
+                        Label("Search branded ingredients", systemImage: "magnifyingglass")
+                    }
+                    HStack(spacing: 10) {
+                        TextField("Or add an ingredient by name", text: $manualIngredient)
+                            .textInputAutocapitalization(.words)
+                            .onSubmit(addManualIngredient)
+                        Button(action: addManualIngredient) {
+                            Image(systemName: "plus.circle.fill").font(.title3)
+                        }
+                        .disabled(manualIngredient.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                        .accessibilityLabel("Add named ingredient")
+                    }
+                } header: {
+                    Text("Ingredients")
+                } footer: {
+                    Text("Search uses Open Food Facts. You can also add eggs, vegetables, leftovers or anything the database doesn't list.")
+                }
+                if !draftIngredients.isEmpty {
+                    Section("In this meal") {
+                        ForEach(draftIngredients) { food in
+                            HStack(alignment: .top, spacing: 8) {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(food.displayName)
+                                    if !food.nutrientSummary.isEmpty {
+                                        Text("Per 100 g: \(food.nutrientSummary)")
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                }
+                                Spacer()
+                                Button(role: .destructive) {
+                                    draftIngredients.removeAll { $0.id == food.id }
+                                } label: { Image(systemName: "xmark.circle.fill") }
+                                    .buttonStyle(.borderless)
+                                    .accessibilityLabel("Remove \(food.displayName)")
+                            }
+                        }
+                    }
+                }
+                Section {
+                    Button(action: saveDraft) {
+                        Text(editingID == nil ? "Save meal" : "Save changes")
+                            .frame(maxWidth: .infinity)
+                            .fontWeight(.semibold)
+                    }
+                    .disabled(draftName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                } footer: {
+                    Text("Only ingredients with reported nutrition data show reference nutrients. Without quantities, we don't calculate meal totals or calories.")
+                }
+            }
+            .navigationTitle(editingID == nil ? "Log a meal" : "Edit meal")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Cancel") { showingEditor = false }
+                }
+            }
+            .sheet(isPresented: $showingProductFinder) {
+                JournalFoodFinder { product in
+                    if !draftIngredients.contains(where: { $0.id == product.id }) {
+                        draftIngredients.append(product)
+                    }
+                }
+            }
+        }
+    }
+
+    private func startNew() {
+        editingID = nil
+        draftName = ""
+        draftType = "Lunch"
+        draftDate = Date()
+        draftIngredients = []
+        manualIngredient = ""
+        showingEditor = true
+    }
+
+    private func edit(_ item: JournalMeal) {
+        editingID = item.id
+        draftName = item.name
+        draftType = item.mealType
+        draftDate = item.eatenAt
+        draftIngredients = item.ingredients
+        manualIngredient = ""
+        showingEditor = true
+    }
+
+    private func addManualIngredient() {
+        let name = manualIngredient.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !name.isEmpty else { return }
+        let ingredient = JournalIngredient(name: name)
+        if !draftIngredients.contains(where: { $0.id == ingredient.id }) {
+            draftIngredients.append(ingredient)
+        }
+        manualIngredient = ""
+    }
+
+    private func saveDraft() {
+        let name = draftName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !name.isEmpty else { return }
+        let newEntry = JournalMeal(id: editingID ?? UUID(), name: name,
+                                   mealType: draftType, eatenAt: draftDate,
+                                   ingredients: draftIngredients)
+        if let idx = meals.firstIndex(where: { $0.id == newEntry.id }) {
+            meals[idx] = newEntry
+        } else {
+            meals.append(newEntry)
+        }
+        storeMeals()
+        showingEditor = false
+    }
+
+    private func delete(_ item: JournalMeal) {
+        meals.removeAll { $0.id == item.id }
+        storeMeals()
+    }
+
+    private func loadSavedMeals() {
+        guard !didLoad else { return }
+        didLoad = true
+        guard let bytes = savedMealsJSON.data(using: .utf8),
+              let decoded = try? JSONDecoder().decode([JournalMeal].self, from: bytes) else { return }
+        meals = decoded
+    }
+
+    private func storeMeals() {
+        guard let bytes = try? JSONEncoder().encode(meals),
+              let json = String(data: bytes, encoding: .utf8) else { return }
+        savedMealsJSON = json
+    }
+}
+
+private struct JournalSearchHit: Identifiable {
+    var id: String
+    var name: String
+    var brand: String?
+    var displayName: String {
+        guard let brand, !brand.isEmpty, !name.lowercased().hasPrefix(brand.lowercased()) else { return name }
+        return "\(brand) \(name)"
+    }
+}
+
+private struct JournalFoodFinder: View {
+    @Environment(\.dismiss) private var dismiss
+    let onSelect: (JournalIngredient) -> Void
+    @State private var query = ""
+    @State private var results: [JournalSearchHit] = []
+    @State private var errorMessage: String? = nil
+    @State private var isSearching = false
+    @State private var isFetching = false
+    @State private var searchTimes: [Date] = []
+    @State private var queryCache: [String: [JournalSearchHit]] = [:]
+
+    var body: some View {
+        NavigationStack {
+            VStack(alignment: .leading, spacing: 10) {
+                Text("Find the exact brand and variety you ate.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+
+                HStack(spacing: 8) {
+                    TextField("e.g. Co-op wholemeal bread", text: $query)
+                        .textInputAutocapitalization(.words)
+                        .autocorrectionDisabled()
+                        .submitLabel(.search)
+                        .onSubmit(search)
+                        .textFieldStyle(.roundedBorder)
+                    Button("Search", action: search)
+                        .buttonStyle(.borderedProminent)
+                        .disabled(isSearching || isFetching || query.trimmingCharacters(in: .whitespacesAndNewlines).count < 2)
+                }
+                if isSearching { ProgressView("Finding products…") }
+                if isFetching { ProgressView("Checking nutrition information…") }
+                if let errorMessage {
+                    Text(errorMessage).font(.footnote).foregroundStyle(.secondary)
+                }
+                List(results) { hit in
+                    Button {
+                        Task { await select(hit) }
+                    } label: {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(hit.displayName).foregroundStyle(.primary)
+                            Text("Tap to add to this meal")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .disabled(isFetching)
+                }
+                .listStyle(.plain)
+                Link("Food data © Open Food Facts contributors · ODbL",
+                     destination: URL(string: "https://world.openfoodfacts.org/terms-of-use")!)
+                    .font(.caption2)
+                Text("Reported nutrient values are per 100 g, not your consumed portion. Not every product lists magnesium or B12.")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(16)
+            .navigationTitle("Find an ingredient")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") { dismiss() }
+                }
+            }
+        }
+    }
+
+    private func search() {
+        let phrase = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard phrase.count >= 2, !isSearching, !isFetching else { return }
+        let cacheKey = phrase.lowercased()
+        if let cached = queryCache[cacheKey] {
+            results = cached
+            errorMessage = cached.isEmpty ? "No matches. Try a shorter name or add it manually." : nil
+            return
+        }
+        let now = Date()
+        searchTimes = searchTimes.filter { now.timeIntervalSince($0) < 60 }
+        guard searchTimes.count < 8 else {
+            errorMessage = "Too many searches. Try again in a minute or add the ingredient manually."
+            return
+        }
+        searchTimes.append(now)
+        isSearching = true
+        errorMessage = nil
+        results = []
+
+        var components = URLComponents(string: "https://search.openfoodfacts.org/search")!
+        components.queryItems = [
+            URLQueryItem(name: "q", value: phrase),
+            URLQueryItem(name: "page_size", value: "12"),
+            URLQueryItem(name: "langs", value: "en"),
+            URLQueryItem(name: "fields", value: "code,product_name,brands")
+        ]
+        guard let url = components.url else {
+            isSearching = false
+            errorMessage = "Couldn't build the search request."
+            return
+        }
+        var request = URLRequest(url: url)
+        request.timeoutInterval = 20
+        request.setValue("ConsciousConnection/1.0 (https://github.com/tesstw89-glitch/ConsciousConnection)", forHTTPHeaderField: "User-Agent")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+
+        Task {
+            do {
+                let (data, response) = try await URLSession.shared.data(for: request)
+                guard let http = response as? HTTPURLResponse,
+                      (200...299).contains(http.statusCode) else {
+                    let status = (response as? HTTPURLResponse)?.statusCode ?? -1
+                    throw NSError(domain: "MealJournalSearch", code: status,
+                                  userInfo: [NSLocalizedDescriptionKey: "Food search returned HTTP \(status). Please try again."])
+                }
+                guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+                      let hits = json["hits"] as? [[String: Any]] else {
+                    throw NSError(domain: "MealJournalSearch", code: -2,
+                                  userInfo: [NSLocalizedDescriptionKey: "Unexpected food search response."])
+                }
+                func stringValue(_ input: Any?) -> String {
+                    if let value = input as? String { return value.trimmingCharacters(in: .whitespacesAndNewlines) }
+                    if let dictionary = input as? [String: Any] {
+                        for lang in ["en", "en-gb", "en_GB"] {
+                            if let value = dictionary[lang] as? String, !value.isEmpty { return value }
+                        }
+                        return dictionary.values.compactMap { $0 as? String }.first ?? ""
+                    }
+                    return ""
+                }
+                var seen = Set<String>()
+                let found: [JournalSearchHit] = hits.compactMap { hit in
+                    let row = (hit["_source"] as? [String: Any]) ?? hit
+                    let barcode = stringValue(row["code"])
+                    guard !barcode.isEmpty, barcode.count <= 20,
+                          barcode.unicodeScalars.allSatisfy({ CharacterSet.decimalDigits.contains($0) }),
+                          seen.insert(barcode).inserted else { return nil }
+                    let english = stringValue(row["product_name_en"])
+                    let name = english.isEmpty ? stringValue(row["product_name"]) : english
+                    guard !name.isEmpty else { return nil }
+                    let brand = stringValue(row["brands"])
+                    return JournalSearchHit(id: barcode, name: name,
+                                            brand: brand.isEmpty ? nil : brand)
+                }
+                await MainActor.run {
+                    results = found
+                    queryCache[cacheKey] = found
+                    errorMessage = found.isEmpty ? "No matching products found. Try a shorter name, or enter it manually." : nil
+                    isSearching = false
+                }
+            } catch {
+                await MainActor.run {
+                    errorMessage = error.localizedDescription
+                    isSearching = false
+                }
+            }
+        }
+    }
+
+    @MainActor
+    private func select(_ hit: JournalSearchHit) async {
+        guard !isFetching else { return }
+        isFetching = true
+        defer { isFetching = false }
+        var nutrients: [String: Any]? = nil
+        if let url = URL(string: "https://world.openfoodfacts.org/api/v2/product/\(hit.id).json?fields=code,product_name,brands,nutriments") {
+            var request = URLRequest(url: url)
+            request.timeoutInterval = 15
+            request.setValue("ConsciousConnection/1.0 (https://github.com/tesstw89-glitch/ConsciousConnection)", forHTTPHeaderField: "User-Agent")
+            request.setValue("application/json", forHTTPHeaderField: "Accept")
+            do {
+                let (data, response) = try await URLSession.shared.data(for: request)
+                if let http = response as? HTTPURLResponse,
+                   (200...299).contains(http.statusCode),
+                   let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+                   let product = json["product"] as? [String: Any] {
+                    nutrients = product["nutriments"] as? [String: Any]
+                }
+            } catch {
+                // The product can still be logged if the nutrition lookup fails.
+                print("Meal journal: nutrient lookup failed: \(error.localizedDescription)")
+            }
+        }
+        onSelect(.fromOpenFoodFacts(barcode: hit.id, name: hit.name,
+                                    brand: hit.brand, nutriments: nutrients))
+        dismiss()
+    }
+}

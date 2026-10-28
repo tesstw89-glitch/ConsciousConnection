@@ -1,0 +1,3154 @@
+import SwiftUI
+import SwiftData
+import AVFoundation
+import ImageIO
+import UIKit
+import Foundation
+
+
+private enum StrengthLabWorkoutPhase:
+    Equatable
+{
+    case exercise
+    case rest
+    case complete
+}
+
+
+struct WorkoutRunView:
+    View
+{
+    @Environment(\.dismiss)
+    private var dismiss
+
+    @Environment(\.modelContext)
+    private var modelContext
+
+    @Environment(ExerciseManager.self)
+    private var exerciseManager
+
+    @Environment(HealthManager.self)
+    private var healthManager
+
+    let workout:
+        WorkoutTemplate
+
+    @State
+    private var startedAt =
+        Date()
+
+    @State
+    private var now =
+        Date()
+
+    @State
+    private var workoutEndedAt:
+        Date?
+
+    @State
+    private var endedEarly =
+        false
+
+    @State
+    private var phase:
+        StrengthLabWorkoutPhase =
+            .exercise
+
+    @State
+    private var currentExerciseIndex =
+        0
+
+    @State
+    private var currentSetIndex =
+        0
+
+    @State
+    private var pendingExerciseIndex =
+        0
+
+    @State
+    private var pendingSetIndex =
+        0
+
+    @State
+    private var restEndDate:
+        Date?
+
+    @State
+    private var restRemaining =
+        0
+
+    @State private var timedRemaining: Int?
+    @State private var timedEndDate: Date?
+
+    @State
+    private var detailsShown =
+        false
+
+    @State
+    private var mediaIsLandscape =
+        false
+
+    @State
+    private var showExitOptions =
+        false
+
+    @State
+    private var completedSetIDs:
+        Set<UUID> = []
+
+    @State
+    private var historyCommitted =
+        false
+
+    @State
+    private var healthSummary:
+        StrengthLabHealthWorkoutSnapshot?
+
+    @State
+    private var healthLookupFinished =
+        false
+
+    @State
+    private var summaryLookupToken =
+        UUID()
+
+
+    private var topSafeAreaInset:
+        CGFloat
+    {
+        UIApplication.shared
+            .connectedScenes
+            .compactMap {
+                $0 as? UIWindowScene
+            }
+            .flatMap {
+                $0.windows
+            }
+            .first {
+                $0.isKeyWindow
+            }?
+            .safeAreaInsets
+            .top
+        ??
+        0
+    }
+
+
+    private var exercises:
+        [SetDeckExercise]
+    {
+        (workout.exercises ?? [])
+            .sorted {
+                $0.orderIndex <
+                $1.orderIndex
+            }
+    }
+
+
+    private var currentExercise:
+        SetDeckExercise?
+    {
+        guard
+            exercises.indices
+                .contains(
+                    currentExerciseIndex
+                )
+        else {
+            return nil
+        }
+
+        return
+            exercises[
+                currentExerciseIndex
+            ]
+    }
+
+
+    private var currentSets:
+        [SetDeckSet]
+    {
+        guard
+            let currentExercise
+        else {
+            return []
+        }
+
+        return
+            orderedSets(
+                for:
+                    currentExercise
+            )
+    }
+
+
+    private var currentSet:
+        SetDeckSet?
+    {
+        guard
+            currentSets.indices
+                .contains(
+                    currentSetIndex
+                )
+        else {
+            return nil
+        }
+
+        return
+            currentSets[
+                currentSetIndex
+            ]
+    }
+
+
+    private var totalSetCount:
+        Int
+    {
+        exercises.reduce(
+            0
+        ) {
+            partial,
+            exercise in
+
+            partial
+            +
+            orderedSets(
+                for:
+                    exercise
+            )
+            .count
+        }
+    }
+
+
+    var body: some View {
+        ZStack {
+            switch phase {
+
+            case .exercise:
+                exerciseScreen
+
+            case .rest:
+                restScreen
+
+            case .complete:
+                completionScreen
+            }
+        }
+        .preferredColorScheme(
+            .light
+        )
+        .onAppear {
+            // STRENGTHLAB_WORKOUT_MUSIC_V1
+            do {
+                try AVAudioSession.sharedInstance()
+                    .setCategory(.ambient, mode: .default)
+            } catch {
+                print("Music mixing: \(error.localizedDescription)")
+            }
+            moveToFirstPlayableSet()
+        }
+        .task {
+            await healthManager
+                .requestAuthorization()
+        }
+        .task {
+            while !Task.isCancelled {
+                try?
+                    await Task.sleep(
+                        for:
+                            .seconds(1)
+                    )
+
+                now =
+                    Date()
+            }
+        }
+        .task(
+            id:
+                restEndDate
+        ) {
+            await runRestCountdown()
+        }
+        .task(id: timedEndDate) {
+            await runTimedSetCountdown()
+        }
+        .confirmationDialog(
+            "Leave workout?",
+            isPresented:
+                $showExitOptions,
+            titleVisibility:
+                .visible
+        ) {
+            Button(
+                "End Workout Here"
+            ) {
+                finishWorkout(
+                    endedEarly:
+                        true
+                )
+            }
+
+            Button(
+                "Cancel Workout",
+                role:
+                    .destructive
+            ) {
+                dismiss()
+            }
+
+            Button(
+                "Keep Going",
+                role:
+                    .cancel
+            ) {
+            }
+
+        } message: {
+            if completedSetIDs.isEmpty {
+                Text(
+                    "End Workout Here will finish the session and show your workout summary. Cancel Workout exits without logging completed sets."
+                )
+            } else {
+                Text(
+                    "End Workout Here will save \(completedSetIDs.count) completed set\(completedSetIDs.count == 1 ? "" : "s") and show your workout summary."
+                )
+            }
+        }
+    }
+
+
+    // MARK: - Exercise
+
+    @ViewBuilder
+    private var exerciseScreen:
+        some View
+    {
+        if
+            let exercise =
+                currentExercise,
+            let set =
+                currentSet
+        {
+            GeometryReader {
+                proxy in
+
+                ZStack {
+                    if detailsShown {
+                        WorkoutLiveSetEditor(
+                            exercise:
+                                exercise,
+                            set:
+                                set,
+                            setNumber:
+                                currentSetIndex
+                                + 1,
+                            setCount:
+                                currentSets
+                                    .count,
+                            onDone:
+                                completeCurrentSet
+                        )
+                        .transition(
+                            .move(
+                                edge:
+                                    .bottom
+                            )
+                            .combined(
+                                with:
+                                    .opacity
+                            )
+                        )
+                        .gesture(
+                            DragGesture(
+                                minimumDistance:
+                                    35
+                            )
+                            .onEnded {
+                                value in
+
+                                if
+                                    value
+                                        .translation
+                                        .height
+                                    >
+                                    55
+                                {
+                                    withAnimation(
+                                        .snappy(
+                                            duration:
+                                                0.32
+                                        )
+                                    ) {
+                                        detailsShown =
+                                            false
+                                    }
+                                }
+                            }
+                        )
+
+                    } else {
+                        mediaStage(
+                            exercise:
+                                exercise,
+                            set:
+                                set,
+                            size:
+                                proxy.size
+                        )
+                        .transition(
+                            .opacity
+                        )
+                        .gesture(
+                            DragGesture(
+                                minimumDistance:
+                                    35
+                            )
+                            .onEnded {
+                                value in
+
+                                if
+                                    value
+                                        .translation
+                                        .height
+                                    <
+                                    -55
+                                {
+                                    withAnimation(
+                                        .snappy(
+                                            duration:
+                                                0.32
+                                        )
+                                    ) {
+                                        detailsShown =
+                                            true
+                                    }
+                                }
+                            }
+                        )
+                    }
+
+                    workoutTopBar(
+                        darkText:
+                            detailsShown
+                            ||
+                            mediaIsLandscape
+                    )
+                }
+                .animation(
+                    .snappy(
+                        duration:
+                            0.32
+                    ),
+                    value:
+                        detailsShown
+                )
+                .task(
+                    id:
+                        exercise.uuid
+                ) {
+                    mediaIsLandscape =
+                        await isLandscapeMedia(
+                            exercise
+                        )
+                }
+            }
+            .ignoresSafeArea()
+
+        } else {
+            completionScreen
+        }
+    }
+
+
+    @ViewBuilder
+    private func mediaStage(
+        exercise:
+            SetDeckExercise,
+        set:
+            SetDeckSet,
+        size:
+            CGSize
+    ) -> some View
+    {
+        if mediaIsLandscape {
+            ZStack {
+                Color.white
+
+                VStack(
+                    spacing: 0
+                ) {
+                    Spacer(
+                        minLength:
+                            90
+                    )
+
+                    ExerciseMediaPlaybackView(
+                        exercise:
+                            exercise
+                    )
+                    .frame(
+                        width:
+                            size.width
+                    )
+                    .frame(
+                        height:
+                            min(
+                                size.height
+                                * 0.53,
+                                size.width
+                                * 0.72
+                            )
+                    )
+                    .background(
+                        Color.black
+                    )
+
+                    instructionBand(
+                        exercise:
+                            exercise,
+                        set:
+                            set
+                    )
+
+                    Spacer(
+                        minLength: 0
+                    )
+                }
+            }
+
+        } else {
+            ZStack(
+                alignment:
+                    .bottom
+            ) {
+                Color.black
+
+                ExerciseMediaPlaybackView(
+                    exercise:
+                        exercise
+                )
+                .frame(
+                    maxWidth:
+                        .infinity,
+                    maxHeight:
+                        .infinity
+                )
+                .background(
+                    Color.black
+                )
+
+                instructionBand(
+                    exercise:
+                        exercise,
+                    set:
+                        set
+                )
+            }
+        }
+    }
+
+
+    private func instructionBand(
+        exercise:
+            SetDeckExercise,
+        set:
+            SetDeckSet
+    ) -> some View
+    {
+        VStack(
+            alignment:
+                .leading,
+            spacing: 10
+        ) {
+            Text(
+                exercise.name
+            )
+            .font(
+                StrengthLabFigmaTheme
+                    .bold(23)
+            )
+            .foregroundStyle(
+                Color.white
+            )
+            .lineLimit(2)
+
+            Text(
+                "SET \(currentSetIndex + 1) OF \(currentSets.count)"
+            )
+            .font(
+                StrengthLabFigmaTheme
+                    .bold(11)
+            )
+            .tracking(1.2)
+            .foregroundStyle(
+                Color.white
+                    .opacity(
+                        0.72
+                    )
+            )
+
+            Text(
+                instructionText(
+                    for:
+                        set
+                )
+            )
+            .font(
+                StrengthLabFigmaTheme
+                    .medium(18)
+            )
+            .foregroundStyle(
+                Color.white
+            )
+            .fixedSize(
+                horizontal:
+                    false,
+                vertical:
+                    true
+            )
+
+            if set.setType == .duration,
+               let seconds = set.targetDuration,
+               seconds > 0 {
+                timedSetControl(for: set)
+                    .padding(.top, 7)
+            }
+
+            HStack(
+                alignment:
+                    .bottom
+            ) {
+                if
+                    let rest =
+                        set
+                            .restTimeInSeconds,
+                    rest > 0
+                {
+                    Label(
+                        "Rest \(formattedRest(rest))",
+                        systemImage:
+                            "timer"
+                    )
+                    .font(
+                        StrengthLabFigmaTheme
+                            .medium(13)
+                    )
+                    .foregroundStyle(
+                        Color.white
+                            .opacity(
+                                0.76
+                            )
+                    )
+                }
+
+                Spacer()
+
+                doneSetButton(
+                    action:
+                        completeCurrentSet
+                )
+            }
+        }
+        .padding(
+            .horizontal,
+            22
+        )
+        .padding(
+            .top,
+            19
+        )
+        .padding(
+            .bottom,
+            24
+        )
+        .frame(
+            maxWidth:
+                .infinity,
+            alignment:
+                .leading
+        )
+        .background(
+            Color.black
+                .opacity(
+                    0.52
+                )
+        )
+    }
+
+
+    // MARK: - Timed exercise (separate from automatic rest)
+
+    private func timedSetControl(for set: SetDeckSet) -> some View {
+        let full = max(1, Int(ceil(set.targetDuration ?? 0)))
+        let remaining = timedRemaining ?? full
+        return HStack(spacing: 17) {
+            Button {
+                toggleTimedSet(for: set)
+            } label: {
+                VStack(spacing: 4) {
+                    Text(remaining < 60 ? "\(remaining)s" : clockText(remaining))
+                        .font(.system(size: 30, weight: .bold, design: .rounded))
+                        .monospacedDigit()
+                    Image(systemName: timedEndDate == nil
+                          ? (remaining == 0 ? "arrow.counterclockwise" : "play.fill")
+                          : "pause.fill")
+                        .font(.system(size: 19, weight: .bold))
+                }
+                .foregroundStyle(.white)
+                .frame(width: 112, height: 112)
+                .background(StrengthLabFigmaTheme.coralGradient, in: Circle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(timedEndDate == nil ? "Start or resume exercise timer" : "Pause exercise timer")
+
+            VStack(alignment: .leading, spacing: 9) {
+                Text(timedEndDate == nil
+                     ? (remaining == 0 ? "Timer finished" : "Tap play to start")
+                     : "Exercise timer running")
+                    .font(StrengthLabFigmaTheme.medium(13))
+                    .foregroundStyle(.white)
+                Button("Reset timer") {
+                    timedEndDate = nil
+                    timedRemaining = full
+                }
+                .font(StrengthLabFigmaTheme.medium(12))
+                .foregroundStyle(.white.opacity(0.8))
+            }
+            Spacer(minLength: 0)
+        }
+    }
+
+    private func clockText(_ value: Int) -> String {
+        String(format: "%d:%02d", value / 60, value % 60)
+    }
+
+    private func resetTimedSet() {
+        timedEndDate = nil
+        if let set = currentSet,
+           set.setType == .duration,
+           let seconds = set.targetDuration,
+           seconds > 0 {
+            timedRemaining = max(1, Int(ceil(seconds)))
+        } else {
+            timedRemaining = nil
+        }
+    }
+
+    private func toggleTimedSet(for set: SetDeckSet) {
+        if let end = timedEndDate {
+            timedRemaining = max(0, Int(ceil(end.timeIntervalSinceNow)))
+            timedEndDate = nil
+            return
+        }
+        let full = max(1, Int(ceil(set.targetDuration ?? 0)))
+        let seconds = (timedRemaining ?? full) > 0 ? (timedRemaining ?? full) : full
+        timedRemaining = seconds
+        timedEndDate = Date().addingTimeInterval(TimeInterval(seconds))
+    }
+
+    @MainActor
+    private func runTimedSetCountdown() async {
+        guard let end = timedEndDate else { return }
+        while !Task.isCancelled {
+            let remaining = max(0, Int(ceil(end.timeIntervalSinceNow)))
+            timedRemaining = remaining
+            if remaining == 0 {
+                timedEndDate = nil
+                return // Never auto-complete the set or start the next one.
+            }
+            do { try await Task.sleep(for: .milliseconds(200)) }
+            catch { return }
+        }
+    }
+
+    private func doneSetButton(
+        action:
+            @escaping () -> Void
+    ) -> some View
+    {
+        Button(
+            action:
+                action
+        ) {
+            Image(
+                systemName:
+                    "checkmark"
+            )
+            .font(
+                .system(
+                    size: 27,
+                    weight: .bold
+                )
+            )
+            .foregroundStyle(
+                .white
+            )
+            .frame(
+                width: 72,
+                height: 72
+            )
+            .background(
+                StrengthLabFigmaTheme
+                    .coralGradient,
+                in:
+                    Circle()
+            )
+            .shadow(
+                color:
+                    StrengthLabFigmaTheme
+                        .coral
+                        .opacity(
+                            0.34
+                        ),
+                radius: 14,
+                y: 7
+            )
+        }
+        .buttonStyle(
+            .plain
+        )
+        .accessibilityLabel(
+            "Complete set"
+        )
+    }
+
+
+    // MARK: - Rest
+
+    private var restScreen:
+        some View
+    {
+        ZStack(
+            alignment:
+                .bottomTrailing
+        ) {
+            Color.white
+                .ignoresSafeArea()
+
+            VStack(
+                spacing: 20
+            ) {
+                Spacer()
+
+                Text("REST")
+                    .font(
+                        StrengthLabFigmaTheme
+                            .bold(14)
+                    )
+                    .tracking(2)
+                    .foregroundStyle(
+                        StrengthLabFigmaTheme
+                            .muted
+                    )
+
+                ZStack {
+                    Circle()
+                        .fill(
+                            StrengthLabFigmaTheme
+                                .coralGradient
+                        )
+                        .frame(
+                            width: 248,
+                            height: 248
+                        )
+
+                    Text(
+                        restClock
+                    )
+                    .font(
+                        .system(
+                            size: 55,
+                            weight: .bold,
+                            design:
+                                .rounded
+                        )
+                    )
+                    .monospacedDigit()
+                    .foregroundStyle(
+                        .white
+                    )
+                }
+
+                if
+                    let next =
+                        pendingExercise
+                {
+                    VStack(
+                        spacing: 6
+                    ) {
+                        Text("UP NEXT")
+                            .font(
+                                StrengthLabFigmaTheme
+                                    .bold(10)
+                            )
+                            .tracking(1.5)
+                            .foregroundStyle(
+                                StrengthLabFigmaTheme
+                                    .coral
+                            )
+
+                        Text(
+                            next.name
+                        )
+                        .font(
+                            StrengthLabFigmaTheme
+                                .bold(20)
+                        )
+                        .foregroundStyle(
+                            StrengthLabFigmaTheme
+                                .ink
+                        )
+
+                        Text(
+                            "Set \(pendingSetIndex + 1)"
+                        )
+                        .font(
+                            StrengthLabFigmaTheme
+                                .medium(14)
+                        )
+                        .foregroundStyle(
+                            StrengthLabFigmaTheme
+                                .muted
+                        )
+                    }
+                }
+
+                Spacer()
+            }
+            .frame(
+                maxWidth:
+                    .infinity,
+                maxHeight:
+                    .infinity
+            )
+
+            Button {
+                finishRest()
+            } label: {
+                Text("Skip Rest")
+                    .font(
+                        StrengthLabFigmaTheme
+                            .bold(15)
+                    )
+                    .foregroundStyle(
+                        .white
+                    )
+                    .padding(
+                        .horizontal,
+                        20
+                    )
+                    .frame(
+                        height: 50
+                    )
+                    .background(
+                        StrengthLabFigmaTheme
+                            .coralGradient,
+                        in:
+                            Capsule()
+                    )
+            }
+            .buttonStyle(.plain)
+            .padding(
+                .trailing,
+                22
+            )
+            .padding(
+                .bottom,
+                22
+            )
+
+            workoutTopBar(
+                darkText:
+                    true
+            )
+        }
+    }
+
+
+    // MARK: - Workout Finished
+
+    private var completionScreen:
+        some View
+    {
+        ZStack {
+            StrengthLabFigmaTheme
+                .paleBlush
+                .ignoresSafeArea()
+
+            ScrollView {
+                VStack(
+                    spacing: 22
+                ) {
+                    Spacer()
+                        .frame(
+                            height: 52
+                        )
+
+                    Text("✨  🎉  ✨")
+                        .font(
+                            .system(
+                                size: 37
+                            )
+                        )
+
+                    Text(
+                        "WORKOUT FINISHED"
+                    )
+                    .font(
+                        StrengthLabFigmaTheme
+                            .bold(13)
+                    )
+                    .tracking(2)
+                    .foregroundStyle(
+                        StrengthLabFigmaTheme
+                            .coral
+                    )
+
+                    Text(
+                        workout.name
+                    )
+                    .font(
+                        StrengthLabFigmaTheme
+                            .bold(30)
+                    )
+                    .foregroundStyle(
+                        StrengthLabFigmaTheme
+                            .ink
+                    )
+                    .multilineTextAlignment(
+                        .center
+                    )
+
+                    if endedEarly {
+                        Text("Ended early")
+                            .font(
+                                StrengthLabFigmaTheme
+                                    .bold(12)
+                            )
+                            .foregroundStyle(
+                                StrengthLabFigmaTheme
+                                    .coral
+                            )
+                            .padding(
+                                .horizontal,
+                                12
+                            )
+                            .frame(
+                                height: 30
+                            )
+                            .background(
+                                StrengthLabFigmaTheme
+                                    .blush,
+                                in:
+                                    Capsule()
+                            )
+                    }
+
+                    LazyVGrid(
+                        columns: [
+                            GridItem(
+                                .flexible()
+                            ),
+                            GridItem(
+                                .flexible()
+                            )
+                        ],
+                        spacing: 12
+                    ) {
+                        summaryCard(
+                            title:
+                                "Workout time",
+                            value:
+                                elapsed,
+                            icon:
+                                "clock"
+                        )
+
+                        summaryCard(
+                            title:
+                                "Sets",
+                            value:
+                                "\(completedSetIDs.count) / \(totalSetCount)",
+                            icon:
+                                "checkmark.circle"
+                        )
+
+                        summaryCard(
+                            title:
+                                "Active calories",
+                            value:
+                                calorieText,
+                            icon:
+                                "flame.fill"
+                        )
+
+                        summaryCard(
+                            title:
+                                "Avg heart rate",
+                            value:
+                                averageHeartRateText,
+                            icon:
+                                "heart.fill"
+                        )
+
+                        if
+                            let maxHR =
+                                healthSummary?
+                                    .maximumHeartRate
+                        {
+                            summaryCard(
+                                title:
+                                    "Peak heart rate",
+                                value:
+                                    "\(Int(maxHR.rounded())) bpm",
+                                icon:
+                                    "waveform.path.ecg"
+                            )
+                        }
+
+                        if
+                            let watch =
+                                healthSummary
+                        {
+                            summaryCard(
+                                title:
+                                    "Watch workout",
+                                value:
+                                    durationText(
+                                        watch
+                                            .duration
+                                    ),
+                                icon:
+                                    "applewatch"
+                            )
+                        }
+                    }
+
+                    watchStatusCard
+
+                    Button {
+                        dismiss()
+                    } label: {
+                        Text("Done")
+                            .font(
+                                StrengthLabFigmaTheme
+                                    .bold(17)
+                            )
+                            .foregroundStyle(
+                                .white
+                            )
+                            .frame(
+                                maxWidth:
+                                    .infinity
+                            )
+                            .frame(
+                                height: 56
+                            )
+                            .background(
+                                StrengthLabFigmaTheme
+                                    .coralGradient,
+                                in:
+                                    RoundedRectangle(
+                                        cornerRadius:
+                                            18,
+                                        style:
+                                            .continuous
+                                    )
+                            )
+                    }
+                    .buttonStyle(.plain)
+                    .padding(
+                        .top,
+                        6
+                    )
+                }
+                .padding(
+                    .horizontal,
+                    24
+                )
+                .padding(
+                    .bottom,
+                    30
+                )
+            }
+            .scrollIndicators(
+                .hidden
+            )
+        }
+        .task(
+            id:
+                summaryLookupToken
+        ) {
+            await loadAppleWatchSummary()
+        }
+    }
+
+
+    private func summaryCard(
+        title:
+            String,
+        value:
+            String,
+        icon:
+            String
+    ) -> some View
+    {
+        VStack(
+            alignment:
+                .leading,
+            spacing: 12
+        ) {
+            Image(
+                systemName:
+                    icon
+            )
+            .font(
+                .system(
+                    size: 20,
+                    weight: .semibold
+                )
+            )
+            .foregroundStyle(
+                StrengthLabFigmaTheme
+                    .coral
+            )
+
+            Text(value)
+                .font(
+                    StrengthLabFigmaTheme
+                        .bold(23)
+                )
+                .foregroundStyle(
+                    StrengthLabFigmaTheme
+                        .ink
+                )
+                .lineLimit(1)
+                .minimumScaleFactor(
+                    0.7
+                )
+
+            Text(title)
+                .font(
+                    StrengthLabFigmaTheme
+                        .medium(12)
+                )
+                .foregroundStyle(
+                    StrengthLabFigmaTheme
+                        .muted
+                )
+        }
+        .frame(
+            maxWidth:
+                .infinity,
+            minHeight:
+                112,
+            alignment:
+                .leading
+        )
+        .padding(16)
+        .background(
+            Color.white,
+            in:
+                RoundedRectangle(
+                    cornerRadius:
+                        22,
+                    style:
+                        .continuous
+                )
+        )
+    }
+
+
+    @ViewBuilder
+    private var watchStatusCard:
+        some View
+    {
+        if healthSummary != nil {
+            HStack(
+                spacing: 12
+            ) {
+                Image(
+                    systemName:
+                        "applewatch"
+                )
+                .font(
+                    .title3
+                )
+                .foregroundStyle(
+                    StrengthLabFigmaTheme
+                        .coral
+                )
+
+                VStack(
+                    alignment:
+                        .leading,
+                    spacing: 3
+                ) {
+                    Text(
+                        "Apple Watch workout matched"
+                    )
+                    .font(
+                        StrengthLabFigmaTheme
+                            .bold(14)
+                    )
+                    .foregroundStyle(
+                        StrengthLabFigmaTheme
+                            .ink
+                    )
+
+                    Text(
+                        "Calories and heart-rate data came from Apple Health."
+                    )
+                    .font(
+                        StrengthLabFigmaTheme
+                            .regular(12)
+                    )
+                    .foregroundStyle(
+                        StrengthLabFigmaTheme
+                            .muted
+                    )
+                }
+
+                Spacer()
+            }
+            .padding(16)
+            .background(
+                Color.white,
+                in:
+                    RoundedRectangle(
+                        cornerRadius:
+                            20,
+                        style:
+                            .continuous
+                    )
+            )
+
+        } else if !healthLookupFinished {
+            HStack(
+                spacing: 12
+            ) {
+                ProgressView()
+                    .tint(
+                        StrengthLabFigmaTheme
+                            .coral
+                    )
+
+                VStack(
+                    alignment:
+                        .leading,
+                    spacing: 3
+                ) {
+                    Text(
+                        "Syncing Apple Watch data…"
+                    )
+                    .font(
+                        StrengthLabFigmaTheme
+                            .bold(14)
+                    )
+
+                    Text(
+                        "Looking for the Traditional Strength Training workout that overlaps this StrengthLab session."
+                    )
+                    .font(
+                        StrengthLabFigmaTheme
+                            .regular(12)
+                    )
+                    .foregroundStyle(
+                        StrengthLabFigmaTheme
+                            .muted
+                    )
+                }
+            }
+            .frame(
+                maxWidth:
+                    .infinity,
+                alignment:
+                    .leading
+            )
+            .padding(16)
+            .background(
+                Color.white,
+                in:
+                    RoundedRectangle(
+                        cornerRadius:
+                            20
+                    )
+            )
+
+        } else {
+            VStack(
+                alignment:
+                    .leading,
+                spacing: 12
+            ) {
+                Text(
+                    "Apple Watch data hasn't appeared yet."
+                )
+                .font(
+                    StrengthLabFigmaTheme
+                        .bold(14)
+                )
+                .foregroundStyle(
+                    StrengthLabFigmaTheme
+                        .ink
+                )
+
+                Text(
+                    "If you just stopped the Watch workout, Health may still be syncing it."
+                )
+                .font(
+                    StrengthLabFigmaTheme
+                        .regular(12)
+                )
+                .foregroundStyle(
+                    StrengthLabFigmaTheme
+                        .muted
+                )
+
+                Button {
+                    healthSummary =
+                        nil
+
+                    healthLookupFinished =
+                        false
+
+                    summaryLookupToken =
+                        UUID()
+                } label: {
+                    Label(
+                        "Check Again",
+                        systemImage:
+                            "arrow.clockwise"
+                    )
+                    .font(
+                        StrengthLabFigmaTheme
+                            .bold(14)
+                    )
+                    .foregroundStyle(
+                        .white
+                    )
+                    .padding(
+                        .horizontal,
+                        16
+                    )
+                    .frame(
+                        height: 44
+                    )
+                    .background(
+                        StrengthLabFigmaTheme
+                            .coralGradient,
+                        in:
+                            Capsule()
+                    )
+                }
+                .buttonStyle(.plain)
+            }
+            .frame(
+                maxWidth:
+                    .infinity,
+                alignment:
+                    .leading
+            )
+            .padding(16)
+            .background(
+                Color.white,
+                in:
+                    RoundedRectangle(
+                        cornerRadius:
+                            20
+                    )
+            )
+        }
+    }
+
+
+    // MARK: - Top Bar
+
+    private func workoutTopBar(
+        darkText:
+            Bool
+    ) -> some View
+    {
+        VStack {
+            HStack {
+                Button {
+                    showExitOptions =
+                        true
+                } label: {
+                    Image(
+                        systemName:
+                            "xmark"
+                    )
+                    .font(
+                        .system(
+                            size: 18,
+                            weight: .bold
+                        )
+                    )
+                    .foregroundStyle(
+                        StrengthLabFigmaTheme
+                            .ink
+                    )
+                    .frame(
+                        width: 48,
+                        height: 48
+                    )
+                    .background(
+                        Color.white
+                            .opacity(
+                                0.96
+                            ),
+                        in:
+                            Circle()
+                    )
+                }
+                .buttonStyle(.plain)
+
+                Spacer()
+
+                VStack(
+                    alignment:
+                        .trailing,
+                    spacing: 3
+                ) {
+                    Text(
+                        elapsed
+                    )
+                    .font(
+                        .headline
+                            .monospacedDigit()
+                    )
+                    .foregroundStyle(
+                        darkText
+                        ? StrengthLabFigmaTheme
+                            .ink
+                        : Color.white
+                    )
+
+                    if phase == .exercise {
+                        Text(
+                            "\(currentExerciseIndex + 1)/\(max(exercises.count, 1))"
+                        )
+                        .font(
+                            .caption
+                                .weight(
+                                    .bold
+                                )
+                        )
+                        .foregroundStyle(
+                            darkText
+                            ? StrengthLabFigmaTheme
+                                .muted
+                            : Color.white
+                                .opacity(
+                                    0.72
+                                )
+                        )
+                    }
+                }
+                .padding(
+                    .horizontal,
+                    14
+                )
+                .frame(
+                    height: 48
+                )
+                .background(
+                    darkText
+                    ? Color.white
+                        .opacity(
+                            0.92
+                        )
+                    : Color.black
+                        .opacity(
+                            0.34
+                        ),
+                    in:
+                        Capsule()
+                )
+            }
+            .padding(
+                .horizontal,
+                20
+            )
+            .padding(
+                .top,
+                max(
+                    12,
+                    topSafeAreaInset
+                    +
+                    8
+                )
+            )
+
+            Spacer()
+        }
+    }
+
+
+    // MARK: - Progression
+
+    private func moveToFirstPlayableSet()
+    {
+        guard
+            let position =
+                firstPlayablePosition()
+        else {
+            finishWorkout(
+                endedEarly:
+                    false
+            )
+
+            return
+        }
+
+        goTo(
+            exerciseIndex:
+                position.exercise,
+            setIndex:
+                position.set
+        )
+    }
+
+
+    // Exercise order for this session. Group members run in cycles:
+    // A1, A2, A3, A4, then A1 set 2, ...; never A1 x3 first.
+    private var playbackPositions: [(exercise: Int, set: Int)] {
+        let ordered = exercises
+        var result: [(exercise: Int, set: Int)] = []
+        var handledGroups = Set<UUID>()
+
+        for (index, exercise) in ordered.enumerated() {
+            if let groupID = exercise.supersetGroupID {
+                guard handledGroups.insert(groupID).inserted else { continue }
+                let members = ordered.enumerated().filter {
+                    $0.element.supersetGroupID == groupID
+                }
+                let cycles = members.map { orderedSets(for: $0.element).count }.max() ?? 0
+                if cycles > 0 {
+                    for cycle in 0..<cycles {
+                        for (memberIndex, member) in members {
+                            if orderedSets(for: member).indices.contains(cycle) {
+                                result.append((memberIndex, cycle))
+                            }
+                        }
+                    }
+                }
+            } else {
+                for setIndex in orderedSets(for: exercise).indices {
+                    result.append((index, setIndex))
+                }
+            }
+        }
+        return result
+    }
+
+    private func firstPlayablePosition() -> (exercise: Int, set: Int)? {
+        playbackPositions.first
+    }
+
+
+    private func completeCurrentSet()
+    {
+        guard
+            let set =
+                currentSet
+        else {
+            finishWorkout(
+                endedEarly:
+                    false
+            )
+
+            return
+        }
+
+        timedEndDate = nil
+        completedSetIDs.insert(
+            set.uuid
+        )
+
+        try?
+            modelContext.save()
+
+        guard
+            let next =
+                nextPosition()
+        else {
+            finishWorkout(
+                endedEarly:
+                    false
+            )
+
+            return
+        }
+
+        let rest =
+            max(
+                0,
+                set
+                    .restTimeInSeconds
+                ??
+                0
+            )
+
+        if rest > 0 {
+            pendingExerciseIndex =
+                next.exercise
+
+            pendingSetIndex =
+                next.set
+
+            restRemaining =
+                rest
+
+            restEndDate =
+                Date()
+                    .addingTimeInterval(
+                        TimeInterval(
+                            rest
+                        )
+                    )
+
+            detailsShown =
+                false
+
+            withAnimation(
+                .snappy(
+                    duration:
+                        0.3
+                )
+            ) {
+                phase =
+                    .rest
+            }
+
+        } else {
+            goTo(
+                exerciseIndex:
+                    next.exercise,
+                setIndex:
+                    next.set
+            )
+        }
+    }
+
+
+    private func finishWorkout(
+        endedEarly:
+            Bool
+    )
+    {
+        guard
+            phase !=
+                .complete
+        else {
+            return
+        }
+
+        self.endedEarly =
+            endedEarly
+
+        workoutEndedAt =
+            Date()
+
+        restEndDate =
+            nil
+
+        restRemaining =
+            0
+
+        timedEndDate = nil
+        timedRemaining = nil
+
+        detailsShown =
+            false
+
+        commitCompletedSetHistory(
+            endedEarly:
+                endedEarly
+        )
+
+        healthSummary =
+            nil
+
+        healthLookupFinished =
+            false
+
+        summaryLookupToken =
+            UUID()
+
+        withAnimation(
+            .snappy(
+                duration:
+                    0.35
+            )
+        ) {
+            phase =
+                .complete
+        }
+    }
+
+
+    private func nextPosition() -> (exercise: Int, set: Int)? {
+        let positions = playbackPositions
+        guard let index = positions.firstIndex(where: {
+            $0.exercise == currentExerciseIndex && $0.set == currentSetIndex
+        }) else { return nil }
+        let next = positions.index(after: index)
+        return positions.indices.contains(next) ? positions[next] : nil
+    }
+
+
+    private func goTo(
+        exerciseIndex:
+            Int,
+        setIndex:
+            Int
+    )
+    {
+        currentExerciseIndex =
+            exerciseIndex
+
+        currentSetIndex =
+            setIndex
+
+        resetTimedSet()
+
+        detailsShown =
+            false
+
+        mediaIsLandscape =
+            false
+
+        restEndDate =
+            nil
+
+        withAnimation(
+            .snappy(
+                duration:
+                    0.3
+            )
+        ) {
+            phase =
+                .exercise
+        }
+    }
+
+
+    private func finishRest()
+    {
+        guard
+            phase ==
+                .rest
+        else {
+            return
+        }
+
+        restEndDate =
+            nil
+
+        restRemaining =
+            0
+
+        goTo(
+            exerciseIndex:
+                pendingExerciseIndex,
+            setIndex:
+                pendingSetIndex
+        )
+    }
+
+
+    @MainActor
+    private func runRestCountdown()
+        async
+    {
+        guard
+            phase ==
+                .rest,
+            let end =
+                restEndDate
+        else {
+            return
+        }
+
+        while !Task.isCancelled {
+            let remaining =
+                max(
+                    0,
+                    Int(
+                        ceil(
+                            end
+                                .timeIntervalSinceNow
+                        )
+                    )
+                )
+
+            restRemaining =
+                remaining
+
+            if remaining <= 0 {
+                finishRest()
+                return
+            }
+
+            try?
+                await Task.sleep(
+                    for:
+                        .milliseconds(
+                            250
+                        )
+                )
+        }
+    }
+
+
+    // MARK: - Apple Health Summary
+
+    @MainActor
+    private func loadAppleWatchSummary()
+        async
+    {
+        guard
+            phase ==
+                .complete,
+            let ended =
+                workoutEndedAt
+        else {
+            return
+        }
+
+        healthLookupFinished =
+            false
+
+        /*
+         Give Apple Watch / HealthKit a short window to sync after
+         the user taps End on Traditional Strength Training.
+        */
+        for attempt in 0..<12 {
+            if Task.isCancelled {
+                return
+            }
+
+            if
+                let snapshot =
+                    await healthManager
+                        .matchingStrengthWorkoutSnapshot(
+                            strengthLabStart:
+                                startedAt,
+                            strengthLabEnd:
+                                ended
+                        )
+            {
+                healthSummary =
+                    snapshot
+
+                healthLookupFinished =
+                    true
+
+                return
+            }
+
+            if attempt < 11 {
+                try?
+                    await Task.sleep(
+                        for:
+                            .seconds(1)
+                    )
+            }
+        }
+
+        healthLookupFinished =
+            true
+    }
+
+
+    // MARK: - History
+
+    private func commitCompletedSetHistory(
+        endedEarly:
+            Bool
+    )
+    {
+        guard
+            !historyCommitted
+        else {
+            return
+        }
+
+        try?
+            modelContext.save()
+
+        guard
+            !completedSetIDs.isEmpty
+        else {
+            historyCommitted =
+                true
+
+            return
+        }
+
+        let completedAt =
+            Date()
+
+        for exercise in exercises {
+            let sets =
+                orderedSets(
+                    for:
+                        exercise
+                )
+
+            for set in sets
+            where
+                completedSetIDs
+                    .contains(
+                        set.uuid
+                    )
+            {
+                _ =
+                    exerciseManager
+                        .recordHistory(
+                            for:
+                                set,
+                            completedDate:
+                                completedAt,
+                            actualReps:
+                                set.targetReps,
+                            actualWeight:
+                                set.weight,
+                            actualWeightUnit:
+                                nil,
+                            actualDuration:
+                                set.setType
+                                ==
+                                .duration
+                                ? set.targetDuration
+                                : nil,
+                            actualDescription:
+                                set.setDescription,
+                            actualRpe:
+                                set.rpe,
+                            note:
+                                endedEarly
+                                ? "Ended early · \(workout.name)"
+                                : "Workout · \(workout.name)"
+                        )
+            }
+        }
+
+        historyCommitted =
+            true
+    }
+
+
+    // MARK: - Data
+
+    private func orderedSets(
+        for exercise:
+            SetDeckExercise
+    ) -> [SetDeckSet]
+    {
+        let managed =
+            exerciseManager
+                .sets(
+                    for:
+                        exercise
+                )
+
+        if !managed.isEmpty {
+            return
+                managed.sorted {
+                    $0.orderIndex <
+                    $1.orderIndex
+                }
+        }
+
+        return
+            (exercise.sets ?? [])
+                .sorted {
+                    $0.orderIndex <
+                    $1.orderIndex
+                }
+    }
+
+
+    private var pendingExercise:
+        SetDeckExercise?
+    {
+        guard
+            exercises.indices
+                .contains(
+                    pendingExerciseIndex
+                )
+        else {
+            return nil
+        }
+
+        return
+            exercises[
+                pendingExerciseIndex
+            ]
+    }
+
+
+    private func instructionText(
+        for set:
+            SetDeckSet
+    ) -> String
+    {
+        if
+            let description =
+                set
+                    .setDescription?
+                    .trimmingCharacters(
+                        in:
+                            .whitespacesAndNewlines
+                    ),
+            !description.isEmpty
+        {
+            return description
+        }
+
+        switch set.setType {
+
+        case .reps:
+            if
+                let reps =
+                    set.targetReps
+            {
+                return
+                    "\(reps) reps"
+            }
+
+            return
+                "Complete the set"
+
+        case .amap:
+            if
+                let reps =
+                    set.targetReps,
+                reps > 0
+            {
+                return
+                    "AMAP · aim for \(reps)+ reps"
+            }
+
+            return
+                "As many reps as possible"
+
+        case .duration:
+            if
+                let duration =
+                    set.targetDuration
+            {
+                return
+                    formattedRest(
+                        Int(
+                            duration
+                        )
+                    )
+            }
+
+            return
+                "Timed set"
+
+        case .freeform:
+            return
+                "Complete this set"
+        }
+    }
+
+
+    private var elapsed:
+        String
+    {
+        let endpoint =
+            workoutEndedAt
+            ??
+            now
+
+        let total =
+            max(
+                0,
+                Int(
+                    endpoint
+                        .timeIntervalSince(
+                            startedAt
+                        )
+                )
+            )
+
+        return
+            durationText(
+                TimeInterval(
+                    total
+                )
+            )
+    }
+
+
+    private var restClock:
+        String
+    {
+        let minutes =
+            restRemaining / 60
+
+        let seconds =
+            restRemaining % 60
+
+        return
+            String(
+                format:
+                    "%02d:%02d",
+                minutes,
+                seconds
+            )
+    }
+
+
+    private var calorieText:
+        String
+    {
+        guard
+            let calories =
+                healthSummary?
+                    .activeEnergyKCal
+        else {
+            return
+                healthLookupFinished
+                ? "—"
+                : "…"
+        }
+
+        return
+            "\(Int(calories.rounded())) kcal"
+    }
+
+
+    private var averageHeartRateText:
+        String
+    {
+        guard
+            let heartRate =
+                healthSummary?
+                    .averageHeartRate
+        else {
+            return
+                healthLookupFinished
+                ? "—"
+                : "…"
+        }
+
+        return
+            "\(Int(heartRate.rounded())) bpm"
+    }
+
+
+    private func durationText(
+        _ duration:
+            TimeInterval
+    ) -> String
+    {
+        let total =
+            max(
+                0,
+                Int(
+                    duration.rounded()
+                )
+            )
+
+        let hours =
+            total / 3600
+
+        let minutes =
+            (
+                total % 3600
+            )
+            / 60
+
+        let seconds =
+            total % 60
+
+        if hours > 0 {
+            return
+                String(
+                    format:
+                        "%d:%02d:%02d",
+                    hours,
+                    minutes,
+                    seconds
+                )
+        }
+
+        return
+            String(
+                format:
+                    "%02d:%02d",
+                minutes,
+                seconds
+            )
+    }
+
+
+    private func formattedRest(
+        _ seconds:
+            Int
+    ) -> String
+    {
+        if seconds >= 60 {
+            let minutes =
+                seconds / 60
+
+            let remainder =
+                seconds % 60
+
+            if remainder == 0 {
+                return
+                    minutes == 1
+                    ? "1 min"
+                    : "\(minutes) min"
+            }
+
+            return
+                "\(minutes):\(String(format: "%02d", remainder))"
+        }
+
+        return
+            "\(seconds)s"
+    }
+
+
+    // MARK: - Media Orientation
+
+    private func isLandscapeMedia(
+        _ exercise:
+            SetDeckExercise
+    ) async -> Bool
+    {
+        if
+            let gif =
+                exercise.gifURL,
+            gif.isFileURL,
+            let source =
+                CGImageSourceCreateWithURL(
+                    gif as CFURL,
+                    nil
+                ),
+            let image =
+                CGImageSourceCreateImageAtIndex(
+                    source,
+                    0,
+                    nil
+                )
+        {
+            return
+                image.width >
+                image.height
+        }
+
+        let candidate:
+            URL?
+
+        if
+            let imported =
+                exercise
+                    .importedVideoURL,
+            !imported.isFileURL
+            ||
+            FileManager.default
+                .fileExists(
+                    atPath:
+                        imported.path
+                )
+        {
+            candidate =
+                imported
+
+        } else if
+            let video =
+                exercise.videoURL,
+            video.isFileURL
+            ||
+            [
+                "mp4",
+                "mov",
+                "m4v",
+                "m3u8"
+            ]
+            .contains(
+                video
+                    .pathExtension
+                    .lowercased()
+            )
+        {
+            candidate =
+                video
+
+        } else {
+            candidate =
+                nil
+        }
+
+        guard
+            let candidate
+        else {
+            return false
+        }
+
+        let asset =
+            AVURLAsset(
+                url:
+                    candidate
+            )
+
+        do {
+            let tracks =
+                try await asset
+                    .loadTracks(
+                        withMediaType:
+                            .video
+                    )
+
+            guard
+                let track =
+                    tracks.first
+            else {
+                return false
+            }
+
+            let size =
+                try await track
+                    .load(
+                        .naturalSize
+                    )
+
+            let transform =
+                try await track
+                    .load(
+                        .preferredTransform
+                    )
+
+            let rect =
+                CGRect(
+                    origin:
+                        .zero,
+                    size:
+                        size
+                )
+                .applying(
+                    transform
+                )
+
+            return
+                abs(
+                    rect.width
+                )
+                >
+                abs(
+                    rect.height
+                )
+
+        } catch {
+            return false
+        }
+    }
+}
+
+
+// MARK: - Live Set Editor
+
+private struct WorkoutLiveSetEditor:
+    View
+{
+    @AppStorage(
+        AppStorageKeys
+            .useMetricUnits
+    )
+    private var useMetricUnits =
+        false
+
+    @Bindable
+    var set:
+        SetDeckSet
+
+    let exercise:
+        SetDeckExercise
+
+    let setNumber:
+        Int
+
+    let setCount:
+        Int
+
+    let onDone:
+        () -> Void
+
+
+    init(
+        exercise:
+            SetDeckExercise,
+        set:
+            SetDeckSet,
+        setNumber:
+            Int,
+        setCount:
+            Int,
+        onDone:
+            @escaping () -> Void
+    ) {
+        self.exercise =
+            exercise
+
+        self.set =
+            set
+
+        self.setNumber =
+            setNumber
+
+        self.setCount =
+            setCount
+
+        self.onDone =
+            onDone
+    }
+
+
+    var body: some View {
+        ZStack(
+            alignment:
+                .bottomTrailing
+        ) {
+            StrengthLabFigmaTheme
+                .paleBlush
+                .ignoresSafeArea()
+
+            ScrollView {
+                VStack(
+                    alignment:
+                        .leading,
+                    spacing: 18
+                ) {
+                    Spacer()
+                        .frame(
+                            height: 88
+                        )
+
+                    Text(
+                        exercise.name
+                    )
+                    .font(
+                        StrengthLabFigmaTheme
+                            .bold(29)
+                    )
+                    .foregroundStyle(
+                        StrengthLabFigmaTheme
+                            .ink
+                    )
+
+                    HStack {
+                        Text(
+                            "SET \(setNumber) OF \(setCount)"
+                        )
+                        .font(
+                            StrengthLabFigmaTheme
+                                .bold(11)
+                        )
+                        .tracking(1.4)
+                        .foregroundStyle(
+                            StrengthLabFigmaTheme
+                                .coral
+                        )
+
+                        Spacer()
+
+                        Image(
+                            systemName:
+                                "chevron.down"
+                        )
+                        .foregroundStyle(
+                            StrengthLabFigmaTheme
+                                .muted
+                        )
+                    }
+
+                    Text(
+                        "Swipe down to return to the demo"
+                    )
+                    .font(
+                        StrengthLabFigmaTheme
+                            .regular(13)
+                    )
+                    .foregroundStyle(
+                        StrengthLabFigmaTheme
+                            .muted
+                    )
+
+                    VStack(
+                        spacing: 12
+                    ) {
+                        if
+                            set.setType ==
+                                .reps
+                            ||
+                            set.setType ==
+                                .amap
+                        {
+                            WorkoutIntAdjuster(
+                                title:
+                                    set
+                                        .setType
+                                    ==
+                                    .amap
+                                    ? "Target reps"
+                                    : "Reps",
+                                value:
+                                    repsBinding,
+                                range:
+                                    0...100,
+                                step:
+                                    1
+                            )
+
+                            WorkoutDoubleAdjuster(
+                                title:
+                                    "Weight (\(useMetricUnits ? "kg" : "lbs"))",
+                                value:
+                                    weightBinding,
+                                range:
+                                    0...1000,
+                                step:
+                                    useMetricUnits
+                                    ? 2.5
+                                    : 5
+                            )
+                        }
+
+                        if
+                            set.setType ==
+                                .duration
+                        {
+                            WorkoutIntAdjuster(
+                                title:
+                                    "Duration",
+                                value:
+                                    durationBinding,
+                                range:
+                                    0...3600,
+                                step:
+                                    15,
+                                suffix:
+                                    "s"
+                            )
+                        }
+
+                        WorkoutIntAdjuster(
+                            title:
+                                "RPE",
+                            value:
+                                rpeBinding,
+                            range:
+                                0...10,
+                            step:
+                                1
+                        )
+
+                        WorkoutIntAdjuster(
+                            title:
+                                "Rest after set",
+                            value:
+                                restBinding,
+                            range:
+                                0...600,
+                            step:
+                                15,
+                            suffix:
+                                "s",
+                            zeroText:
+                                "Off"
+                        )
+                    }
+
+                    if
+                        let note =
+                            set
+                                .setDescription,
+                        !note.isEmpty
+                    {
+                        Text(note)
+                            .font(
+                                StrengthLabFigmaTheme
+                                    .medium(16)
+                            )
+                            .foregroundStyle(
+                                StrengthLabFigmaTheme
+                                    .ink
+                            )
+                            .padding(18)
+                            .frame(
+                                maxWidth:
+                                    .infinity,
+                                alignment:
+                                    .leading
+                            )
+                            .background(
+                                Color.white,
+                                in:
+                                    RoundedRectangle(
+                                        cornerRadius:
+                                            20
+                                    )
+                            )
+                    }
+
+                    Spacer()
+                        .frame(
+                            height: 110
+                        )
+                }
+                .padding(
+                    .horizontal,
+                    22
+                )
+            }
+            .scrollIndicators(
+                .hidden
+            )
+
+            Button(
+                action:
+                    onDone
+            ) {
+                Image(
+                    systemName:
+                        "checkmark"
+                )
+                .font(
+                    .system(
+                        size: 26,
+                        weight: .bold
+                    )
+                )
+                .foregroundStyle(
+                    .white
+                )
+                .frame(
+                    width: 72,
+                    height: 72
+                )
+                .background(
+                    StrengthLabFigmaTheme
+                        .coralGradient,
+                    in:
+                        Circle()
+                )
+            }
+            .buttonStyle(.plain)
+            .padding(
+                .trailing,
+                22
+            )
+            .padding(
+                .bottom,
+                22
+            )
+        }
+    }
+
+
+    private var repsBinding:
+        Binding<Int>
+    {
+        Binding(
+            get: {
+                set.targetReps ?? 0
+            },
+            set: {
+                set.targetReps = $0
+            }
+        )
+    }
+
+
+    private var durationBinding:
+        Binding<Int>
+    {
+        Binding(
+            get: {
+                Int(
+                    set.targetDuration
+                    ??
+                    0
+                )
+            },
+            set: {
+                set.targetDuration =
+                    TimeInterval(
+                        $0
+                    )
+            }
+        )
+    }
+
+
+    private var rpeBinding:
+        Binding<Int>
+    {
+        Binding(
+            get: {
+                set.rpe ?? 0
+            },
+            set: {
+                set.rpe = $0
+            }
+        )
+    }
+
+
+    private var restBinding:
+        Binding<Int>
+    {
+        Binding(
+            get: {
+                set.restTimeInSeconds
+                ??
+                0
+            },
+            set: {
+                set.restTimeInSeconds =
+                    $0 <= 0
+                    ? nil
+                    : $0
+            }
+        )
+    }
+
+
+    private var weightBinding:
+        Binding<Double>
+    {
+        Binding(
+            get: {
+                let pounds =
+                    set.weight
+                    ??
+                    0
+
+                return
+                    useMetricUnits
+                    ? pounds
+                        * 0.45359237
+                    : pounds
+            },
+            set: {
+                value in
+
+                set.weight =
+                    useMetricUnits
+                    ? value
+                        / 0.45359237
+                    : value
+            }
+        )
+    }
+}
+
+
+// MARK: - Live Controls
+
+private struct WorkoutIntAdjuster:
+    View
+{
+    let title:
+        String
+
+    @Binding
+    var value:
+        Int
+
+    let range:
+        ClosedRange<Int>
+
+    let step:
+        Int
+
+    var suffix:
+        String = ""
+
+    var zeroText:
+        String? = nil
+
+
+    var body: some View {
+        VStack(
+            alignment:
+                .leading,
+            spacing: 10
+        ) {
+            Text(title)
+                .font(
+                    StrengthLabFigmaTheme
+                        .medium(15)
+                )
+                .foregroundStyle(
+                    StrengthLabFigmaTheme
+                        .muted
+                )
+
+            HStack {
+                Button {
+                    value =
+                        max(
+                            range.lowerBound,
+                            value - step
+                        )
+                } label: {
+                    Image(
+                        systemName:
+                            "minus"
+                    )
+                    .font(
+                        .headline
+                            .bold()
+                    )
+                    .frame(
+                        width: 54,
+                        height: 54
+                    )
+                    .background(
+                        StrengthLabFigmaTheme
+                            .blush,
+                        in:
+                            Circle()
+                    )
+                }
+
+                Spacer()
+
+                Text(
+                    displayValue
+                )
+                .font(
+                    .system(
+                        size: 36,
+                        weight: .medium,
+                        design:
+                            .rounded
+                    )
+                )
+                .monospacedDigit()
+                .foregroundStyle(
+                    StrengthLabFigmaTheme
+                        .ink
+                )
+
+                Spacer()
+
+                Button {
+                    value =
+                        min(
+                            range.upperBound,
+                            value + step
+                        )
+                } label: {
+                    Image(
+                        systemName:
+                            "plus"
+                    )
+                    .font(
+                        .headline
+                            .bold()
+                    )
+                    .frame(
+                        width: 54,
+                        height: 54
+                    )
+                    .background(
+                        StrengthLabFigmaTheme
+                            .blush,
+                        in:
+                            Circle()
+                    )
+                }
+            }
+            .foregroundStyle(
+                StrengthLabFigmaTheme
+                    .ink
+            )
+        }
+        .padding(18)
+        .background(
+            Color.white,
+            in:
+                RoundedRectangle(
+                    cornerRadius: 22
+                )
+        )
+    }
+
+
+    private var displayValue:
+        String
+    {
+        if
+            value == 0,
+            let zeroText
+        {
+            return zeroText
+        }
+
+        return
+            "\(value)\(suffix)"
+    }
+}
+
+
+private struct WorkoutDoubleAdjuster:
+    View
+{
+    let title:
+        String
+
+    @Binding
+    var value:
+        Double
+
+    let range:
+        ClosedRange<Double>
+
+    let step:
+        Double
+
+
+    var body: some View {
+        VStack(
+            alignment:
+                .leading,
+            spacing: 10
+        ) {
+            Text(title)
+                .font(
+                    StrengthLabFigmaTheme
+                        .medium(15)
+                )
+                .foregroundStyle(
+                    StrengthLabFigmaTheme
+                        .muted
+                )
+
+            HStack {
+                Button {
+                    value =
+                        max(
+                            range.lowerBound,
+                            value - step
+                        )
+                } label: {
+                    Image(
+                        systemName:
+                            "minus"
+                    )
+                    .font(
+                        .headline
+                            .bold()
+                    )
+                    .frame(
+                        width: 54,
+                        height: 54
+                    )
+                    .background(
+                        StrengthLabFigmaTheme
+                            .blush,
+                        in:
+                            Circle()
+                    )
+                }
+
+                Spacer()
+
+                Text(
+                    formattedWeight
+                )
+                .font(
+                    .system(
+                        size: 36,
+                        weight: .medium,
+                        design:
+                            .rounded
+                    )
+                )
+                .monospacedDigit()
+                .foregroundStyle(
+                    StrengthLabFigmaTheme
+                        .ink
+                )
+
+                Spacer()
+
+                Button {
+                    value =
+                        min(
+                            range.upperBound,
+                            value + step
+                        )
+                } label: {
+                    Image(
+                        systemName:
+                            "plus"
+                    )
+                    .font(
+                        .headline
+                            .bold()
+                    )
+                    .frame(
+                        width: 54,
+                        height: 54
+                    )
+                    .background(
+                        StrengthLabFigmaTheme
+                            .blush,
+                        in:
+                            Circle()
+                    )
+                }
+            }
+            .foregroundStyle(
+                StrengthLabFigmaTheme
+                    .ink
+            )
+        }
+        .padding(18)
+        .background(
+            Color.white,
+            in:
+                RoundedRectangle(
+                    cornerRadius: 22
+                )
+        )
+    }
+
+
+    private var formattedWeight:
+        String
+    {
+        if
+            value.rounded()
+            ==
+            value
+        {
+            return
+                String(
+                    format:
+                        "%.0f",
+                    value
+                )
+        }
+
+        return
+            String(
+                format:
+                    "%.1f",
+                value
+            )
+    }
+}

@@ -6,6 +6,7 @@ import UIKit
 struct ConsciousConnectionApp: App {
 
     @StateObject private var router = AppRouter()
+    @State private var hidesKeysPerformanceBackButton = false
     @StateObject private var workoutStore = WorkoutStore()
 
     let habitModelContainer: ModelContainer?
@@ -60,7 +61,7 @@ struct ConsciousConnectionApp: App {
                                 NutritionView()
 
                             case .createHome:
-                                SectionHomeView(mode: .create)
+                                CreateMusicHomeView()
 
                             case .becomeHome:
                                 SectionHomeView(mode: .become)
@@ -221,7 +222,7 @@ struct ConsciousConnectionApp: App {
                 // This overlay sits above every pushed route, including
                 // video screens that intentionally hide the navigation bar.
                 .overlay(alignment: .topLeading) {
-                    if !router.path.isEmpty {
+                    if !router.path.isEmpty && !hidesKeysPerformanceBackButton {
                         ConsciousCircleBackButton {
                             guard !router.path.isEmpty else { return }
                             router.path.removeLast()
@@ -230,6 +231,16 @@ struct ConsciousConnectionApp: App {
                         .padding(.top, 18)
                         .zIndex(999)
                     }
+                }
+                .onReceive(
+                    NotificationCenter.default.publisher(
+                        for: Notification.Name(
+                            "KeysStudioPerformanceVisibility"
+                        )
+                    )
+                ) { event in
+                    hidesKeysPerformanceBackButton =
+                        (event.object as? Bool) == true
                 }
                 .environmentObject(router)
                 .environmentObject(workoutStore)

@@ -1,0 +1,972 @@
+{
+  "schema": 1,
+  "assumptions": "37-key, physical note range C3-C6; roots may be bass only; all LH/RH pitches are curated concert-MIDI voicings; do not auto-split by register.",
+  "labs": {
+    "keys-01": [
+      {
+        "chord": "Bm9",
+        "left": [
+          "B3",
+          "D4"
+        ],
+        "right": [
+          "F♯4",
+          "A4",
+          "C♯5"
+        ],
+        "rootPC": 11
+      },
+      {
+        "chord": "Gmaj9",
+        "left": [
+          "G3",
+          "D4"
+        ],
+        "right": [
+          "F♯4",
+          "A4",
+          "B4"
+        ],
+        "rootPC": 7
+      },
+      {
+        "chord": "Em9",
+        "left": [
+          "E3",
+          "B3"
+        ],
+        "right": [
+          "D4",
+          "F♯4",
+          "G4"
+        ],
+        "rootPC": 4
+      },
+      {
+        "chord": "F♯7(♭9)",
+        "left": [
+          "F♯3",
+          "C♯4"
+        ],
+        "right": [
+          "E4",
+          "G4",
+          "A♯4"
+        ],
+        "rootPC": 6
+      }
+    ],
+    "keys-02": [
+      {
+        "chord": "Cmaj9",
+        "left": [
+          "C3",
+          "G3"
+        ],
+        "right": [
+          "D4",
+          "E4",
+          "B4"
+        ],
+        "rootPC": 0
+      },
+      {
+        "chord": "Am9",
+        "left": [
+          "A3",
+          "C4"
+        ],
+        "right": [
+          "E4",
+          "G4",
+          "B4"
+        ],
+        "rootPC": 9
+      },
+      {
+        "chord": "Fmaj9",
+        "left": [
+          "F3",
+          "C4"
+        ],
+        "right": [
+          "E4",
+          "G4",
+          "A4"
+        ],
+        "rootPC": 5
+      },
+      {
+        "chord": "G13sus4",
+        "left": [
+          "G3",
+          "C4"
+        ],
+        "right": [
+          "E4",
+          "F4",
+          "A4"
+        ],
+        "rootPC": 7
+      }
+    ],
+    "keys-03": [
+      {
+        "chord": "F♯m11",
+        "left": [
+          "F♯3",
+          "C♯4"
+        ],
+        "right": [
+          "E4",
+          "A4",
+          "B4"
+        ],
+        "rootPC": 6
+      },
+      {
+        "chord": "B13",
+        "left": [
+          "B3",
+          "D♯4"
+        ],
+        "right": [
+          "G♯4",
+          "A4",
+          "C♯5"
+        ],
+        "rootPC": 11
+      }
+    ],
+    "keys-04": [
+      {
+        "chord": "Dmaj9",
+        "left": [
+          "D3",
+          "A3"
+        ],
+        "right": [
+          "E4",
+          "F♯4",
+          "C♯5"
+        ],
+        "rootPC": 2
+      },
+      {
+        "chord": "Bm11",
+        "left": [
+          "B3",
+          "D4"
+        ],
+        "right": [
+          "E4",
+          "F♯4",
+          "A4",
+          "C♯5"
+        ],
+        "rootPC": 11
+      },
+      {
+        "chord": "Gmaj9",
+        "left": [
+          "G3",
+          "D4"
+        ],
+        "right": [
+          "F♯4",
+          "A4",
+          "B4"
+        ],
+        "rootPC": 7
+      },
+      {
+        "chord": "A13sus4",
+        "left": [
+          "A3",
+          "E4"
+        ],
+        "right": [
+          "F♯4",
+          "G4",
+          "B4",
+          "D5"
+        ],
+        "rootPC": 9
+      }
+    ],
+    "keys-05": [
+      {
+        "chord": "B♭m11",
+        "left": [
+          "D♭4",
+          "A♭4"
+        ],
+        "right": [
+          "E♭5",
+          "F5"
+        ],
+        "rootPC": 10
+      },
+      {
+        "chord": "E♭13",
+        "left": [
+          "G3",
+          "D♭4"
+        ],
+        "right": [
+          "F4",
+          "C5"
+        ],
+        "rootPC": 3
+      }
+    ],
+    "keys-06": [
+      {
+        "chord": "Am9",
+        "left": [
+          "C4",
+          "G4"
+        ],
+        "right": [
+          "B4",
+          "E5"
+        ],
+        "rootPC": 9
+      },
+      {
+        "chord": "D13",
+        "left": [
+          "C4",
+          "F♯4"
+        ],
+        "right": [
+          "B4",
+          "E5"
+        ],
+        "rootPC": 2
+      }
+    ],
+    "keys-07": [
+      {
+        "chord": "D♭maj9",
+        "left": [
+          "D♭3",
+          "A♭3"
+        ],
+        "right": [
+          "C4",
+          "E♭4",
+          "F4"
+        ],
+        "rootPC": 1
+      },
+      {
+        "chord": "G♭maj9",
+        "left": [
+          "G♭3",
+          "D♭4"
+        ],
+        "right": [
+          "F4",
+          "A♭4",
+          "B♭4"
+        ],
+        "rootPC": 6
+      },
+      {
+        "chord": "E♭m9",
+        "left": [
+          "E♭3",
+          "B♭3"
+        ],
+        "right": [
+          "D♭4",
+          "F4",
+          "G♭4"
+        ],
+        "rootPC": 3
+      },
+      {
+        "chord": "A♭13",
+        "left": [
+          "A♭3",
+          "C4"
+        ],
+        "right": [
+          "F4",
+          "G♭4",
+          "B♭4"
+        ],
+        "rootPC": 8
+      }
+    ],
+    "keys-08": [
+      {
+        "chord": "Dmaj9",
+        "left": [
+          "D3",
+          "A3"
+        ],
+        "right": [
+          "C♯4",
+          "E4",
+          "F♯4"
+        ],
+        "rootPC": 2
+      },
+      {
+        "chord": "Gmaj9",
+        "left": [
+          "G3",
+          "D4"
+        ],
+        "right": [
+          "F♯4",
+          "A4",
+          "B4"
+        ],
+        "rootPC": 7
+      },
+      {
+        "chord": "Gm9",
+        "left": [
+          "G3",
+          "D4"
+        ],
+        "right": [
+          "F4",
+          "A4",
+          "B♭4"
+        ],
+        "rootPC": 7
+      },
+      {
+        "chord": "D6/9",
+        "left": [
+          "D3",
+          "A3"
+        ],
+        "right": [
+          "E4",
+          "F♯4",
+          "B4"
+        ],
+        "rootPC": 2
+      }
+    ],
+    "keys-09": [
+      {
+        "chord": "Bm9",
+        "left": [
+          "B3",
+          "D4"
+        ],
+        "right": [
+          "F♯4",
+          "A4",
+          "C♯5"
+        ],
+        "rootPC": 11
+      },
+      {
+        "chord": "E13",
+        "left": [
+          "B3",
+          "D4"
+        ],
+        "right": [
+          "F♯4",
+          "G♯4",
+          "C♯5"
+        ],
+        "rootPC": 4
+      },
+      {
+        "chord": "Amaj9",
+        "left": [
+          "A3",
+          "C♯4"
+        ],
+        "right": [
+          "E4",
+          "G♯4",
+          "B4"
+        ],
+        "rootPC": 9
+      }
+    ],
+    "keys-10": [
+      {
+        "chord": "Bm7♭5",
+        "left": [
+          "B3",
+          "D4"
+        ],
+        "right": [
+          "F4",
+          "A4"
+        ],
+        "rootPC": 11
+      },
+      {
+        "chord": "E7(♭9)",
+        "left": [
+          "B3",
+          "D4"
+        ],
+        "right": [
+          "F4",
+          "G♯4"
+        ],
+        "rootPC": 4
+      },
+      {
+        "chord": "Am9",
+        "left": [
+          "A3",
+          "C4"
+        ],
+        "right": [
+          "E4",
+          "G4",
+          "B4"
+        ],
+        "rootPC": 9
+      }
+    ],
+    "keys-11": [
+      {
+        "chord": "Em11",
+        "left": [
+          "G3",
+          "D4"
+        ],
+        "right": [
+          "F♯4",
+          "A4",
+          "B4"
+        ],
+        "rootPC": 4
+      },
+      {
+        "chord": "Cmaj9(♯11)/E",
+        "left": [
+          "G3",
+          "C4"
+        ],
+        "right": [
+          "D4",
+          "F♯4",
+          "B4"
+        ],
+        "rootPC": 0
+      },
+      {
+        "chord": "Am11/E",
+        "left": [
+          "A3",
+          "C4"
+        ],
+        "right": [
+          "D4",
+          "G4",
+          "B4"
+        ],
+        "rootPC": 9
+      },
+      {
+        "chord": "Em11",
+        "left": [
+          "G3",
+          "D4"
+        ],
+        "right": [
+          "F♯4",
+          "A4",
+          "B4"
+        ],
+        "rootPC": 4
+      }
+    ],
+    "keys-12": [
+      {
+        "chord": "Em7",
+        "left": [
+          "G3",
+          "D4"
+        ],
+        "right": [
+          "B4",
+          "E5"
+        ],
+        "rootPC": 4
+      },
+      {
+        "chord": "Fmaj7(♯11)/E",
+        "left": [
+          "A3",
+          "C4"
+        ],
+        "right": [
+          "E4",
+          "F4",
+          "B4"
+        ],
+        "rootPC": 5
+      },
+      {
+        "chord": "G6/E",
+        "left": [
+          "G3",
+          "B3"
+        ],
+        "right": [
+          "D4",
+          "E4"
+        ],
+        "rootPC": 7
+      },
+      {
+        "chord": "Fmaj7/E",
+        "left": [
+          "A3",
+          "C4"
+        ],
+        "right": [
+          "E4",
+          "F4"
+        ],
+        "rootPC": 5
+      }
+    ],
+    "keys-13": [
+      {
+        "chord": "Amaj9(♯11)",
+        "left": [
+          "A3",
+          "C♯4"
+        ],
+        "right": [
+          "G♯4",
+          "B4",
+          "D♯5"
+        ],
+        "rootPC": 9
+      },
+      {
+        "chord": "B/A",
+        "left": [
+          "B3",
+          "F♯4"
+        ],
+        "right": [
+          "B4",
+          "D♯5"
+        ],
+        "rootPC": 11
+      },
+      {
+        "chord": "Emaj9/A",
+        "left": [
+          "B3",
+          "E4"
+        ],
+        "right": [
+          "F♯4",
+          "G♯4",
+          "D♯5"
+        ],
+        "rootPC": 4
+      },
+      {
+        "chord": "Amaj9(♯11)",
+        "left": [
+          "A3",
+          "C♯4"
+        ],
+        "right": [
+          "G♯4",
+          "B4",
+          "D♯5"
+        ],
+        "rootPC": 9
+      }
+    ],
+    "keys-14": [
+      {
+        "chord": "Gmaj9",
+        "left": [
+          "G3",
+          "D4"
+        ],
+        "right": [
+          "F♯4",
+          "A4",
+          "B4"
+        ],
+        "rootPC": 7
+      },
+      {
+        "chord": "Bm7(add11)",
+        "left": [
+          "B3",
+          "D4"
+        ],
+        "right": [
+          "E4",
+          "F♯4",
+          "A4"
+        ],
+        "rootPC": 11
+      },
+      {
+        "chord": "Em9",
+        "left": [
+          "E3",
+          "B3"
+        ],
+        "right": [
+          "D4",
+          "F♯4",
+          "G4"
+        ],
+        "rootPC": 4
+      },
+      {
+        "chord": "Cmaj9",
+        "left": [
+          "C3",
+          "G3"
+        ],
+        "right": [
+          "D4",
+          "E4",
+          "B4"
+        ],
+        "rootPC": 0
+      }
+    ],
+    "keys-15": [
+      {
+        "chord": "F♯m9",
+        "left": [
+          "F♯3",
+          "C♯4"
+        ],
+        "right": [
+          "E4",
+          "G♯4",
+          "A4"
+        ],
+        "rootPC": 6
+      },
+      {
+        "chord": "Gm9",
+        "left": [
+          "G3",
+          "D4"
+        ],
+        "right": [
+          "F4",
+          "A4",
+          "B♭4"
+        ],
+        "rootPC": 7
+      },
+      {
+        "chord": "F♯m9",
+        "left": [
+          "F♯3",
+          "C♯4"
+        ],
+        "right": [
+          "E4",
+          "G♯4",
+          "A4"
+        ],
+        "rootPC": 6
+      },
+      {
+        "chord": "C♯7(♭9)",
+        "left": [
+          "C♯3",
+          "G♯3"
+        ],
+        "right": [
+          "B3",
+          "D4",
+          "E♯4"
+        ],
+        "rootPC": 1
+      }
+    ],
+    "keys-16": [
+      {
+        "chord": "Amaj9",
+        "left": [
+          "A3",
+          "C♯4"
+        ],
+        "right": [
+          "G♯4",
+          "B4",
+          "E5"
+        ],
+        "rootPC": 9
+      },
+      {
+        "chord": "Cmaj9",
+        "left": [
+          "C4",
+          "G4"
+        ],
+        "right": [
+          "B4",
+          "D5",
+          "E5"
+        ],
+        "rootPC": 0
+      },
+      {
+        "chord": "Dmaj9",
+        "left": [
+          "D4",
+          "F♯4"
+        ],
+        "right": [
+          "A4",
+          "C♯5",
+          "E5"
+        ],
+        "rootPC": 2
+      },
+      {
+        "chord": "Amaj9",
+        "left": [
+          "A3",
+          "C♯4"
+        ],
+        "right": [
+          "G♯4",
+          "B4",
+          "E5"
+        ],
+        "rootPC": 9
+      }
+    ],
+    "keys-17": [
+      {
+        "chord": "Cmaj9/E",
+        "left": [
+          "E3",
+          "B3"
+        ],
+        "right": [
+          "C4",
+          "D4",
+          "G4"
+        ],
+        "rootPC": 0
+      },
+      {
+        "chord": "Dm9/F",
+        "left": [
+          "F3",
+          "C4"
+        ],
+        "right": [
+          "D4",
+          "E4",
+          "A4"
+        ],
+        "rootPC": 2
+      },
+      {
+        "chord": "Fmaj9/A",
+        "left": [
+          "A3",
+          "E4"
+        ],
+        "right": [
+          "F4",
+          "G4",
+          "C5"
+        ],
+        "rootPC": 5
+      },
+      {
+        "chord": "G13/B",
+        "left": [
+          "F3",
+          "B3"
+        ],
+        "right": [
+          "G4",
+          "A4",
+          "E5"
+        ],
+        "rootPC": 7
+      }
+    ],
+    "keys-18": [
+      {
+        "chord": "Em11",
+        "left": [
+          "G3",
+          "D4"
+        ],
+        "right": [
+          "F♯4",
+          "A4",
+          "B4"
+        ],
+        "rootPC": 4
+      },
+      {
+        "chord": "Am9",
+        "left": [
+          "A3",
+          "E4"
+        ],
+        "right": [
+          "G4",
+          "B4",
+          "C5"
+        ],
+        "rootPC": 9
+      },
+      {
+        "chord": "B7(♭9)",
+        "left": [
+          "B3",
+          "F♯4"
+        ],
+        "right": [
+          "A4",
+          "C5",
+          "D♯5"
+        ],
+        "rootPC": 11
+      },
+      {
+        "chord": "Em11",
+        "left": [
+          "G3",
+          "D4"
+        ],
+        "right": [
+          "F♯4",
+          "A4",
+          "B4"
+        ],
+        "rootPC": 4
+      }
+    ],
+    "keys-19": [
+      {
+        "chord": "B♭m9",
+        "left": [
+          "B♭3",
+          "F4"
+        ],
+        "right": [
+          "A♭4",
+          "C5",
+          "D♭5"
+        ],
+        "rootPC": 10
+      },
+      {
+        "chord": "G♭maj9",
+        "left": [
+          "G♭3",
+          "D♭4"
+        ],
+        "right": [
+          "F4",
+          "A♭4",
+          "B♭4"
+        ],
+        "rootPC": 6
+      },
+      {
+        "chord": "E♭m9",
+        "left": [
+          "E♭3",
+          "B♭3"
+        ],
+        "right": [
+          "D♭4",
+          "F4",
+          "G♭4"
+        ],
+        "rootPC": 3
+      },
+      {
+        "chord": "F7(♭9)",
+        "left": [
+          "F3",
+          "C4"
+        ],
+        "right": [
+          "E♭4",
+          "G♭4",
+          "A4"
+        ],
+        "rootPC": 5
+      },
+      {
+        "chord": "D♭maj9",
+        "left": [
+          "D♭3",
+          "A♭3"
+        ],
+        "right": [
+          "C4",
+          "E♭4",
+          "F4"
+        ],
+        "rootPC": 1
+      },
+      {
+        "chord": "E♭m9",
+        "left": [
+          "E♭3",
+          "B♭3"
+        ],
+        "right": [
+          "D♭4",
+          "F4",
+          "G♭4"
+        ],
+        "rootPC": 3
+      },
+      {
+        "chord": "A♭13",
+        "left": [
+          "A♭3",
+          "C4"
+        ],
+        "right": [
+          "F4",
+          "G♭4",
+          "B♭4"
+        ],
+        "rootPC": 8
+      },
+      {
+        "chord": "D♭maj9",
+        "left": [
+          "D♭3",
+          "A♭3"
+        ],
+        "right": [
+          "C4",
+          "E♭4",
+          "F4"
+        ],
+        "rootPC": 1
+      }
+    ]
+  }
+}

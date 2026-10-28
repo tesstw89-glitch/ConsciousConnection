@@ -1,0 +1,1018 @@
+import SwiftUI
+import UIKit
+
+// Nutrition lives in the main ConsciousConnection app, sharing its navigation stack.
+private enum KitchenArea: String, Codable, CaseIterable, Hashable {
+    case essentials = "Essentials"
+    case fridge = "Fridge & Freezer"
+    case cupboard = "Cupboard"
+
+    var step: Int {
+        switch self {
+        case .essentials: return 0
+        case .fridge: return 1
+        case .cupboard: return 2
+        }
+    }
+}
+
+private struct KitchenFood: Codable, Identifiable {
+    var name: String
+    var area: KitchenArea
+    var brand: String? = nil
+    var barcode: String? = nil
+    var nutrition: KitchenNutrients? = nil
+
+    var id: String {
+        if let barcode, !barcode.isEmpty { return "off:" + barcode }
+        let names = [brand, name].compactMap { $0 }.joined(separator: " ")
+        return NutritionView.foodKey(names)
+    }
+
+    var displayName: String {
+        guard let brand, !brand.trimmingCharacters(in: .whitespaces).isEmpty else {
+            return name
+        }
+        if name.lowercased().hasPrefix(brand.lowercased()) { return name }
+        return "\(brand) \(name)"
+    }
+}
+
+// Only nutrients relevant to this feature; no calorie fields.
+private struct KitchenNutrients: Codable {
+    var proteinG: Double? = nil
+    var fibreG: Double? = nil
+    var carbohydrateG: Double? = nil
+    var ironMg: Double? = nil
+    var magnesiumMg: Double? = nil
+    var b12Micrograms: Double? = nil
+
+    init(raw: [String: Any]) {
+        func number(_ key: String) -> Double? {
+            if let value = raw[key] as? NSNumber { return value.doubleValue }
+            if let value = raw[key] as? String { return Double(value) }
+            return nil
+        }
+        proteinG = number("proteins_100g")
+        fibreG = number("fiber_100g")
+        carbohydrateG = number("carbohydrates_100g")
+        // OFF standardizes micronutrients in grams. Convert to familiar units.
+        ironMg = number("iron_100g").map { $0 * 1_000 }
+        magnesiumMg = number("magnesium_100g").map { $0 * 1_000 }
+        b12Micrograms = number("vitamin-b12_100g").map { $0 * 1_000_000 }
+    }
+
+    var asRawNutrients: [String: Any] {
+        var result: [String: Any] = [:]
+        if let proteinG { result["proteins_100g"] = proteinG }
+        if let fibreG { result["fiber_100g"] = fibreG }
+        if let carbohydrateG { result["carbohydrates_100g"] = carbohydrateG }
+        if let ironMg { result["iron_100g"] = ironMg / 1000 }
+        if let magnesiumMg { result["magnesium_100g"] = magnesiumMg / 1000 }
+        if let b12Micrograms { result["vitamin-b12_100g"] = b12Micrograms / 1_000_000 }
+        return result
+    }
+
+    var summary: String {
+        var parts: [String] = []
+        if let proteinG { parts.append(String(format: "protein %.1f g", proteinG)) }
+        if let fibreG { parts.append(String(format: "fibre %.1f g", fibreG)) }
+        if let carbohydrateG { parts.append(String(format: "carbs %.1f g", carbohydrateG)) }
+        if let ironMg { parts.append(String(format: "iron %.2f mg", ironMg)) }
+        if let magnesiumMg { parts.append(String(format: "magnesium %.1f mg", magnesiumMg)) }
+        if let b12Micrograms { parts.append(String(format: "B12 %.2f µg", b12Micrograms)) }
+        return parts.joined(separator: ", ")
+    }
+}
+
+private struct OpenFoodFactsKitchenProduct: Identifiable {
+    let id: String // EAN/UPC barcode
+    let name: String
+    let brand: String?
+    let nutrition: KitchenNutrients?
+
+    var displayName: String {
+        guard let brand, !brand.isEmpty, !name.lowercased().hasPrefix(brand.lowercased()) else {
+            return name
+        }
+        return "\(brand) \(name)"
+    }
+}
+
+private enum EatingMoment: String, CaseIterable {
+    case breakfast = "Breakfast"
+    case lunch = "Lunch"
+    case dinner = "Dinner"
+}
+
+private enum CookingEnergy: String, CaseIterable {
+    case quick = "Quick & easy"
+    case cook = "I've got time to cook"
+}
+
+struct NutritionView: View {
+    @AppStorage("nutrition.userFoods.v1") private var savedFoods = ""
+    @AppStorage("nutrition.selectedFoods.v1") private var savedSelection = ""
+    @AppStorage("nutrition.inventorySetUp.v1") private var inventorySetUp = false
+
+    @State private var extraFoods: [KitchenFood] = []
+    @State private var selected: Set<String> = []
+    @State private var isLoaded = false
+    @State private var step = 0
+    @State private var newIngredient = ""
+    @State private var newBrand = ""
+    @State private var addTo: KitchenArea = .fridge
+    @State private var showingProductSearch = false
+    @State private var productQuery = ""
+    @State private var localBrandedFoods: [NutritionSavedProduct] = []
+    @State private var searchingOnlineFoods = false
+    @State private var productResults: [OpenFoodFactsKitchenProduct] = []
+    @State private var productSearchError: String? = nil
+    @State private var searchingProducts = false
+    @State private var fetchingProduct = false
+    @State private var searchHistory: [Date] = []
+    @State private var productCache: [String: [OpenFoodFactsKitchenProduct]] = [:]
+    @State private var meal: EatingMoment = .lunch
+    @State private var energy: CookingEnergy = .quick
+    @State private var additionalNotes = ""
+    @State private var showAppError = false
+    @State private var showingMealJournal = false
+    @State private var journalStartTab = 0
+    @State private var showingKitchenBarcodeScanner = false
+    @State private var scanningKitchenProduct = false
+    @State private var kitchenBarcodeError = ""
+    @State private var showingKitchenBarcodeError = false
+    @State private var kitchenBarcodeFeedback: String? = nil
+
+    // Your initial kitchen inventory, from your own list of ingredients.
+    private static let startingFoods: [KitchenFood] = [
+        .init(name: "Milk", area: .essentials),
+        .init(name: "Eggs", area: .essentials),
+        .init(name: "Cereal", area: .essentials),
+        .init(name: "Bread", area: .essentials),
+        .init(name: "Pasta", area: .essentials),
+        .init(name: "Basmati rice", area: .essentials),
+        .init(name: "Long-grain rice", area: .essentials),
+        .init(name: "Jasmine rice", area: .essentials),
+        .init(name: "Broccoli", area: .fridge),
+        .init(name: "Tenderstem broccoli", area: .fridge),
+        .init(name: "Pancetta", area: .fridge),
+        .init(name: "Parmesan", area: .fridge),
+        .init(name: "Double cream", area: .fridge),
+        .init(name: "Stilton", area: .fridge),
+        .init(name: "Bacon", area: .fridge),
+        .init(name: "Spring onions", area: .fridge),
+        .init(name: "Rosemary", area: .fridge),
+        .init(name: "Frozen banana", area: .fridge),
+        .init(name: "Frozen peas", area: .fridge),
+        .init(name: "Frozen avocado", area: .fridge),
+        .init(name: "Frozen scampi", area: .fridge),
+        .init(name: "Frozen fries", area: .fridge),
+        .init(name: "Sweet potato", area: .cupboard),
+        .init(name: "New potatoes", area: .cupboard),
+        .init(name: "Maris Piper potatoes", area: .cupboard),
+        .init(name: "Onions", area: .cupboard),
+        .init(name: "Shallots", area: .cupboard),
+        .init(name: "Sun-dried tomato pesto", area: .cupboard),
+        .init(name: "Tinned tomatoes", area: .cupboard),
+        .init(name: "Tinned lentils", area: .cupboard)
+    ]
+
+    private var allFoods: [KitchenFood] { Self.startingFoods + extraFoods }
+
+    var body: some View {
+        GeometryReader { geo in
+            ZStack {
+                Image("Meal_Background")
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: geo.size.width, height: geo.size.height)
+                    .clipped()
+                    .ignoresSafeArea()
+
+                Color.black.opacity(0.46)
+                    .ignoresSafeArea()
+
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 20) {
+                        VStack(alignment: .leading, spacing: 7) {
+                            Text("NOURISH")
+                                .font(.system(size: 13, weight: .bold, design: .rounded))
+                                .tracking(3)
+                                .foregroundStyle(.white.opacity(0.75))
+
+                            Text("What have we got to eat?")
+                                .font(.system(size: 30, weight: .semibold, design: .rounded))
+                                .foregroundStyle(.white)
+
+                            Text("Use what you have. Make something satisfying and nutritious.")
+                                .font(.subheadline)
+                                .foregroundStyle(.white.opacity(0.82))
+                        }
+
+                        addFoodPanel
+
+                        Button {
+                            journalStartTab = 0
+                            showingMealJournal = true
+                        } label: {
+                            HStack(spacing: 12) {
+                                Image(systemName: "book.closed.fill")
+                                    .font(.title3)
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text("Log a meal I've eaten")
+                                        .font(.headline)
+                                    Text("Name it, add its ingredients and save it")
+                                        .font(.caption)
+                                        .foregroundStyle(.white.opacity(0.83))
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                            }
+                            .foregroundStyle(.white)
+                            .padding(16)
+                            .background(Color(red: 0.10, green: 0.38, blue: 0.33).opacity(0.96),
+                                        in: RoundedRectangle(cornerRadius: 16))
+                        }
+                        .buttonStyle(.plain)
+
+                        Button {
+                            journalStartTab = 1
+                            showingMealJournal = true
+                        } label: {
+                            HStack(spacing: 12) {
+                                Image(systemName: "calendar")
+                                    .font(.title3)
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text("Today's nutrition")
+                                        .font(.headline)
+                                    Text("Calendar, meals and daily nutrient totals")
+                                        .font(.caption)
+                                        .foregroundStyle(.white.opacity(0.83))
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                            }
+                            .foregroundStyle(.white)
+                            .padding(16)
+                            .background(Color(red: 0.10, green: 0.38, blue: 0.33).opacity(0.96),
+                                        in: RoundedRectangle(cornerRadius: 16))
+                        }
+                        .buttonStyle(.plain)
+
+                        HStack {
+                            Text("STEP \(step + 1) OF 4")
+                                .font(.caption.weight(.bold))
+                                .foregroundStyle(.white.opacity(0.80))
+                            Spacer()
+                            Text(stepTitle)
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(.white)
+                        }
+
+                        Group {
+                            if step < 3 {
+                                ingredientPanel(area: KitchenArea.allCases[step])
+                            } else {
+                                mealPreferencesPanel
+                            }
+                        }
+
+                        HStack(spacing: 12) {
+                            if step > 0 {
+                                Button {
+                                    withAnimation(.easeInOut(duration: 0.2)) { step -= 1 }
+                                } label: {
+                                    Text("Back")
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.vertical, 15)
+                                }
+                                .buttonStyle(.plain)
+                                .foregroundStyle(.white)
+                                .background(Color.black.opacity(0.58), in: RoundedRectangle(cornerRadius: 14))
+                            }
+
+                            Button {
+                                if step < 3 {
+                                    withAnimation(.easeInOut(duration: 0.2)) { step += 1 }
+                                } else {
+                                    discussWithChatGPT()
+                                }
+                            } label: {
+                                HStack(spacing: 8) {
+                                    Text(step == 3 ? "Ask ChatGPT" : "Continue")
+                                    Image(systemName: step == 3 ? "bubble.left.and.bubble.right" : "arrow.right")
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 15)
+                            }
+                            .buttonStyle(.plain)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(.white)
+                            .background(Color(red: 0.12, green: 0.43, blue: 0.37), in: RoundedRectangle(cornerRadius: 14))
+                            .disabled(step == 3 && selected.isEmpty)
+                            .opacity(step == 3 && selected.isEmpty ? 0.5 : 1)
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 25)
+                    .padding(.bottom, 70)
+                }
+            }
+        }
+        .navigationTitle("Nutrition")
+        .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $showingProductSearch) { productSearchSheet }
+        .sheet(isPresented: $showingKitchenBarcodeScanner) {
+            MealBarcodeScanner { barcode in
+                Task { await addScannedKitchenProduct(barcode) }
+            }
+        }
+        .alert("Barcode lookup", isPresented: $showingKitchenBarcodeError) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(kitchenBarcodeError)
+        }
+        .sheet(isPresented: $showingMealJournal) { MealJournalView(initialTab: journalStartTab) }
+        .onAppear(perform: loadSavedKitchen)
+        .alert("Open ChatGPT on your iPhone", isPresented: $showAppError) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text("Your meal request is already copied. Please open the ChatGPT app and paste it. If needed, install the ChatGPT app first.")
+        }
+    }
+
+    private var stepTitle: String {
+        step == 3 ? "Your meal" : KitchenArea.allCases[step].rawValue
+    }
+
+    private var addFoodPanel: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Add an ingredient", systemImage: "plus.circle.fill")
+                .font(.headline)
+                .foregroundStyle(.white)
+
+            HStack(spacing: 8) {
+                TextField("Type or dictate an ingredient", text: $newIngredient)
+                    .textInputAutocapitalization(.words)
+                    .autocorrectionDisabled(false)
+                    .submitLabel(.next)
+                    .padding(12)
+                    .background(Color.white.opacity(0.95), in: RoundedRectangle(cornerRadius: 12))
+                    .foregroundStyle(.black)
+
+                Button(action: addIngredient) {
+                    Image(systemName: "plus")
+                        .font(.headline.weight(.bold))
+                        .frame(width: 44, height: 44)
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.white)
+                .background(Color.white.opacity(0.22), in: RoundedRectangle(cornerRadius: 12))
+                .accessibilityLabel("Add ingredient")
+            }
+
+            TextField("Brand (optional, e.g. Weetabix or M&S)", text: $newBrand)
+                .textInputAutocapitalization(.words)
+                .padding(12)
+                .background(Color.white.opacity(0.95), in: RoundedRectangle(cornerRadius: 12))
+                .foregroundStyle(.black)
+
+            Button {
+                productSearchError = nil
+                searchingOnlineFoods = false
+                productQuery = ""
+                localBrandedFoods = NutritionBrandedLibrary.loadWithMigration()
+                showingProductSearch = true
+            } label: {
+                Label("My saved branded foods", systemImage: "magnifyingglass")
+                    .font(.subheadline.weight(.semibold))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(Color.white.opacity(0.17), in: RoundedRectangle(cornerRadius: 12))
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(.white)
+
+            Button {
+                showingKitchenBarcodeScanner = true
+            } label: {
+                Label("Scan a food barcode", systemImage: "barcode.viewfinder")
+                    .font(.subheadline.weight(.semibold))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(Color.white.opacity(0.17), in: RoundedRectangle(cornerRadius: 12))
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(.white)
+            .disabled(scanningKitchenProduct)
+
+            if scanningKitchenProduct {
+                ProgressView("Looking up barcode…").tint(.white)
+            }
+            if let kitchenBarcodeFeedback {
+                Text(kitchenBarcodeFeedback)
+                    .font(.footnote)
+                    .foregroundStyle(.white)
+            }
+
+            Menu {
+                ForEach(KitchenArea.allCases, id: \.self) { area in
+                    Button(area.rawValue) { addTo = area }
+                }
+            } label: {
+                Label("Add to: \(addTo.rawValue)", systemImage: "chevron.down")
+                    .font(.footnote.weight(.medium))
+                    .foregroundStyle(.white.opacity(0.90))
+            }
+
+            Text("Search your saved brands instantly, even offline. Tap Search Open Food Facts only when you need to discover a new product.")
+                .font(.caption)
+                .foregroundStyle(.white.opacity(0.72))
+
+            Link("Product data: Open Food Facts contributors (ODbL)",
+                 destination: URL(string: "https://world.openfoodfacts.org/terms-of-use")!)
+                .font(.caption2)
+                .foregroundStyle(.white.opacity(0.75))
+        }
+        .nutritionPanel()
+    }
+
+    private func ingredientPanel(area: KitchenArea) -> some View {
+        let foods = allFoods.filter { $0.area == area }
+        return VStack(alignment: .leading, spacing: 14) {
+            Text(area.rawValue)
+                .font(.title2.weight(.semibold))
+                .foregroundStyle(.white)
+
+            Text("Tap what you currently have. Selections are remembered for next time.")
+                .font(.subheadline)
+                .foregroundStyle(.white.opacity(0.78))
+
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 125), spacing: 10)], spacing: 10) {
+                ForEach(foods) { food in
+                    Button {
+                        let key = food.id
+                        if selected.contains(key) { selected.remove(key) }
+                        else { selected.insert(key) }
+                        saveSelectedFoods()
+                    } label: {
+                        HStack(spacing: 7) {
+                            Image(systemName: selected.contains(food.id) ? "checkmark.circle.fill" : "circle")
+                            Text(food.displayName)
+                                .multilineTextAlignment(.leading)
+                                .lineLimit(2)
+                                .minimumScaleFactor(0.85)
+                            Spacer(minLength: 0)
+                        }
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 10)
+                        .frame(maxWidth: .infinity, minHeight: 54, alignment: .leading)
+                        .background(
+                            selected.contains(food.id) ? Color(red: 0.11, green: 0.48, blue: 0.40) : Color.white.opacity(0.15),
+                            in: RoundedRectangle(cornerRadius: 12)
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    .contextMenu {
+                        if extraFoods.contains(where: { $0.id == food.id }) {
+                            Button("Remove from list", role: .destructive) { removeCustomFood(food) }
+                        }
+                    }
+                }
+            }
+
+            Text("\(selected.count) ingredients selected across your kitchen")
+                .font(.footnote)
+                .foregroundStyle(.white.opacity(0.76))
+        }
+        .nutritionPanel()
+    }
+
+    private var mealPreferencesPanel: some View {
+        VStack(alignment: .leading, spacing: 17) {
+            Text("What are we making?")
+                .font(.title2.weight(.semibold))
+                .foregroundStyle(.white)
+
+            Text("Meal")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.white)
+
+            HStack(spacing: 8) {
+                ForEach(EatingMoment.allCases, id: \.self) { option in
+                    Button(option.rawValue) { meal = option }
+                        .nutritionChoice(isActive: meal == option)
+                }
+            }
+
+            Text("How much time and energy?")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.white)
+
+            ForEach(CookingEnergy.allCases, id: \.self) { option in
+                Button {
+                    energy = option
+                } label: {
+                    HStack {
+                        Image(systemName: option == .quick ? "bolt.fill" : "frying.pan.fill")
+                        Text(option == .quick ? "I need something quick and easy" : "I've got time to cook")
+                        Spacer()
+                        if energy == option { Image(systemName: "checkmark") }
+                    }
+                    .padding(13)
+                    .foregroundStyle(.white)
+                    .background(energy == option ? Color(red: 0.11, green: 0.48, blue: 0.40) : Color.white.opacity(0.14), in: RoundedRectangle(cornerRadius: 12))
+                }
+                .buttonStyle(.plain)
+            }
+
+            Text("Anything else? (Optional)")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.white)
+
+            TextEditor(text: $additionalNotes)
+                .scrollContentBackground(.hidden)
+                .foregroundStyle(.white)
+                .frame(minHeight: 95)
+                .padding(10)
+                .background(Color.black.opacity(0.40), in: RoundedRectangle(cornerRadius: 12))
+                .accessibilityLabel("Additional notes or cravings")
+
+            Text("Dictate a craving, mention leftovers, or tell ChatGPT how you're feeling. This note clears after you send a request.")
+                .font(.caption)
+                .foregroundStyle(.white.opacity(0.78))
+
+            Text("We'll prioritise protein, steady-release carbohydrates, magnesium, B12 and iron, while making the meal enjoyable and practical.")
+                .font(.footnote)
+                .foregroundStyle(.white.opacity(0.89))
+        }
+        .nutritionPanel()
+    }
+
+    private func loadSavedKitchen() {
+        guard !isLoaded else { return }
+        isLoaded = true
+        if let data = savedFoods.data(using: .utf8),
+           let foods = try? JSONDecoder().decode([KitchenFood].self, from: data) {
+            extraFoods = foods
+        }
+        if inventorySetUp {
+            if let data = savedSelection.data(using: .utf8),
+               let keys = try? JSONDecoder().decode([String].self, from: data) {
+                selected = Set(keys)
+            }
+        } else {
+            selected = Set(allFoods.map { Self.foodKey($0.name) })
+            inventorySetUp = true
+            saveSelectedFoods()
+        }
+    }
+
+    static func foodKey(_ value: String) -> String {
+        let simplified = value.lowercased().filter { $0.isLetter || $0.isNumber }
+        switch simplified {
+        case "egg", "eggs": return "eggs"
+        case "tenderstembroccoli", "tenderstembrokoli": return "tenderstembroccoli"
+        case "tintomatoes", "tinnedtomatoes": return "tinnedtomatoes"
+        default: return simplified
+        }
+    }
+
+    private func addIngredient() {
+        let name = newIngredient.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !name.isEmpty else { return }
+        let brand = newBrand.trimmingCharacters(in: .whitespacesAndNewlines)
+        let candidate = KitchenFood(name: name, area: addTo,
+                                    brand: brand.isEmpty ? nil : brand)
+        if let existing = allFoods.first(where: { $0.id == candidate.id }) {
+            selected.insert(existing.id)
+            step = existing.area.step
+        } else {
+            extraFoods.append(candidate)
+            selected.insert(candidate.id)
+            step = addTo.step
+            saveCustomFoods()
+        }
+        saveSelectedFoods()
+        if !brand.isEmpty {
+            NutritionBrandedLibrary.save(NutritionSavedProduct(name: name, brand: brand))
+        }
+        newIngredient = ""
+        newBrand = ""
+    }
+
+    private func addOpenFoodFactsProduct(_ product: OpenFoodFactsKitchenProduct) {
+        let candidate = KitchenFood(name: product.name, area: addTo,
+                                    brand: product.brand, barcode: product.id,
+                                    nutrition: product.nutrition)
+        if let existing = allFoods.first(where: { $0.id == candidate.id }) {
+            selected.insert(existing.id)
+            step = existing.area.step
+        } else {
+            extraFoods.append(candidate)
+            selected.insert(candidate.id)
+            step = addTo.step
+            saveCustomFoods()
+        }
+        saveSelectedFoods()
+        NutritionBrandedLibrary.save(.fromProduct(name: product.name, brand: product.brand,
+            barcode: product.id, nutriments: product.nutrition?.asRawNutrients))
+        showingProductSearch = false
+    }
+
+    @MainActor
+    private func addScannedKitchenProduct(_ code: String) async {
+        guard !scanningKitchenProduct else { return }
+        scanningKitchenProduct = true
+        kitchenBarcodeFeedback = nil
+        defer { scanningKitchenProduct = false }
+        do {
+            let product = try await MealBarcodeProducts.lookup(code)
+            let wasPresent = allFoods.contains { $0.barcode == product.barcode }
+            NutritionBrandedLibrary.save(.fromProduct(name: product.name, brand: product.brand,
+                barcode: product.barcode, nutriments: product.nutriments,
+                productFields: product.rawProduct))
+            addOpenFoodFactsProduct(OpenFoodFactsKitchenProduct(
+                id: product.barcode, name: product.name, brand: product.brand,
+                nutrition: product.nutriments.map { KitchenNutrients(raw: $0) }
+            ))
+            kitchenBarcodeFeedback = wasPresent
+                ? "Already in your kitchen — selected \(product.name)."
+                : "Added \(product.name) to \(addTo.rawValue)."
+        } catch {
+            kitchenBarcodeError = error.localizedDescription
+            showingKitchenBarcodeError = true
+        }
+    }
+
+    private func removeCustomFood(_ food: KitchenFood) {
+        let key = food.id
+        extraFoods.removeAll { $0.id == key }
+        selected.remove(key)
+        saveCustomFoods()
+        saveSelectedFoods()
+    }
+
+    private var filteredLocalBrandedFoods: [NutritionSavedProduct] {
+        let query = productQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !query.isEmpty else { return localBrandedFoods }
+        return localBrandedFoods.filter {
+            $0.displayName.localizedStandardContains(query) ||
+            ($0.barcode?.contains(query) ?? false)
+        }
+    }
+
+    private func addSavedBrandedFood(_ product: NutritionSavedProduct) {
+        let candidate = KitchenFood(name: product.name, area: addTo, brand: product.brand,
+            barcode: product.barcode, nutrition: KitchenNutrients(raw: product.rawNutriments()))
+        if let existing = allFoods.first(where: { $0.id == candidate.id }) {
+            selected.insert(existing.id)
+            step = existing.area.step
+        } else {
+            extraFoods.append(candidate)
+            selected.insert(candidate.id)
+            step = addTo.step
+            saveCustomFoods()
+        }
+        saveSelectedFoods()
+        showingProductSearch = false
+    }
+
+    private var productSearchSheet: some View {
+        NavigationStack {
+            VStack(alignment: .leading, spacing: 12) {
+                Text(searchingOnlineFoods
+                     ? "Discover a new product on Open Food Facts. This needs an internet connection."
+                     : "Your saved branded foods appear as you type — no internet needed.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+
+                HStack(spacing: 8) {
+                    TextField(searchingOnlineFoods ? "e.g. Weetabix Original" : "Search my saved foods", text: $productQuery)
+                        .textInputAutocapitalization(.words)
+                        .autocorrectionDisabled()
+                        .submitLabel(.search)
+                        .onSubmit { if searchingOnlineFoods { searchOpenFoodFacts() } }
+                        .textFieldStyle(.roundedBorder)
+                    if searchingOnlineFoods {
+                        Button("Search") { searchOpenFoodFacts() }
+                            .disabled(searchingProducts || productQuery.trimmingCharacters(in: .whitespacesAndNewlines).count < 2)
+                            .buttonStyle(.borderedProminent)
+                    }
+                }
+
+                Picker("Store in", selection: $addTo) {
+                    ForEach(KitchenArea.allCases, id: \.self) { area in
+                        Text(area.rawValue).tag(area)
+                    }
+                }
+                .pickerStyle(.menu)
+
+                Button {
+                    searchingOnlineFoods.toggle()
+                    productSearchError = nil
+                    productResults = []
+                    if !searchingOnlineFoods { localBrandedFoods = NutritionBrandedLibrary.loadWithMigration() }
+                } label: {
+                    Label(searchingOnlineFoods ? "Back to my saved foods" : "Search Open Food Facts for a new product",
+                          systemImage: searchingOnlineFoods ? "clock.arrow.circlepath" : "globe")
+                        .font(.subheadline.weight(.semibold))
+                }
+                .disabled(searchingProducts || fetchingProduct)
+
+                if searchingOnlineFoods {
+                    if searchingProducts { ProgressView("Looking for products…") }
+                    if fetchingProduct { ProgressView("Fetching up-to-date nutrient details…") }
+                    if let productSearchError { Text(productSearchError).font(.footnote).foregroundStyle(.secondary) }
+                    List(productResults) { product in
+                        Button {
+                            Task { await addProductWithLatestNutrition(product) }
+                        } label: {
+                            VStack(alignment: .leading, spacing: 5) {
+                                Text(product.displayName).font(.headline).foregroundStyle(.primary)
+                                Text(product.nutrition?.summary ?? "Nutrient details checked on selection")
+                                    .font(.caption).foregroundStyle(.secondary)
+                            }
+                        }
+                        .disabled(fetchingProduct)
+                    }
+                    .listStyle(.plain)
+                } else {
+                    if filteredLocalBrandedFoods.isEmpty {
+                        ContentUnavailableView("No saved products found", systemImage: "tray",
+                            description: Text("Use Search Open Food Facts or scan a barcode to save your first branded product."))
+                    }
+                    List(filteredLocalBrandedFoods) { product in
+                        Button { addSavedBrandedFood(product) } label: {
+                            VStack(alignment: .leading, spacing: 5) {
+                                Text(product.displayName).font(.headline).foregroundStyle(.primary)
+                                if !product.nutritionDetails.isEmpty {
+                                    Text("Reported per 100 g / 100 ml: \(product.nutritionDetails)")
+                                        .font(.caption).foregroundStyle(.secondary)
+                                }
+                                if let serving = product.servingSizeText, !serving.isEmpty {
+                                    Text("Label serving: \(serving)").font(.caption2).foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+                    }
+                    .listStyle(.plain)
+                }
+                Link("Product data: Open Food Facts contributors (ODbL)",
+                     destination: URL(string: "https://world.openfoodfacts.org/terms-of-use")!)
+                    .font(.caption2).foregroundStyle(.secondary)
+                Text("Saved locally on this iPhone. Nutrient fields are included only when provided; no calories tracked.")
+                    .font(.caption2).foregroundStyle(.secondary)
+            }
+            .padding(16)
+            .navigationTitle(searchingOnlineFoods ? "Search Open Food Facts" : "My saved branded foods")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") { showingProductSearch = false }
+                }
+            }
+            .onAppear { localBrandedFoods = NutritionBrandedLibrary.loadWithMigration() }
+        }
+    }
+
+    // Use Search-a-licious for text search; the legacy /cgi/search.pl service
+    // intermittently returns 503. Product details are refreshed by barcode on selection.
+    // Search only on explicit tap; never per keystroke.
+    private func searchOpenFoodFacts() {
+        let query = productQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard query.count >= 2, !searchingProducts, !fetchingProduct else { return }
+        let cacheKey = query.lowercased()
+        if let cached = productCache[cacheKey] {
+            productResults = cached
+            productSearchError = cached.isEmpty ? "No products found for that search. You can still add it manually." : nil
+            return
+        }
+
+        let now = Date()
+        searchHistory = searchHistory.filter { now.timeIntervalSince($0) < 60 }
+        guard searchHistory.count < 8 else {
+            productSearchError = "Please wait a minute before searching again. You can still add an ingredient manually."
+            return
+        }
+        searchHistory.append(now)
+        productResults = []
+        productSearchError = nil
+        searchingProducts = true
+
+        var components = URLComponents(string: "https://search.openfoodfacts.org/search")!
+        components.queryItems = [
+            URLQueryItem(name: "q", value: query),
+            URLQueryItem(name: "page_size", value: "12"),
+            URLQueryItem(name: "langs", value: "en"),
+            URLQueryItem(name: "fields", value: "code,product_name,brands")
+        ]
+        guard let url = components.url else {
+            searchingProducts = false
+            productSearchError = "Could not create the product search request."
+            return
+        }
+        var request = URLRequest(url: url)
+        request.timeoutInterval = 20
+        request.setValue("ConsciousConnection/1.0 (https://github.com/tesstw89-glitch/ConsciousConnection)",
+                         forHTTPHeaderField: "User-Agent")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+
+        Task {
+            do {
+                let (data, response) = try await URLSession.shared.data(for: request)
+                guard let http = response as? HTTPURLResponse else {
+                    throw NSError(domain: "ConsciousConnectionFoodSearch", code: -1,
+                                  userInfo: [NSLocalizedDescriptionKey: "The food service did not return an HTTP response."])
+                }
+                guard (200...299).contains(http.statusCode) else {
+                    let explanation: String
+                    switch http.statusCode {
+                    case 403: explanation = "Open Food Facts denied the search request (HTTP 403)."
+                    case 429: explanation = "Open Food Facts is rate-limiting searches (HTTP 429). Please try later."
+                    case 500...599: explanation = "Open Food Facts' search service is temporarily unavailable (HTTP \(http.statusCode))."
+                    default: explanation = "Open Food Facts returned HTTP \(http.statusCode)."
+                    }
+                    throw NSError(domain: "ConsciousConnectionFoodSearch", code: http.statusCode,
+                                  userInfo: [NSLocalizedDescriptionKey: explanation])
+                }
+                guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+                      let hits = json["hits"] as? [[String: Any]] else {
+                    throw NSError(domain: "ConsciousConnectionFoodSearch", code: -2,
+                                  userInfo: [NSLocalizedDescriptionKey: "Unexpected search response. The service may have changed its format."])
+                }
+                func fieldText(_ value: Any?) -> String {
+                    if let text = value as? String { return text.trimmingCharacters(in: .whitespacesAndNewlines) }
+                    if let multilingual = value as? [String: Any] {
+                        let ordered = ["en", "en-gb", "en_GB"]
+                        for lang in ordered {
+                            if let result = multilingual[lang] as? String, !result.isEmpty { return result }
+                        }
+                        if let result = multilingual.values.compactMap({ $0 as? String }).first { return result }
+                    }
+                    return ""
+                }
+                var seen = Set<String>()
+                let products: [OpenFoodFactsKitchenProduct] = hits.compactMap { hit in
+                    let record = (hit["_source"] as? [String: Any]) ?? hit
+                    let barcode = fieldText(record["code"])
+                    guard !barcode.isEmpty, barcode.count <= 20,
+                          barcode.unicodeScalars.allSatisfy({ CharacterSet.decimalDigits.contains($0) }),
+                          seen.insert(barcode).inserted else { return nil }
+                    let name = fieldText(record["product_name_en"]).isEmpty
+                        ? fieldText(record["product_name"]) : fieldText(record["product_name_en"])
+                    guard !name.isEmpty else { return nil }
+                    let brand = fieldText(record["brands"])
+                    return OpenFoodFactsKitchenProduct(id: barcode,
+                                                       name: name,
+                                                       brand: brand.isEmpty ? nil : brand,
+                                                       nutrition: nil)
+                }
+                await MainActor.run {
+                    productResults = products
+                    productCache[cacheKey] = products
+                    productSearchError = products.isEmpty
+                        ? "No matching products found. The Open Food Facts search catalogue may be incomplete; try a shorter name or add it manually."
+                        : nil
+                    searchingProducts = false
+                }
+            } catch {
+                await MainActor.run {
+                    if let urlError = error as? URLError {
+                        productSearchError = "Couldn't reach Open Food Facts (network error \(urlError.code.rawValue)). Check your connection or try again later."
+                    } else {
+                        productSearchError = error.localizedDescription
+                    }
+                    searchingProducts = false
+                }
+            }
+        }
+    }
+
+    // The text index is not necessarily current; fetch the latest public product
+    // record from the canonical barcode API before saving its nutrient values.
+    @MainActor
+    private func addProductWithLatestNutrition(_ searchResult: OpenFoodFactsKitchenProduct) async {
+        guard !fetchingProduct else { return }
+        fetchingProduct = true
+        defer { fetchingProduct = false }
+        var product = searchResult
+        if let url = URL(string: "https://world.openfoodfacts.org/api/v2/product/\(searchResult.id).json?fields=code,product_name,brands,nutriments,serving_size,serving_quantity,serving_quantity_unit,product_quantity_unit") {
+            var request = URLRequest(url: url)
+            request.timeoutInterval = 15
+            request.setValue("ConsciousConnection/1.0 (https://github.com/tesstw89-glitch/ConsciousConnection)",
+                             forHTTPHeaderField: "User-Agent")
+            request.setValue("application/json", forHTTPHeaderField: "Accept")
+            do {
+                let (data, response) = try await URLSession.shared.data(for: request)
+                if let http = response as? HTTPURLResponse,
+                   (200...299).contains(http.statusCode),
+                   let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+                   let current = json["product"] as? [String: Any] {
+                    let rawNutrients = current["nutriments"] as? [String: Any]
+                    NutritionBrandedLibrary.save(.fromProduct(name: searchResult.name,
+                        brand: searchResult.brand, barcode: searchResult.id,
+                        nutriments: rawNutrients, productFields: current))
+                    let nutrients = rawNutrients.map { KitchenNutrients(raw: $0) }
+                    // Keep the name and brand the user selected in the search results.
+                    product = OpenFoodFactsKitchenProduct(id: searchResult.id,
+                                                          name: searchResult.name,
+                                                          brand: searchResult.brand,
+                                                          nutrition: nutrients)
+                }
+            } catch {
+                // The user's selected food still saves, without invented nutrient data.
+                print("Nutrition: latest product nutrient data unavailable: \(error.localizedDescription)")
+            }
+        }
+        addOpenFoodFactsProduct(product)
+    }
+
+    private func saveCustomFoods() {
+        if let data = try? JSONEncoder().encode(extraFoods),
+           let text = String(data: data, encoding: .utf8) {
+            savedFoods = text
+        }
+    }
+
+    private func saveSelectedFoods() {
+        if let data = try? JSONEncoder().encode(Array(selected).sorted()),
+           let text = String(data: data, encoding: .utf8) {
+            savedSelection = text
+        }
+    }
+
+    private func discussWithChatGPT() {
+        let lines = KitchenArea.allCases.compactMap { area -> String? in
+            let names = allFoods.filter {
+                $0.area == area && selected.contains($0.id)
+            }.map { food -> String in
+                var label = food.displayName
+                if let nutrition = food.nutrition, !nutrition.summary.isEmpty {
+                    label += " [Open Food Facts reported nutrients, approx. per 100g/100ml: " + nutrition.summary + "]"
+                }
+                return label
+            }
+            guard !names.isEmpty else { return nil }
+            return "\(area.rawValue): \(names.joined(separator: ", "))"
+        }
+        guard !lines.isEmpty else { return }
+
+        let cookingInstruction = energy == .quick
+            ? "I need something quick and easy: minimal preparation, few ingredients and as little washing-up as possible."
+            : "I've got time to cook: feel free to suggest something more involved or creative."
+        let note = additionalNotes.trimmingCharacters(in: .whitespacesAndNewlines)
+        let noteText = note.isEmpty ? "" : "\n\nMy extra note: \(note)"
+
+        let message = """
+        I'd like help making a nutritious \(meal.rawValue.lowercased()) using food I already have.
+
+        Here is what I have available right now:
+        \(lines.joined(separator: "\n"))
+
+        My nutritional priorities are protein, steady-release carbohydrates, magnesium, vitamin B12 and iron. Please include as many of these as practical, but even one is worthwhile. I want a satisfying meal, not a restrictive diet.
+
+        \(cookingInstruction)\(noteText)
+
+        Please suggest two or three realistic meals using what I have. Explain briefly which of my nutritional priorities each option supports. Don't assume I have extra ingredients. Branded-product nutrient data may be incomplete or outdated: treat missing nutrients as unknown, not zero, and don't invent exact amounts. Ask me a helpful question if it would make choosing easier.
+        """
+
+        UIPasteboard.general.string = message
+        additionalNotes = ""
+        guard let url = URL(string: "chatgpt://") else {
+            showAppError = true
+            return
+        }
+        UIApplication.shared.open(url, options: [:]) { success in
+            if !success {
+                DispatchQueue.main.async { showAppError = true }
+            }
+        }
+    }
+}
+
+private extension View {
+    func nutritionPanel() -> some View {
+        self.padding(17)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.black.opacity(0.59), in: RoundedRectangle(cornerRadius: 20))
+            .overlay {
+                RoundedRectangle(cornerRadius: 20)
+                    .stroke(Color.white.opacity(0.24), lineWidth: 1)
+            }
+    }
+
+    func nutritionChoice(isActive: Bool) -> some View {
+        self.font(.system(size: 13, weight: .semibold))
+            .foregroundStyle(.white)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 12)
+            .background(
+                isActive ? Color(red: 0.11, green: 0.48, blue: 0.40) : Color.white.opacity(0.14),
+                in: RoundedRectangle(cornerRadius: 11)
+            )
+            .buttonStyle(.plain)
+    }
+}

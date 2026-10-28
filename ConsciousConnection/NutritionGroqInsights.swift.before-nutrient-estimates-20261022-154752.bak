@@ -1,0 +1,235 @@
+import SwiftUI
+import Security
+import Foundation
+
+// Personal-device Groq prototype: the user's own key is stored in iOS Keychain,
+// never in source, UserDefaults, or an Xcode project file.
+// For distribution to other users, use a server-side authenticated proxy instead.
+private enum NutritionGroqKeychain {
+    private static let service = "com.tess.ConsciousConnection.NutritionGroq"
+    private static let account = "userApiKey"
+
+    private static var query: [String: Any] {
+        [kSecClass as String: kSecClassGenericPassword,
+         kSecAttrService as String: service,
+         kSecAttrAccount as String: account]
+    }
+
+    static func read() -> String? {
+        var attributes = query
+        attributes[kSecReturnData as String] = true
+        attributes[kSecMatchLimit as String] = kSecMatchLimitOne
+        var result: CFTypeRef?
+        let status = SecItemCopyMatching(attributes as CFDictionary, &result)
+        guard status == errSecSuccess, let data = result as? Data,
+              let key = String(data: data, encoding: .utf8), !key.isEmpty else { return nil }
+        return key
+    }
+
+    static func save(_ raw: String) -> Bool {
+        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.hasPrefix("gsk_"), trimmed.count > 15,
+              let data = trimmed.data(using: .utf8) else { return false }
+        SecItemDelete(query as CFDictionary)
+        var attributes = query
+        attributes[kSecValueData as String] = data
+        attributes[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+        return SecItemAdd(attributes as CFDictionary, nil) == errSecSuccess
+    }
+
+    static func remove() {
+        SecItemDelete(query as CFDictionary)
+    }
+}
+
+private enum NutritionGroqError: LocalizedError {
+    case message(String)
+    var errorDescription: String? {
+        switch self { case .message(let text): return text }
+    }
+}
+
+private enum NutritionGroqService {
+    static func review(_ payload: String, key: String) async throws -> String {
+        guard let url = URL(string: "https://api.groq.com/openai/v1/chat/completions") else {
+            throw NutritionGroqError.message("Groq API address is invalid.")
+        }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.timeoutInterval = 30
+        request.setValue("Bearer " + key, forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+
+        let system = """
+        You are a supportive, evidence-conscious nutrition planning assistant for a personal food journal.
+        Use UK English, a warm, practical, non-judgemental tone. Keep the answer under 320 words.
+        Structure as: 1) What's represented in the recorded meals, 2) What is uncertain or might be worth adding, 3) Two specific kitchen-only ideas for the next meal or snack.
+        Priorities: protein, fibre-rich carbohydrate choices, magnesium, B12 and iron. Never discuss calories or weight loss.
+        Use ONLY ingredients explicitly listed as available for proposed dishes. If the list is empty, request the user update it; do not invent ingredients. Do not recommend shopping unless asked.
+        Use nutrient values only as *recorded contributions*, not full-day totals. Some food products lack micronutrient records. Unknown is NEVER zero. Do not claim a vitamin/mineral deficiency, diagnose illness, assign target percentages or imply missing meals were skipped. Avoid exact quantities for suggested food nutrients unless the provided data fully supports them.
+        Offer realistic cooking combinations and say why each helps nutritionally, without making up product nutrient data.
+        """
+        let body: [String: Any] = [
+            "model": "openai/gpt-oss-120b",
+            "reasoning_effort": "low",
+            "include_reasoning": false,
+            "temperature": 0.3,
+            "max_completion_tokens": 1300,
+            "messages": [
+                ["role": "system", "content": system],
+                ["role": "user", "content": payload]
+            ]
+        ]
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse else {
+            throw NutritionGroqError.message("No valid response from Groq. Check your connection.")
+        }
+        if !(200...299).contains(http.statusCode) {
+            let envelope = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
+            let apiError = (envelope?["error"] as? [String: Any])?["message"] as? String
+            let generic: String
+            switch http.statusCode {
+            case 401, 403: generic = "The Groq API key was rejected. Check or replace it."
+            case 429: generic = "Groq is rate-limiting requests. Try again later."
+            default: generic = "Groq returned HTTP \(http.statusCode)."
+            }
+            throw NutritionGroqError.message(apiError ?? generic)
+        }
+        guard let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let choices = object["choices"] as? [[String: Any]],
+              let first = choices.first,
+              let answer = (first["message"] as? [String: Any])?["content"] as? String,
+              !answer.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            throw NutritionGroqError.message("Groq did not return a readable summary. Please try again.")
+        }
+        return answer
+    }
+}
+
+struct NutritionGroqReviewView: View {
+    let payload: String
+    @Environment(\.dismiss) private var dismiss
+    @State private var hasKey = false
+    @State private var newKey = ""
+    @State private var showingKeyEditor = false
+    @State private var working = false
+    @State private var resultText = ""
+    @State private var feedback: String? = nil
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    Label("Your nutrition, in context", systemImage: "sparkles")
+                        .font(.title2.weight(.semibold))
+                    Text("Groq will consider meals you've logged, available recorded nutrients and the foods checked in your kitchen. It'll suggest what to add next from those ingredients.")
+                        .foregroundStyle(.secondary)
+
+                    if !hasKey || showingKeyEditor {
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text("Connect your personal Groq API key")
+                                .font(.headline)
+                            SecureField("Paste gsk_… API key", text: $newKey)
+                                .textInputAutocapitalization(.never)
+                                .autocorrectionDisabled()
+                                .textContentType(.password)
+                                .padding(10)
+                                .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 10))
+                            Button("Save key on this iPhone") {
+                                if NutritionGroqKeychain.save(newKey) {
+                                    newKey = ""
+                                    hasKey = true
+                                    showingKeyEditor = false
+                                    feedback = nil
+                                } else {
+                                    feedback = "That doesn't look like a Groq API key, or it couldn't be saved securely."
+                                }
+                            }
+                            .buttonStyle(.borderedProminent)
+                            Text("Get a key at console.groq.com/keys. It's saved in iPhone Keychain, not in your code or GitHub.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    } else {
+                        Button("Change or remove Groq key") {
+                            showingKeyEditor = true
+                        }
+                        .font(.caption)
+                        .buttonStyle(.borderless)
+                        Button("Remove saved key", role: .destructive) {
+                            NutritionGroqKeychain.remove()
+                            hasKey = false
+                            newKey = ""
+                            showingKeyEditor = false
+                            resultText = ""
+                        }
+                        .font(.caption)
+                    }
+
+                    Divider()
+                    Text("Privacy: only when you tap **Summarise with Groq** will this day's meal names, portions, recorded nutrient contributions and your checked kitchen items be sent to Groq. No calorie data is sent.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                    Button {
+                        Task { await analyse() }
+                    } label: {
+                        HStack {
+                            if working { ProgressView().tint(.white) }
+                            Label(working ? "Analysing…" : "Summarise with Groq", systemImage: "sparkles")
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 7)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(Color(red: 0.11, green: 0.48, blue: 0.40))
+                    .disabled(!hasKey || working)
+
+                    if let feedback {
+                        Text(feedback)
+                            .foregroundStyle(.red)
+                            .font(.subheadline)
+                            .textSelection(.enabled)
+                    }
+                    if !resultText.isEmpty {
+                        Text("Today's nourishment ideas").font(.headline)
+                        Text(.init(resultText))
+                            .textSelection(.enabled)
+                        Text("Food-diary observations, not a medical assessment. Database values and quantities can be incomplete.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .padding(20)
+            }
+            .navigationTitle("Groq Nutrition")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") { dismiss() }
+                }
+            }
+            .onAppear { hasKey = NutritionGroqKeychain.read() != nil }
+        }
+    }
+
+    @MainActor
+    private func analyse() async {
+        guard let key = NutritionGroqKeychain.read() else {
+            hasKey = false
+            feedback = "Add your personal Groq key first."
+            return
+        }
+        working = true
+        feedback = nil
+        resultText = ""
+        defer { working = false }
+        do {
+            resultText = try await NutritionGroqService.review(payload, key: key)
+        } catch {
+            feedback = error.localizedDescription
+        }
+    }
+}

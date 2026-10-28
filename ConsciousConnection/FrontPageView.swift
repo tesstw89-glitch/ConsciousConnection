@@ -75,7 +75,7 @@ struct FrontPageView: View {
                     }
 
                     frontButton(asset: "Create") {
-                        showingCreatePlaceholder = true
+                        router.path.append(.createHome)
                     }
 
                     frontButton(asset: "Live") {
