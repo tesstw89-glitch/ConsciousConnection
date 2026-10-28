@@ -94,14 +94,16 @@ def wrap_call(source,name,index,omit,portrait):
     original=source[pos:end]
     original_indented=original.replace("\n","\n    ")
     replacement=(
-        indent+'if boardMode == "Exquis" {\n'+
-        indent+'    ExquisChordBoard(labID: lab.id,\n'+
-        indent+'                     chordIndex: '+index+',\n'+
-        indent+'                     chord: chord,\n'+
-        indent+'                     omitRoot: '+omit+')'+
-        ('\n'+indent+'        .frame(height: 220)' if portrait else '')+
-        '\n'+indent+'} else {\n'+
-        indent+'    '+original_indented+'\n'+
+        indent+'Group {\n'+
+        indent+'    if boardMode == "Exquis" {\n'+
+        indent+'        ExquisChordBoard(labID: lab.id,\n'+
+        indent+'                         chordIndex: '+index+',\n'+
+        indent+'                         chord: chord,\n'+
+        indent+'                         omitRoot: '+omit+')'+
+        ('\n'+indent+'            .frame(height: 220)' if portrait else '')+
+        '\n'+indent+'    } else {\n'+
+        indent+'        '+original_indented+'\n'+
+        indent+'    }\n'+
         indent+'}'
     )
     return source[:line_start]+replacement+source[end:]
