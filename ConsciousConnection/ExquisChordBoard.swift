@@ -91,6 +91,24 @@ private enum ExquisNoteColours {
     static func colour(for pitchClass: Int) -> Color {
         chromatic[((pitchClass % 12) + 12) % 12]
     }
+
+    // EXQUIS_PITCH_CLASS_NOTE_NAMES_V1: chromatic names, no octave numbers.
+    static let noteNames = ["C", "C♯", "D", "D♯", "E", "F",
+                            "F♯", "G", "G♯", "A", "A♯", "B"]
+
+    static func noteName(for pitchClass: Int) -> String {
+        noteNames[((pitchClass % 12) + 12) % 12]
+    }
+
+    static func labelColour(for pitchClass: Int) -> Color {
+        // Choose dark lettering on the light-coloured pads.
+        switch ((pitchClass % 12) + 12) % 12 {
+        case 1, 2, 4, 6, 8, 10, 11:
+            return Color(red: 0.08, green: 0.11, blue: 0.15)
+        default:
+            return .white
+        }
+    }
 }
 
 struct ExquisChordBoard: View {
@@ -134,25 +152,47 @@ struct ExquisChordBoard: View {
                         .resizable()
                         .frame(width: w, height: h)
 
+                    // EXQUIS_PAD_NOTE_LABELS_V1: label all 61 pads, highlight chord pitches.
                     ForEach(ExquisLayout.pads) { pad in
-                        if let pc = pad.pitchClass,
-                           pc == root || active.contains(pc) {
+                        if let pc = pad.pitchClass {
                             let isRoot = pc == root
-                            ExquisHexagon()
-                                .fill(ExquisNoteColours.colour(for: pc).opacity(0.87))
-                                .overlay {
+                            let isHighlighted = isRoot || active.contains(pc)
+                            ZStack {
+                                if isHighlighted {
                                     ExquisHexagon()
-                                        .stroke(ink.opacity(0.78),
-                                                lineWidth: max(0.8, scale * 2))
+                                        .fill(ExquisNoteColours.colour(for: pc).opacity(0.87))
+                                        .overlay {
+                                            ExquisHexagon()
+                                                .stroke(ink.opacity(0.78),
+                                                        lineWidth: max(0.8, scale * 2))
+                                        }
+                                        .overlay {
+                                            if isRoot {
+                                                ExquisHexagon()
+                                                    .stroke(.white, lineWidth: max(1.8, scale * 3.5))
+                                            }
+                                        }
                                 }
-                                .overlay {
-                                    if isRoot {
-                                        ExquisHexagon()
-                                            .stroke(.white, lineWidth: max(1.8, scale * 3.5))
+
+                                Text(ExquisNoteColours.noteName(for: pc))
+                                    .font(.system(size: max(8, min(16, hexWidth * 0.41)),
+                                                  weight: .bold, design: .rounded))
+                                    .foregroundStyle(isHighlighted
+                                                     ? ExquisNoteColours.labelColour(for: pc)
+                                                     : Color.white)
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.7)
+                                    .padding(.horizontal, 2)
+                                    .background {
+                                        if !isHighlighted {
+                                            Capsule().fill(Color.black.opacity(0.65))
+                                        }
                                     }
-                                }
-                                .frame(width: hexWidth, height: hexHeight)
-                                .position(x: w * pad.x, y: h * pad.y)
+                                    .frame(maxWidth: hexWidth * 0.88)
+                                    .allowsHitTesting(false)
+                            }
+                            .frame(width: hexWidth, height: hexHeight)
+                            .position(x: w * pad.x, y: h * pad.y)
                         }
                     }
                 }
@@ -161,6 +201,6 @@ struct ExquisChordBoard: View {
             .frame(width: geometry.size.width, height: geometry.size.height)
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Exquis chord \(chord.symbol). Each note has its own colour across octaves. White outlines show root notes.")
+        .accessibilityLabel("Exquis chord \(chord.symbol). Every pad shows its note name without octave numbers. Chord notes are coloured; white outlines show roots.")
     }
 }
