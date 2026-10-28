@@ -46,7 +46,7 @@ except (OSError, subprocess.CalledProcessError):
 if latest_home.count(SHEET_MARKER) != 1:
     fail("The fetched GitHub source is missing the embedded workout picker. Nothing changed.")
 sheet_source = latest_home.split(SHEET_MARKER, 1)[1].strip()
-if not sheet_source.startswith("struct WorkoutCombineSheet: View {"):
+if sheet_source.count("struct WorkoutCombineSheet: View {") != 1:
     fail("Unexpected workout picker source. Nothing changed.")
 
 source = HOME.read_text(encoding="utf-8")
