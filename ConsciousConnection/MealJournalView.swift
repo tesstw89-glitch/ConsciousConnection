@@ -739,7 +739,8 @@ struct MealJournalView: View {
                     .font(.subheadline)
                     .font(.subheadline)
             }
-            ForEach(item.ingredients) { food in
+            ForEach(item.ingredients.indices, id: \.self) { index in
+                let food = item.ingredients[index]
                 VStack(alignment: .leading, spacing: 3) {
                     Text("• \(food.displayName)")
                         .font(.subheadline)
@@ -754,6 +755,14 @@ struct MealJournalView: View {
                         Text("Nutrient total unavailable without a known weight or volume")
                             .font(.caption2)
                             .foregroundStyle(.secondary)
+                    }
+                    if let estimate = groqEstimate(for: item, index: index, food: food) {
+                        let summary = groqSummary(estimate)
+                        if !summary.isEmpty {
+                            Text("Groq estimates for this portion: \(summary)")
+                                .font(.caption2)
+                                .foregroundStyle(.orange)
+                        }
                     }
                 }
             }
