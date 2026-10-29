@@ -49,6 +49,36 @@ private enum NutritionGroqError: LocalizedError {
     }
 }
 
+
+// Groq numbers refer to the consumed portion and are NEVER verified label data.
+struct NutritionGroqIngredientEstimate: Codable, Identifiable {
+    let mealID: String
+    let ingredientIndex: Int
+    let proteinG: Double?
+    let fibreG: Double?
+    let carbohydrateG: Double?
+    let ironMg: Double?
+    let magnesiumMg: Double?
+    let b12Micrograms: Double?
+    let confidence: String
+    let note: String
+    var id: String { mealID + ":" + String(ingredientIndex) }
+    var hasNumbers: Bool {
+        [proteinG, fibreG, carbohydrateG, ironMg, magnesiumMg, b12Micrograms].contains { $0 != nil }
+    }
+}
+
+struct NutritionGroqEstimateResponse: Codable {
+    let ingredients: [NutritionGroqIngredientEstimate]
+}
+
+struct NutritionGroqStoredEstimate: Codable {
+    let mealID: String
+    let ingredientIndex: Int
+    let portionSignature: String
+    let estimate: NutritionGroqIngredientEstimate
+}
+
 private enum NutritionGroqService {
     static func review(_ payload: String, key: String) async throws -> String {
         guard let url = URL(string: "https://api.groq.com/openai/v1/chat/completions") else {
@@ -122,6 +152,87 @@ private enum NutritionGroqService {
             throw NutritionGroqError.message("Groq did not return a readable summary. Please try again.")
         }
         return answer
+    }
+
+    // Use Groq's strict structured outputs; the caller still validates every value.
+    static func estimate(_ payload: String, key: String) async throws -> NutritionGroqEstimateResponse {
+        guard let url = URL(string: "https://api.groq.com/openai/v1/chat/completions") else {
+            throw NutritionGroqError.message("Groq API address is invalid.")
+        }
+        let numberOrNull: [String: Any] = ["type": ["number", "null"]]
+        let properties: [String: Any] = [
+            "mealID": ["type": "string"],
+            "ingredientIndex": ["type": "integer"],
+            "proteinG": numberOrNull, "fibreG": numberOrNull,
+            "carbohydrateG": numberOrNull, "ironMg": numberOrNull,
+            "magnesiumMg": numberOrNull, "b12Micrograms": numberOrNull,
+            "confidence": ["type": "string", "enum": ["low", "moderate"]],
+            "note": ["type": "string"]
+        ]
+        let ingredientSchema: [String: Any] = [
+            "type": "object", "additionalProperties": false,
+            "properties": properties,
+            "required": ["mealID", "ingredientIndex", "proteinG", "fibreG",
+                         "carbohydrateG", "ironMg", "magnesiumMg", "b12Micrograms",
+                         "confidence", "note"]
+        ]
+        let schema: [String: Any] = [
+            "type": "object", "additionalProperties": false,
+            "properties": ["ingredients": ["type": "array", "items": ingredientSchema]],
+            "required": ["ingredients"]
+        ]
+        let system = """
+        Return strict JSON only. The input lists specific eaten portions and MISSING nutrient keys.
+        Provide approximate contributions for the consumed portion (NOT per 100 grams).
+        proteinG, fibreG, carbohydrateG are in grams. ironMg and magnesiumMg are in milligrams.
+        b12Micrograms is in micrograms. Never provide calories.
+        Copy each mealID and ingredientIndex EXACTLY. Only fill fields listed as MISSING;
+        set all other nutrient fields to null. Known reported zero is not missing.
+        If uncertain about a nutrient or an ingredient's identity, set that field null, NOT zero.
+        Do not invent fortification, specific branded composition, unknown ingredients or preparation.
+        If the brand of milk or a substitute isn't clear, do not invent B12 fortification.
+        These are rough, model-generated estimates, not source-verified values.
+        Use modest rounded numbers, no misleading precision; note important food assumptions.
+        Return confidence as 'low' or 'moderate'. This isn't a clinical dietary assessment.
+        """
+        let body: [String: Any] = [
+            "model": "openai/gpt-oss-120b",
+            "reasoning_effort": "low",
+            "include_reasoning": false,
+            "temperature": 0.2,
+            "max_completion_tokens": 2400,
+            "response_format": [
+                "type": "json_schema",
+                "json_schema": ["name": "food_diary_estimates_v1", "strict": true, "schema": schema]
+            ],
+            "messages": [
+                ["role": "system", "content": system],
+                ["role": "user", "content": payload]
+            ]
+        ]
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.timeoutInterval = 45
+        request.setValue("Bearer " + key, forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse else {
+            throw NutritionGroqError.message("No response from Groq.")
+        }
+        guard (200...299).contains(http.statusCode) else {
+            let errorJSON = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
+            let apiError = (errorJSON?["error"] as? [String: Any])?["message"] as? String
+            throw NutritionGroqError.message(apiError ?? "Groq returned HTTP \(http.statusCode).")
+        }
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let choices = json["choices"] as? [[String: Any]],
+              let content = (choices.first?["message"] as? [String: Any])?["content"] as? String,
+              let resultData = content.data(using: .utf8),
+              let parsed = try? JSONDecoder().decode(NutritionGroqEstimateResponse.self, from: resultData) else {
+            throw NutritionGroqError.message("Groq's structured estimates could not be read. Try again.")
+        }
+        return parsed
     }
 }
 
