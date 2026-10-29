@@ -222,6 +222,7 @@ struct MealJournalView: View {
     @Environment(\.dismiss) private var dismiss
     @AppStorage("nutrition.loggedMeals.v1") private var savedMealsJSON = ""
     @AppStorage("nutrition.savedMealTemplates.v1") private var savedTemplatesJSON = ""
+    @AppStorage("nutrition.packdTropicalSmoothieSeeded.v1") private var didSeedPackdSmoothie = false
     // 0 = meal history, 1 = daily nutrition, 2 = favourite meals
     var initialTab: Int = 0
     @State private var activeTab = 0
@@ -1030,6 +1031,7 @@ struct MealJournalView: View {
         guard !didLoad else { return }
         didLoad = true
         loadTemplates()
+        seedPackdTropicalSmoothieIfNeeded()
         guard let bytes = savedMealsJSON.data(using: .utf8),
               let decoded = try? JSONDecoder().decode([JournalMeal].self, from: bytes) else { return }
         meals = decoded
@@ -1039,6 +1041,35 @@ struct MealJournalView: View {
         guard let data = savedTemplatesJSON.data(using: .utf8),
               let decoded = try? JSONDecoder().decode([JournalMealTemplate].self, from: data) else { return }
         templates = decoded
+    }
+
+    // Add this personal recipe only once. It is a reusable favourite, not a diary
+    // entry: never invent an eaten date, alter existing meals, or re-add after deletion.
+    private func seedPackdTropicalSmoothieIfNeeded() {
+        guard !didSeedPackdSmoothie else { return }
+        // A damaged saved library must not be replaced with an empty one.
+        if !savedTemplatesJSON.isEmpty {
+            guard let data = savedTemplatesJSON.data(using: .utf8),
+                  (try? JSONDecoder().decode([JournalMealTemplate].self, from: data)) != nil
+            else { return }
+        }
+
+        let title = "PACK'D Tropical Smoothie"
+        if !templates.contains(where: { $0.name.caseInsensitiveCompare(title) == .orderedSame }) {
+            let ingredients: [JournalIngredient] = [
+                JournalIngredient(name: "Banana", quantityText: "50", portionUnit: "g"),
+                JournalIngredient(name: "Frozen avocado", brand: "PACK'D", quantityText: "30", portionUnit: "g"),
+                JournalIngredient(name: "Frozen mango", brand: "PACK'D", quantityText: "45", portionUnit: "g"),
+                JournalIngredient(name: "Frozen pineapple", brand: "Sainsbury's", quantityText: "30", portionUnit: "g"),
+                JournalIngredient(name: "Milk", quantityText: "250", portionUnit: "ml", productQuantityUnit: "ml"),
+                JournalIngredient(name: "Chia seeds", quantityText: "5", portionUnit: "g"),
+                JournalIngredient(name: "Honey", quantityText: "21", portionUnit: "g")
+            ]
+            templates.append(JournalMealTemplate(id: UUID(), name: title,
+                mealType: "Snack", ingredients: ingredients, savedAt: Date()))
+            storeTemplates()
+        }
+        didSeedPackdSmoothie = true
     }
 
     private func storeTemplates() {
