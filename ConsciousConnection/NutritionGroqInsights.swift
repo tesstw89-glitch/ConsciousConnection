@@ -248,6 +248,7 @@ struct NutritionGroqReviewView: View {
     @State private var resultText = ""
     @State private var estimates: NutritionGroqEstimateResponse? = nil
     @State private var applied = false
+    @State private var appliedCount = 0
     @State private var feedback: String? = nil
 
     var body: some View {
@@ -356,7 +357,8 @@ struct NutritionGroqReviewView: View {
                                 let count = onApplyEstimates?(estimates.ingredients) ?? 0
                                 if count > 0 {
                                     applied = true
-                                    feedback = "Saved \(count) estimated ingredient values on this device. Daily stats now show recorded and AI-estimated totals separately."
+                                    appliedCount = count
+                                    feedback = nil
                                 } else {
                                     feedback = "No estimates were applied. The meals may have changed or the values could not be verified."
                                 }
@@ -368,6 +370,11 @@ struct NutritionGroqReviewView: View {
                             .foregroundStyle(.secondary)
                     }
 
+                    if appliedCount > 0 {
+                        Text("Saved \(appliedCount) ingredient estimates. Recorded and approximate values are now separated in your daily stats.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
                     if let feedback {
                         Text(feedback)
                             .foregroundStyle(.red)
@@ -419,6 +426,7 @@ struct NutritionGroqReviewView: View {
         feedback = nil
         estimates = nil
         applied = false
+        appliedCount = 0
         defer { working = false }
         do {
             let response = try await NutritionGroqService.estimate(estimatePayload, key: key)
