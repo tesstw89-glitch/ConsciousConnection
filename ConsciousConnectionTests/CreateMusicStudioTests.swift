@@ -53,4 +53,35 @@ final class CreateMusicStudioTests: XCTestCase {
             }
         }
     }
+
+    // ROLI_BASS_STAND_BY_ME_TESTS_V1
+    func testStandByMeExactUserTabPitchesAndBars() {
+        let bars = BassSongLibrary.standByMe
+        XCTAssertEqual(bars.count, 8)
+        XCTAssertEqual(bars.map(\.harmony), ["A", "A", "F♯m", "F♯m", "D", "E", "A", "A"])
+        XCTAssertEqual(bars.map { $0.notes.count }, [4, 4, 3, 4, 4, 4, 4, 4])
+        XCTAssertEqual(bars.flatMap(\.notes).count, 31)
+        let pitches = bars.map { $0.notes.map(\.midi) }
+        XCTAssertEqual(pitches, [
+            [45, 45, 40, 44],
+            [45, 45, 45, 44],
+            [42, 42, 40],
+            [42, 42, 42, 40],
+            [38, 38, 38, 42],
+            [40, 40, 40, 44],
+            [45, 45, 40, 44],
+            [45, 45, 40, 44]
+        ])
+        XCTAssertEqual(Set(bars.flatMap(\.notes).map(\.midi)), Set([38, 40, 42, 44, 45]))
+    }
+
+    func testBassTabConvertsStandardTuningNotGuitarOctaves() {
+        XCTAssertEqual(BassTabNote(.lowE, 0).midi, 28)
+        XCTAssertEqual(BassTabNote(.a, 0).midi, 33)
+        XCTAssertEqual(BassTabNote(.d, 0).midi, 38)
+        XCTAssertEqual(BassTabNote(.g, 0).midi, 43)
+        XCTAssertEqual(BassTabNote(.d, 7).label, "A2")
+        XCTAssertEqual(BassTabNote(.a, 5).label, "D2")
+        XCTAssertEqual(BassTabNote(.d, 6).label, "G♯2")
+    }
 }
