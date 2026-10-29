@@ -155,13 +155,20 @@ private struct JournalIngredient: Codable, Identifiable {
     }
 
     // Changing the food or its portion invalidates stored AI estimates.
+    // Build the signature incrementally to keep Swift's type checker efficient.
     var groqPortionSignature: String {
-        [
-            name, brand ?? "", barcode ?? "", quantityText ?? "", portionUnit ?? "",
-            servingSizeText ?? "", String(servingQuantity ?? -1),
-            servingQuantityUnit ?? "", productQuantityUnit ?? "",
-            String(customUnitSize ?? -1)
-        ].joined(separator: "|")
+        var fields: [String] = []
+        fields.append(name)
+        fields.append(brand ?? "")
+        fields.append(barcode ?? "")
+        fields.append(quantityText ?? "")
+        fields.append(portionUnit ?? "")
+        fields.append(servingSizeText ?? "")
+        fields.append(servingQuantity.map { String($0) } ?? "-1")
+        fields.append(servingQuantityUnit ?? "")
+        fields.append(productQuantityUnit ?? "")
+        fields.append(customUnitSize.map { String($0) } ?? "-1")
+        return fields.joined(separator: "|")
     }
 
     var nutrientSummary: String {
