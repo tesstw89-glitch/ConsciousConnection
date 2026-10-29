@@ -597,6 +597,36 @@ struct MealJournalView: View {
         }
     }
 
+    // Only send edible amounts and nutrients absent from source-labelled data.
+    private func groqEstimateRequest(_ dayMeals: [JournalMeal]) -> String {
+        let lines: [String] = dayMeals.flatMap { meal in
+            meal.ingredients.enumerated().compactMap { index, food -> String? in
+                guard food.portionScale != nil else { return nil }
+                let fields: [(String, Double?)] = [
+                    ("proteinG", food.proteinG), ("fibreG", food.fibreG),
+                    ("carbohydrateG", food.carbohydrateG), ("ironMg", food.ironMg),
+                    ("magnesiumMg", food.magnesiumMg), ("b12Micrograms", food.b12Micrograms)
+                ]
+                let missing = fields.filter { $0.1 == nil }.map { $0.0 }
+                guard !missing.isEmpty else { return nil }
+                let reported = fields.compactMap { key, number -> String? in
+                    guard let number else { return nil }
+                    return "\(key)=\(number) per 100 \(food.baseUnit)"
+                }
+                return """
+                mealID=\(meal.id.uuidString); ingredientIndex=\(index)
+                mealName=\(meal.name); food=\(food.displayName)
+                consumed=\(food.portionDescription); amount=\(food.consumedReferenceAmount ?? 0) \(food.baseUnit)
+                ALREADY REPORTED: \(reported.isEmpty ? "none" : reported.joined(separator: ", "))
+                MISSING: \(missing.joined(separator: ", "))
+                """
+            }
+        }
+        guard !lines.isEmpty else { return "" }
+        return "FOOD DIARY: Estimate only MISSING nutrients for these actually eaten portions. Return the same mealID and ingredientIndex for each entry, using requested units. Unknown fields must be null.\n\n" +
+            lines.joined(separator: "\n---\n")
+    }
+
     // Use measured per-portion contributions and explicit data coverage.
     // The language model never receives guessed daily target percentages.
     private func groqDayPayload(_ dayMeals: [JournalMeal]) -> String {
@@ -1080,6 +1110,75 @@ struct MealJournalView: View {
         guard let bytes = savedMealsJSON.data(using: .utf8),
               let decoded = try? JSONDecoder().decode([JournalMeal].self, from: bytes) else { return }
         meals = decoded
+    }
+
+    private func loadStoredGroqEstimates() {
+        guard let data = storedGroqJSON.data(using: .utf8),
+              let decoded = try? JSONDecoder().decode([NutritionGroqStoredEstimate].self, from: data)
+        else { return }
+        groqEstimates = decoded
+    }
+
+    // Save separately: never mutate reported nutrients or overwrite a corrupt diary.
+    private func applyGroqEstimates(_ entries: [NutritionGroqIngredientEstimate]) -> Int {
+        if !storedGroqJSON.isEmpty {
+            guard let data = storedGroqJSON.data(using: .utf8),
+                  (try? JSONDecoder().decode([NutritionGroqStoredEstimate].self, from: data)) != nil
+            else { return 0 }
+        }
+        func sane(_ value: Double?, max upper: Double) -> Double? {
+            guard let value, value.isFinite, value >= 0, value <= upper else { return nil }
+            return value
+        }
+        var updated = groqEstimates
+        var seen = Set<String>()
+        var count = 0
+        for entry in entries {
+            guard !seen.contains(entry.id),
+                  let mealID = UUID(uuidString: entry.mealID),
+                  let meal = meals.first(where: { $0.id == mealID }),
+                  dayCalendar.isDate(meal.eatenAt, inSameDayAs: selectedDay),
+                  entry.ingredientIndex >= 0,
+                  entry.ingredientIndex < meal.ingredients.count else { continue }
+            seen.insert(entry.id)
+            let food = meal.ingredients[entry.ingredientIndex]
+            guard food.portionScale != nil else { continue }
+
+            // Existing source values (including source zeros) take precedence.
+            let checked = NutritionGroqIngredientEstimate(
+                mealID: entry.mealID, ingredientIndex: entry.ingredientIndex,
+                proteinG: food.proteinG == nil ? sane(entry.proteinG, max: 500) : nil,
+                fibreG: food.fibreG == nil ? sane(entry.fibreG, max: 500) : nil,
+                carbohydrateG: food.carbohydrateG == nil ? sane(entry.carbohydrateG, max: 1000) : nil,
+                ironMg: food.ironMg == nil ? sane(entry.ironMg, max: 100) : nil,
+                magnesiumMg: food.magnesiumMg == nil ? sane(entry.magnesiumMg, max: 5000) : nil,
+                b12Micrograms: food.b12Micrograms == nil ? sane(entry.b12Micrograms, max: 1000) : nil,
+                confidence: entry.confidence, note: entry.note
+            )
+            guard checked.hasNumbers else { continue }
+            updated.removeAll { $0.mealID == entry.mealID && $0.ingredientIndex == entry.ingredientIndex }
+            updated.append(NutritionGroqStoredEstimate(
+                mealID: entry.mealID, ingredientIndex: entry.ingredientIndex,
+                portionSignature: food.groqPortionSignature, estimate: checked))
+            count += 1
+        }
+        guard count > 0, let data = try? JSONEncoder().encode(updated),
+              let json = String(data: data, encoding: .utf8) else { return 0 }
+        storedGroqJSON = json
+        groqEstimates = updated
+        return count
+    }
+
+    private func groqSummary(_ item: NutritionGroqIngredientEstimate) -> String {
+        let values: [(String, String, Double?)] = [
+            ("protein", "g", item.proteinG), ("fibre", "g", item.fibreG),
+            ("carbs", "g", item.carbohydrateG), ("iron", "mg", item.ironMg),
+            ("magnesium", "mg", item.magnesiumMg), ("B12", "µg", item.b12Micrograms)
+        ]
+        return values.compactMap { key, unit, number in
+            guard let number, number.isFinite, number >= 0 else { return nil }
+            return "\(key) ≈\(String(format: "%.2g", number)) \(unit)"
+        }.joined(separator: " · ")
     }
 
     private func loadTemplates() {
