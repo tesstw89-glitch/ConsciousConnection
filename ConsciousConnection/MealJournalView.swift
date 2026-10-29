@@ -485,6 +485,18 @@ struct MealJournalView: View {
                 Text("Daily nutrients: recorded + estimated")
                     .font(.headline)
                 dailyNutrientCards(dayMeals)
+                if dayMeals.contains(where: { meal in
+                    meal.ingredients.indices.contains(where: { index in
+                        groqEstimate(for: meal, index: index, food: meal.ingredients[index]) != nil
+                    })
+                }) {
+                    Button(role: .destructive) {
+                        removeGroqEstimates(for: selectedDay)
+                    } label: {
+                        Label("Clear AI estimates for this day", systemImage: "trash")
+                            .font(.caption)
+                    }
+                }
                 Button {
                     groqNutritionPayload = groqDayPayload(dayMeals)
                     groqEstimatePayload = groqEstimateRequest(dayMeals)
@@ -1176,6 +1188,16 @@ struct MealJournalView: View {
         storedGroqJSON = json
         groqEstimates = updated
         return count
+    }
+
+    // A one-tap undo: source-verified nutrition and the food diary remain intact.
+    private func removeGroqEstimates(for date: Date) {
+        let mealIDs = Set(mealsOn(date).map { $0.id.uuidString })
+        let remaining = groqEstimates.filter { !mealIDs.contains($0.mealID) }
+        guard let data = try? JSONEncoder().encode(remaining),
+              let json = String(data: data, encoding: .utf8) else { return }
+        storedGroqJSON = json
+        groqEstimates = remaining
     }
 
     private func groqSummary(_ item: NutritionGroqIngredientEstimate) -> String {
