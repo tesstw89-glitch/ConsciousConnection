@@ -238,12 +238,16 @@ private enum NutritionGroqService {
 
 struct NutritionGroqReviewView: View {
     let payload: String
+    var estimatePayload: String = ""
+    var onApplyEstimates: (([NutritionGroqIngredientEstimate]) -> Int)? = nil
     @Environment(\.dismiss) private var dismiss
     @State private var hasKey = false
     @State private var newKey = ""
     @State private var showingKeyEditor = false
     @State private var working = false
     @State private var resultText = ""
+    @State private var estimates: NutritionGroqEstimateResponse? = nil
+    @State private var applied = false
     @State private var feedback: String? = nil
 
     var body: some View {
@@ -297,7 +301,7 @@ struct NutritionGroqReviewView: View {
                     }
 
                     Divider()
-                    Text("Privacy: only when you tap **Summarise with Groq** will this day's meal names, portions, recorded nutrient contributions and your checked kitchen items be sent to Groq. No calorie data is sent.")
+                    Text("Privacy: day details are sent to Groq only when you tap a Groq button. Your checked kitchen items are only sent for the written review. No calories are shared.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
 
@@ -314,6 +318,55 @@ struct NutritionGroqReviewView: View {
                     .buttonStyle(.borderedProminent)
                     .tint(Color(red: 0.11, green: 0.48, blue: 0.40))
                     .disabled(!hasKey || working)
+
+                    if !estimatePayload.isEmpty && onApplyEstimates != nil {
+                        Button {
+                            Task { await calculateEstimates() }
+                        } label: {
+                            HStack {
+                                if working { ProgressView().tint(.white) }
+                                Label(working ? "Estimating…" : "Estimate missing nutrients", systemImage: "chart.bar.xaxis")
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 7)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .disabled(!hasKey || working)
+                        Text("Estimates are calculated only for missing fields with a known portion. You choose whether to apply them.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    if let estimates {
+                        Text("Proposed AI estimates").font(.headline)
+                        ForEach(estimates.ingredients.filter { $0.hasNumbers }) { item in
+                            VStack(alignment: .leading, spacing: 5) {
+                                Text("Ingredient \(item.ingredientIndex + 1) · \(item.confidence) confidence")
+                                    .font(.subheadline.weight(.semibold))
+                                Text(estimateSummary(item))
+                                    .font(.caption)
+                                if !item.note.isEmpty {
+                                    Text(item.note).font(.caption2).foregroundStyle(.secondary)
+                                }
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        if estimates.ingredients.contains(where: { $0.hasNumbers }) && !applied {
+                            Button("Apply estimates to diary stats") {
+                                let count = onApplyEstimates?(estimates.ingredients) ?? 0
+                                if count > 0 {
+                                    applied = true
+                                    feedback = "Saved \(count) estimated ingredient values on this device. Daily stats now show recorded and AI-estimated totals separately."
+                                } else {
+                                    feedback = "No estimates were applied. The meals may have changed or the values could not be verified."
+                                }
+                            }
+                            .buttonStyle(.borderedProminent)
+                        }
+                        Text("These are rough AI guesses, not tested nutrition facts. Recorded label data always takes precedence, and unestimated fields remain unknown.")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
 
                     if let feedback {
                         Text(feedback)
@@ -340,6 +393,41 @@ struct NutritionGroqReviewView: View {
                 }
             }
             .onAppear { hasKey = NutritionGroqKeychain.read() != nil }
+        }
+    }
+
+    private func estimateSummary(_ item: NutritionGroqIngredientEstimate) -> String {
+        let values: [(String, String, Double?)] = [
+            ("protein", "g", item.proteinG), ("fibre", "g", item.fibreG),
+            ("carbs", "g", item.carbohydrateG), ("iron", "mg", item.ironMg),
+            ("magnesium", "mg", item.magnesiumMg), ("B12", "µg", item.b12Micrograms)
+        ]
+        return values.compactMap { label, unit, number in
+            guard let number, number.isFinite, number >= 0 else { return nil }
+            return "\(label) ≈\(String(format: "%.2g", number)) \(unit)"
+        }.joined(separator: " · ")
+    }
+
+    @MainActor
+    private func calculateEstimates() async {
+        guard let key = NutritionGroqKeychain.read() else {
+            hasKey = false
+            feedback = "Add your personal Groq key first."
+            return
+        }
+        working = true
+        feedback = nil
+        estimates = nil
+        applied = false
+        defer { working = false }
+        do {
+            let response = try await NutritionGroqService.estimate(estimatePayload, key: key)
+            estimates = response
+            if !response.ingredients.contains(where: { $0.hasNumbers }) {
+                feedback = "Groq couldn't make dependable numeric estimates for these portions. Your recorded stats are unchanged."
+            }
+        } catch {
+            feedback = error.localizedDescription
         }
     }
 
