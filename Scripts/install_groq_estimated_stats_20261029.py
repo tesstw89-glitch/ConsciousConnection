@@ -56,9 +56,8 @@ with tempfile.TemporaryDirectory(prefix="consciousconnection-groq-") as director
             )
         new_files[path] = result.stdout
 
-    if not all(b"groqEstimateRequest" in new_files[paths[0]]
-               and b"applyGroqEstimates" in new_files[paths[0]]
-               for _ in [0]):
+    if not (b"groqEstimateRequest" in new_files[paths[0]]
+            and b"applyGroqEstimates" in new_files[paths[0]]):
         sys.exit("Feature checks failed for the diary. No files were changed.")
     if b"static func estimate(" not in new_files[paths[1]]:
         sys.exit("Feature checks failed for Groq service. No files were changed.")
