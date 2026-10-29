@@ -154,6 +154,16 @@ private struct JournalIngredient: Codable, Identifiable {
         return "\(brand) \(name)"
     }
 
+    // Changing the food or its portion invalidates stored AI estimates.
+    var groqPortionSignature: String {
+        [
+            name, brand ?? "", barcode ?? "", quantityText ?? "", portionUnit ?? "",
+            servingSizeText ?? "", String(servingQuantity ?? -1),
+            servingQuantityUnit ?? "", productQuantityUnit ?? "",
+            String(customUnitSize ?? -1)
+        ].joined(separator: "|")
+    }
+
     var nutrientSummary: String {
         var parts: [String] = []
         if let proteinG { parts.append(String(format: "protein %.1f g", proteinG)) }
@@ -222,6 +232,7 @@ struct MealJournalView: View {
     @Environment(\.dismiss) private var dismiss
     @AppStorage("nutrition.loggedMeals.v1") private var savedMealsJSON = ""
     @AppStorage("nutrition.savedMealTemplates.v1") private var savedTemplatesJSON = ""
+    @AppStorage("nutrition.groqIngredientEstimates.v1") private var storedGroqJSON = ""
     @AppStorage("nutrition.packdTropicalSmoothieSeeded.v1") private var didSeedPackdSmoothie = false
     // 0 = meal history, 1 = daily nutrition, 2 = favourite meals
     var initialTab: Int = 0
@@ -233,6 +244,8 @@ struct MealJournalView: View {
     @State private var replacingIngredientID: String? = nil
     @State private var meals: [JournalMeal] = []
     @State private var groqNutritionPayload = ""
+    @State private var groqEstimatePayload = ""
+    @State private var groqEstimates: [NutritionGroqStoredEstimate] = []
     @State private var showingGroqNutrition = false
     @State private var didLoad = false
     @State private var showingEditor = false
@@ -298,6 +311,7 @@ struct MealJournalView: View {
                 }
             }
             .onAppear {
+                loadStoredGroqEstimates()
                 loadSavedMeals()
                 activeTab = initialTab
                 selectedDay = Date()
@@ -305,7 +319,9 @@ struct MealJournalView: View {
             }
             .sheet(isPresented: $showingEditor) { editor }
             .sheet(isPresented: $showingGroqNutrition) {
-                NutritionGroqReviewView(payload: groqNutritionPayload)
+                NutritionGroqReviewView(payload: groqNutritionPayload,
+                    estimatePayload: groqEstimatePayload,
+                    onApplyEstimates: applyGroqEstimates)
             }
         }
     }
@@ -466,21 +482,22 @@ struct MealJournalView: View {
             }
             .padding(.vertical, 2)
             if !dayMeals.isEmpty {
-                Text("Recorded nutrients")
+                Text("Daily nutrients: recorded + estimated")
                     .font(.headline)
                 dailyNutrientCards(dayMeals)
                 Button {
                     groqNutritionPayload = groqDayPayload(dayMeals)
+                    groqEstimatePayload = groqEstimateRequest(dayMeals)
                     showingGroqNutrition = true
                 } label: {
-                    Label("Groq: what could I add today?", systemImage: "sparkles")
+                    Label("Groq: fill nutrient gaps & meal ideas", systemImage: "sparkles")
                         .font(.headline)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 12)
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(accent)
-                Text("Calculated from recorded portions and available product values. Partial means one or more ingredients don't have that nutrient recorded. These are not dietary targets or complete intake estimates.")
+                Text("Verified product values and optional Groq estimates are shown separately. Missing data is never counted as zero. These are approximate diary totals, not clinical dietary targets.")
                     .font(.caption2)
                     .foregroundStyle(.secondary)
                 Text("Meals on this day")
