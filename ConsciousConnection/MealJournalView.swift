@@ -510,9 +510,20 @@ struct MealJournalView: View {
         }
     }
 
+    private func groqEstimate(for meal: JournalMeal, index: Int, food: JournalIngredient) -> NutritionGroqIngredientEstimate? {
+        guard food.portionScale != nil else { return nil }
+        return groqEstimates.last(where: {
+            $0.mealID == meal.id.uuidString &&
+            $0.ingredientIndex == index &&
+            $0.portionSignature == food.groqPortionSignature
+        })?.estimate
+    }
+
     private struct DayMetric: Identifiable {
         let title: String
         let amount: Double
+        let estimated: Double
+        let estimatedCount: Int
         let unit: String
         let known: Int
         let total: Int
@@ -521,26 +532,36 @@ struct MealJournalView: View {
     }
 
     private func dailyMetrics(_ dayMeals: [JournalMeal]) -> [DayMetric] {
-        let foods = dayMeals.flatMap { $0.ingredients }
-        let nutrients: [(String, String, Int, (JournalIngredient) -> Double?)] = [
-            ("Protein", "g", 1, { $0.proteinG }),
-            ("Fibre", "g", 1, { $0.fibreG }),
-            ("Carbohydrates", "g", 1, { $0.carbohydrateG }),
-            ("Iron", "mg", 2, { $0.ironMg }),
-            ("Magnesium", "mg", 1, { $0.magnesiumMg }),
-            ("B12", "µg", 2, { $0.b12Micrograms })
+        let nutrients: [(String, String, Int, (JournalIngredient) -> Double?, (NutritionGroqIngredientEstimate) -> Double?)] = [
+            ("Protein", "g", 1, { $0.proteinG }, { $0.proteinG }),
+            ("Fibre", "g", 1, { $0.fibreG }, { $0.fibreG }),
+            ("Carbohydrates", "g", 1, { $0.carbohydrateG }, { $0.carbohydrateG }),
+            ("Iron", "mg", 2, { $0.ironMg }, { $0.ironMg }),
+            ("Magnesium", "mg", 1, { $0.magnesiumMg }, { $0.magnesiumMg }),
+            ("B12", "µg", 2, { $0.b12Micrograms }, { $0.b12Micrograms })
         ]
-        return nutrients.map { label, unit, digits, field in
-            var amount = 0.0
-            var count = 0
-            for food in foods {
-                if let scale = food.portionScale, let number = field(food), number.isFinite {
-                    amount += number * scale
-                    count += 1
+        let total = dayMeals.reduce(0) { $0 + $1.ingredients.count }
+        return nutrients.map { label, unit, digits, field, estimateField in
+            var recorded = 0.0
+            var estimated = 0.0
+            var knownCount = 0
+            var estimatedCount = 0
+            for meal in dayMeals {
+                for (index, food) in meal.ingredients.enumerated() {
+                    if let scale = food.portionScale, let number = field(food),
+                       number.isFinite, number >= 0 {
+                        recorded += number * scale
+                        knownCount += 1
+                    } else if let ai = groqEstimate(for: meal, index: index, food: food),
+                              let number = estimateField(ai), number.isFinite, number >= 0 {
+                        estimated += number
+                        estimatedCount += 1
+                    }
                 }
             }
-            return DayMetric(title: label, amount: amount, unit: unit,
-                             known: count, total: foods.count, precision: digits)
+            return DayMetric(title: label, amount: recorded, estimated: estimated,
+                             estimatedCount: estimatedCount, unit: unit,
+                             known: knownCount, total: total, precision: digits)
         }
     }
 
@@ -549,16 +570,23 @@ struct MealJournalView: View {
             ForEach(dailyMetrics(dayMeals)) { metric in
                 VStack(alignment: .leading, spacing: 6) {
                     Text(metric.title).font(.subheadline.weight(.semibold))
-                    if metric.known == 0 {
+                    if metric.known == 0 && metric.estimatedCount == 0 {
                         Text("Not available").font(.footnote).foregroundStyle(.secondary)
                     } else {
-                        Text("\(String(format: "%.*f", metric.precision, metric.amount)) \(metric.unit)")
+                        let combined = metric.amount + metric.estimated
+                        Text("\(metric.estimatedCount > 0 ? "≈" : "")\(String(format: "%.*f", metric.precision, combined)) \(metric.unit)")
                             .font(.title3.weight(.bold))
                             .monospacedDigit()
                             .foregroundStyle(accent)
+                        if metric.estimatedCount > 0 {
+                            Text("Recorded \(String(format: "%.*f", metric.precision, metric.amount)) + Groq ≈\(String(format: "%.*f", metric.precision, metric.estimated)) \(metric.unit)")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
                     }
-                    Text(metric.known == metric.total && metric.total > 0
-                         ? "All ingredients reported" : "Partial · \(metric.known)/\(metric.total) ingredients")
+                    Text(metric.estimatedCount == 0 && metric.known == metric.total && metric.total > 0
+                         ? "All ingredients reported"
+                         : "Recorded \(metric.known) · AI \(metric.estimatedCount) · Unknown \(max(0, metric.total - metric.known - metric.estimatedCount))")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                 }
