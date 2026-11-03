@@ -154,6 +154,22 @@ private struct JournalIngredient: Codable, Identifiable {
         return "\(brand) \(name)"
     }
 
+    // Changing the food or its portion invalidates stored AI estimates.
+    var groqPortionSignature: String {
+        var fields: [String] = []
+        fields.append(name)
+        fields.append(brand ?? "")
+        fields.append(barcode ?? "")
+        fields.append(quantityText ?? "")
+        fields.append(portionUnit ?? "")
+        fields.append(servingSizeText ?? "")
+        fields.append(servingQuantity.map { String($0) } ?? "-1")
+        fields.append(servingQuantityUnit ?? "")
+        fields.append(productQuantityUnit ?? "")
+        fields.append(customUnitSize.map { String($0) } ?? "-1")
+        return fields.joined(separator: "|")
+    }
+
     var nutrientSummary: String {
         var parts: [String] = []
         if let proteinG { parts.append(String(format: "protein %.1f g", proteinG)) }
@@ -221,6 +237,7 @@ private struct JournalMeal: Codable, Identifiable {
 struct MealJournalView: View {
     @Environment(\.dismiss) private var dismiss
     @AppStorage("nutrition.loggedMeals.v1") private var savedMealsJSON = ""
+    @AppStorage("nutrition.groqIngredientEstimates.v1") private var storedGroqJSON = ""
     @AppStorage("nutrition.savedMealTemplates.v1") private var savedTemplatesJSON = ""
     @AppStorage("nutrition.packdTropicalSmoothieSeeded.v1") private var didSeedPackdSmoothie = false
     // 0 = meal history, 1 = daily nutrition, 2 = favourite meals
@@ -233,6 +250,8 @@ struct MealJournalView: View {
     @State private var replacingIngredientID: String? = nil
     @State private var meals: [JournalMeal] = []
     @State private var groqNutritionPayload = ""
+    @State private var groqEstimatePayload = ""
+    @State private var groqEstimates: [NutritionGroqStoredEstimate] = []
     @State private var showingGroqNutrition = false
     @State private var didLoad = false
     @State private var showingEditor = false
@@ -298,6 +317,7 @@ struct MealJournalView: View {
                 }
             }
             .onAppear {
+                loadStoredGroqEstimates()
                 loadSavedMeals()
                 activeTab = initialTab
                 selectedDay = Date()
@@ -305,7 +325,9 @@ struct MealJournalView: View {
             }
             .sheet(isPresented: $showingEditor) { editor }
             .sheet(isPresented: $showingGroqNutrition) {
-                NutritionGroqReviewView(payload: groqNutritionPayload)
+                NutritionGroqReviewView(payload: groqNutritionPayload,
+                    estimatePayload: groqEstimatePayload,
+                    onApplyEstimates: applyGroqEstimates)
             }
         }
     }
@@ -466,21 +488,34 @@ struct MealJournalView: View {
             }
             .padding(.vertical, 2)
             if !dayMeals.isEmpty {
-                Text("Recorded nutrients")
+                Text("Daily nutrients: recorded + estimated")
                     .font(.headline)
-                dailyNutrientCards(dayMeals)
                 Button {
                     groqNutritionPayload = groqDayPayload(dayMeals)
+                    groqEstimatePayload = groqEstimateRequest(dayMeals)
                     showingGroqNutrition = true
                 } label: {
-                    Label("Groq: what could I add today?", systemImage: "sparkles")
-                        .font(.headline)
+                    Label("Fill gaps with AI", systemImage: "sparkles")
+                        .font(.subheadline.weight(.semibold))
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
+                        .padding(.vertical, 8)
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(accent)
-                Text("Calculated from recorded portions and available product values. Partial means one or more ingredients don't have that nutrient recorded. These are not dietary targets or complete intake estimates.")
+                groqEnhancedNutrientCards(dayMeals)
+                if dayMeals.contains(where: { meal in
+                    meal.ingredients.indices.contains(where: { index in
+                        groqEstimate(for: meal, index: index, food: meal.ingredients[index]) != nil
+                    })
+                }) {
+                    Button(role: .destructive) {
+                        removeGroqEstimates(for: selectedDay)
+                    } label: {
+                        Label("Clear AI estimates for this day", systemImage: "trash")
+                            .font(.caption)
+                    }
+                }
+                Text("Percentages use general UK adult-woman daily reference values: protein 50 g, fibre 30 g, carbohydrates 260 g, iron 14.8 mg, magnesium 270 mg and B12 1.5 µg. AI estimates remain approximate and are for guidance only.")
                     .font(.caption2)
                     .foregroundStyle(.secondary)
                 Text("Meals on this day")
@@ -500,6 +535,7 @@ struct MealJournalView: View {
         let known: Int
         let total: Int
         let precision: Int
+        let ukTarget: Double?
         var id: String { title }
     }
 
@@ -523,7 +559,8 @@ struct MealJournalView: View {
                 }
             }
             return DayMetric(title: label, amount: amount, unit: unit,
-                             known: count, total: foods.count, precision: digits)
+                             known: count, total: foods.count, precision: digits,
+                             ukTarget: ukReferenceTarget(for: label))
         }
     }
 
@@ -554,6 +591,144 @@ struct MealJournalView: View {
 
     // Use measured per-portion contributions and explicit data coverage.
     // The language model never receives guessed daily target percentages.
+    private func groqEstimate(for meal: JournalMeal, index: Int, food: JournalIngredient) -> NutritionGroqIngredientEstimate? {
+        guard food.portionScale != nil else { return nil }
+        return groqEstimates.last(where: {
+            $0.mealID == meal.id.uuidString &&
+            $0.ingredientIndex == index &&
+            $0.portionSignature == food.groqPortionSignature
+        })?.estimate
+    }
+
+    private struct GroqDayMetric: Identifiable {
+        let title: String
+        let amount: Double
+        let estimated: Double
+        let estimatedCount: Int
+        let unit: String
+        let known: Int
+        let total: Int
+        let precision: Int
+        let ukTarget: Double?
+        var id: String { title }
+    }
+
+    // UK_REFERENCE_PERCENTAGES_20261029
+    // General UK daily reference values for an adult woman. Guidance only.
+    private func ukReferenceTarget(for nutrient: String) -> Double? {
+        switch nutrient {
+        case "Protein": return 50
+        case "Fibre": return 30
+        case "Carbohydrates": return 260
+        case "Iron": return 14.8
+        case "Magnesium": return 270
+        case "B12": return 1.5
+        default: return nil
+        }
+    }
+
+    private func groqEnhancedMetrics(_ dayMeals: [JournalMeal]) -> [GroqDayMetric] {
+        let nutrients: [(String, String, Int, (JournalIngredient) -> Double?, (NutritionGroqIngredientEstimate) -> Double?)] = [
+            ("Protein", "g", 1, { $0.proteinG }, { $0.proteinG }),
+            ("Fibre", "g", 1, { $0.fibreG }, { $0.fibreG }),
+            ("Carbohydrates", "g", 1, { $0.carbohydrateG }, { $0.carbohydrateG }),
+            ("Iron", "mg", 2, { $0.ironMg }, { $0.ironMg }),
+            ("Magnesium", "mg", 1, { $0.magnesiumMg }, { $0.magnesiumMg }),
+            ("B12", "µg", 2, { $0.b12Micrograms }, { $0.b12Micrograms })
+        ]
+        let total = dayMeals.reduce(0) { $0 + $1.ingredients.count }
+        return nutrients.map { label, unit, digits, field, estimateField in
+            var recorded = 0.0
+            var estimated = 0.0
+            var knownCount = 0
+            var estimatedCount = 0
+            for meal in dayMeals {
+                for (index, food) in meal.ingredients.enumerated() {
+                    if let scale = food.portionScale, let number = field(food),
+                       number.isFinite, number >= 0 {
+                        recorded += number * scale
+                        knownCount += 1
+                    } else if let ai = groqEstimate(for: meal, index: index, food: food),
+                              let number = estimateField(ai), number.isFinite, number >= 0 {
+                        estimated += number
+                        estimatedCount += 1
+                    }
+                }
+            }
+            return GroqDayMetric(title: label, amount: recorded, estimated: estimated,
+                             estimatedCount: estimatedCount, unit: unit,
+                             known: knownCount, total: total, precision: digits,
+                             ukTarget: ukReferenceTarget(for: label))
+        }
+    }
+
+    private func groqEnhancedNutrientCards(_ dayMeals: [JournalMeal]) -> some View {
+        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
+            ForEach(groqEnhancedMetrics(dayMeals)) { metric in
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(metric.title).font(.subheadline.weight(.semibold))
+                    if metric.known == 0 && metric.estimatedCount == 0 {
+                        Text("Not available").font(.footnote).foregroundStyle(.secondary)
+                    } else {
+                        let combined = metric.amount + metric.estimated
+                        Text("\(metric.estimatedCount > 0 ? "≈" : "")\(String(format: "%.*f", metric.precision, combined)) \(metric.unit)")
+                            .font(.title3.weight(.bold))
+                            .monospacedDigit()
+                            .foregroundStyle(accent)
+                        if metric.estimatedCount > 0 {
+                            Text("Recorded \(String(format: "%.*f", metric.precision, metric.amount)) + Groq ≈\(String(format: "%.*f", metric.precision, metric.estimated)) \(metric.unit)")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                        if let target = metric.ukTarget, target > 0 {
+                            Text(String(format: "%.0f%% of UK daily reference", max(0, (combined / target) * 100)))
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    Text(metric.estimatedCount == 0 && metric.known == metric.total && metric.total > 0
+                         ? "All ingredients reported"
+                         : "Recorded \(metric.known) · AI \(metric.estimatedCount) · Unknown \(max(0, metric.total - metric.known - metric.estimatedCount))")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(13)
+                .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12))
+            }
+        }
+    }
+
+    // Only send edible amounts and nutrients absent from source-labelled data.
+    private func groqEstimateRequest(_ dayMeals: [JournalMeal]) -> String {
+        let lines: [String] = dayMeals.flatMap { meal in
+            meal.ingredients.enumerated().compactMap { index, food -> String? in
+                guard food.portionScale != nil else { return nil }
+                let fields: [(String, Double?)] = [
+                    ("proteinG", food.proteinG), ("fibreG", food.fibreG),
+                    ("carbohydrateG", food.carbohydrateG), ("ironMg", food.ironMg),
+                    ("magnesiumMg", food.magnesiumMg), ("b12Micrograms", food.b12Micrograms)
+                ]
+                let missing = fields.filter { $0.1 == nil }.map { $0.0 }
+                guard !missing.isEmpty else { return nil }
+                let reported = fields.compactMap { key, number -> String? in
+                    guard let number else { return nil }
+                    return "\(key)=\(number) per 100 \(food.baseUnit)"
+                }
+                return """
+                mealID=\(meal.id.uuidString); ingredientIndex=\(index)
+                mealName=\(meal.name); food=\(food.displayName)
+                consumed=\(food.portionDescription); amount=\(food.consumedReferenceAmount ?? 0) \(food.baseUnit)
+                ALREADY REPORTED: \(reported.isEmpty ? "none" : reported.joined(separator: ", "))
+                MISSING: \(missing.joined(separator: ", "))
+                """
+            }
+        }
+        guard !lines.isEmpty else { return "" }
+        return "FOOD DIARY: Estimate only MISSING nutrients for these actually eaten portions. Return the same mealID and ingredientIndex for each entry, using requested units. Unknown fields must be null.\n\n" +
+            lines.joined(separator: "\n---\n")
+    }
+
     private func groqDayPayload(_ dayMeals: [JournalMeal]) -> String {
         let dateLabel = selectedDay.formatted(date: .complete, time: .omitted)
         let mealLines = dayMeals.map { meal in
@@ -1027,7 +1202,68 @@ struct MealJournalView: View {
         storeMeals()
     }
 
+    // OCT29_SMOOTHIE_LOG_2026: one-time on-device import, no other diary changes.
+    private func logOctober29SmoothieIfNeeded() {
+        let key = "nutrition.smoothie20261029Logged.v2"
+        guard !UserDefaults.standard.bool(forKey: key) else { return }
+
+        let calendar = Calendar.current
+        guard let eatenAt = calendar.date(from: DateComponents(
+            year: 2026, month: 10, day: 29, hour: 10, minute: 0
+        )) else { return }
+
+        // Read the stored diary independently; never destroy malformed stored data.
+        let existing: [JournalMeal]
+        if savedMealsJSON.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            existing = []
+        } else {
+            guard let data = savedMealsJSON.data(using: .utf8),
+                  let stored = try? JSONDecoder().decode([JournalMeal].self, from: data)
+            else {
+                print("Smoothie import skipped: existing meal JSON could not be read.")
+                return
+            }
+            existing = stored
+        }
+
+        let title = "PACK'D Tropical Smoothie"
+        if existing.contains(where: {
+            calendar.isDate($0.eatenAt, inSameDayAs: eatenAt) &&
+            $0.name.caseInsensitiveCompare(title) == .orderedSame
+        }) {
+            meals = existing
+            UserDefaults.standard.set(true, forKey: key)
+            return
+        }
+
+        let ingredients: [JournalIngredient] = [
+            JournalIngredient(name: "Banana", quantityText: "50", portionUnit: "g"),
+            JournalIngredient(name: "Frozen avocado", brand: "PACK'D", quantityText: "30", portionUnit: "g"),
+            JournalIngredient(name: "Frozen mango", brand: "PACK'D", quantityText: "45", portionUnit: "g"),
+            JournalIngredient(name: "Frozen pineapple", brand: "Sainsbury's", quantityText: "30", portionUnit: "g"),
+            JournalIngredient(name: "Milk", quantityText: "250", portionUnit: "ml", productQuantityUnit: "ml"),
+            JournalIngredient(name: "Chia seeds", quantityText: "5", portionUnit: "g"),
+            JournalIngredient(name: "Honey", quantityText: "21", portionUnit: "g")
+        ]
+        let entry = JournalMeal(id: UUID(), name: title,
+                                mealType: "Breakfast", eatenAt: eatenAt,
+                                ingredients: ingredients)
+        var updated = existing
+        updated.append(entry)
+        guard let data = try? JSONEncoder().encode(updated),
+              let json = String(data: data, encoding: .utf8) else { return }
+        savedMealsJSON = json
+
+        // Only mark complete after confirming the updated storage decoded correctly.
+        guard let storedData = savedMealsJSON.data(using: .utf8),
+              let confirmed = try? JSONDecoder().decode([JournalMeal].self, from: storedData),
+              confirmed.contains(where: { $0.id == entry.id }) else { return }
+        meals = confirmed
+        UserDefaults.standard.set(true, forKey: key)
+    }
+
     private func loadSavedMeals() {
+        defer { logOctober29SmoothieIfNeeded() }
         guard !didLoad else { return }
         didLoad = true
         loadTemplates()
@@ -1035,6 +1271,85 @@ struct MealJournalView: View {
         guard let bytes = savedMealsJSON.data(using: .utf8),
               let decoded = try? JSONDecoder().decode([JournalMeal].self, from: bytes) else { return }
         meals = decoded
+    }
+
+    private func loadStoredGroqEstimates() {
+        guard let data = storedGroqJSON.data(using: .utf8),
+              let decoded = try? JSONDecoder().decode([NutritionGroqStoredEstimate].self, from: data)
+        else { return }
+        groqEstimates = decoded
+    }
+
+    // Save separately: never mutate reported nutrients or overwrite a corrupt diary.
+    private func applyGroqEstimates(_ entries: [NutritionGroqIngredientEstimate]) -> Int {
+        if !storedGroqJSON.isEmpty {
+            guard let data = storedGroqJSON.data(using: .utf8),
+                  (try? JSONDecoder().decode([NutritionGroqStoredEstimate].self, from: data)) != nil
+            else { return 0 }
+        }
+        func sane(_ value: Double?, max upper: Double) -> Double? {
+            guard let value, value.isFinite, value >= 0, value <= upper else { return nil }
+            return value
+        }
+        var updated = groqEstimates
+        var seen = Set<String>()
+        var count = 0
+        for entry in entries {
+            guard !seen.contains(entry.id),
+                  let mealID = UUID(uuidString: entry.mealID),
+                  let meal = meals.first(where: { $0.id == mealID }),
+                  dayCalendar.isDate(meal.eatenAt, inSameDayAs: selectedDay),
+                  entry.ingredientIndex >= 0,
+                  entry.ingredientIndex < meal.ingredients.count else { continue }
+            seen.insert(entry.id)
+            let food = meal.ingredients[entry.ingredientIndex]
+            guard food.portionScale != nil else { continue }
+
+            // Existing source values (including source zeros) take precedence.
+            let checked = NutritionGroqIngredientEstimate(
+                mealID: entry.mealID, ingredientIndex: entry.ingredientIndex,
+                proteinG: food.proteinG == nil ? sane(entry.proteinG, max: 500) : nil,
+                fibreG: food.fibreG == nil ? sane(entry.fibreG, max: 500) : nil,
+                carbohydrateG: food.carbohydrateG == nil ? sane(entry.carbohydrateG, max: 1000) : nil,
+                ironMg: food.ironMg == nil ? sane(entry.ironMg, max: 100) : nil,
+                magnesiumMg: food.magnesiumMg == nil ? sane(entry.magnesiumMg, max: 5000) : nil,
+                b12Micrograms: food.b12Micrograms == nil ? sane(entry.b12Micrograms, max: 1000) : nil,
+                confidence: entry.confidence, note: entry.note
+            )
+            guard checked.hasNumbers else { continue }
+            updated.removeAll { $0.mealID == entry.mealID && $0.ingredientIndex == entry.ingredientIndex }
+            updated.append(NutritionGroqStoredEstimate(
+                mealID: entry.mealID, ingredientIndex: entry.ingredientIndex,
+                portionSignature: food.groqPortionSignature, estimate: checked))
+            count += 1
+        }
+        guard count > 0, let data = try? JSONEncoder().encode(updated),
+              let json = String(data: data, encoding: .utf8) else { return 0 }
+        storedGroqJSON = json
+        groqEstimates = updated
+        return count
+    }
+
+    // A one-tap undo: source-verified nutrition and the food diary remain intact.
+    private func removeGroqEstimates(for date: Date) {
+        let mealIDs = Set(mealsOn(date).map { $0.id.uuidString })
+        let remaining = groqEstimates.filter { !mealIDs.contains($0.mealID) }
+        guard let data = try? JSONEncoder().encode(remaining),
+              let json = String(data: data, encoding: .utf8) else { return }
+        storedGroqJSON = json
+        groqEstimates = remaining
+    }
+
+    private func groqSummary(_ item: NutritionGroqIngredientEstimate) -> String {
+        let values: [(String, String, Double?)] = [
+            ("protein", "g", item.proteinG), ("fibre", "g", item.fibreG),
+            ("carbs", "g", item.carbohydrateG), ("iron", "mg", item.ironMg),
+            ("magnesium", "mg", item.magnesiumMg), ("B12", "µg", item.b12Micrograms)
+        ]
+        return values.compactMap { key, unit, number in
+            guard let number, number.isFinite, number >= 0 else { return nil }
+            return "\(key) ≈\(String(format: "%.2g", number)) \(unit)"
+        }.joined(separator: " · ")
     }
 
     private func loadTemplates() {

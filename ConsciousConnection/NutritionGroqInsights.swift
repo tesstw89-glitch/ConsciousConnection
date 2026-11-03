@@ -49,6 +49,36 @@ private enum NutritionGroqError: LocalizedError {
     }
 }
 
+
+// Groq numbers refer to the consumed portion and are NEVER verified label data.
+struct NutritionGroqIngredientEstimate: Codable, Identifiable {
+    let mealID: String
+    let ingredientIndex: Int
+    let proteinG: Double?
+    let fibreG: Double?
+    let carbohydrateG: Double?
+    let ironMg: Double?
+    let magnesiumMg: Double?
+    let b12Micrograms: Double?
+    let confidence: String
+    let note: String
+    var id: String { mealID + ":" + String(ingredientIndex) }
+    var hasNumbers: Bool {
+        [proteinG, fibreG, carbohydrateG, ironMg, magnesiumMg, b12Micrograms].contains { $0 != nil }
+    }
+}
+
+struct NutritionGroqEstimateResponse: Codable {
+    let ingredients: [NutritionGroqIngredientEstimate]
+}
+
+struct NutritionGroqStoredEstimate: Codable {
+    let mealID: String
+    let ingredientIndex: Int
+    let portionSignature: String
+    let estimate: NutritionGroqIngredientEstimate
+}
+
 private enum NutritionGroqService {
     static func review(_ payload: String, key: String) async throws -> String {
         guard let url = URL(string: "https://api.groq.com/openai/v1/chat/completions") else {
@@ -123,16 +153,102 @@ private enum NutritionGroqService {
         }
         return answer
     }
+
+    // Use Groq's strict structured outputs; the caller still validates every value.
+    static func estimate(_ payload: String, key: String) async throws -> NutritionGroqEstimateResponse {
+        guard let url = URL(string: "https://api.groq.com/openai/v1/chat/completions") else {
+            throw NutritionGroqError.message("Groq API address is invalid.")
+        }
+        let numberOrNull: [String: Any] = ["type": ["number", "null"]]
+        let properties: [String: Any] = [
+            "mealID": ["type": "string"],
+            "ingredientIndex": ["type": "integer"],
+            "proteinG": numberOrNull, "fibreG": numberOrNull,
+            "carbohydrateG": numberOrNull, "ironMg": numberOrNull,
+            "magnesiumMg": numberOrNull, "b12Micrograms": numberOrNull,
+            "confidence": ["type": "string", "enum": ["low", "moderate"]],
+            "note": ["type": "string"]
+        ]
+        let ingredientSchema: [String: Any] = [
+            "type": "object", "additionalProperties": false,
+            "properties": properties,
+            "required": ["mealID", "ingredientIndex", "proteinG", "fibreG",
+                         "carbohydrateG", "ironMg", "magnesiumMg", "b12Micrograms",
+                         "confidence", "note"]
+        ]
+        let schema: [String: Any] = [
+            "type": "object", "additionalProperties": false,
+            "properties": ["ingredients": ["type": "array", "items": ingredientSchema]],
+            "required": ["ingredients"]
+        ]
+        let system = """
+        Return strict JSON only. The input lists specific eaten portions and MISSING nutrient keys.
+        Provide approximate contributions for the consumed portion (NOT per 100 grams).
+        proteinG, fibreG, carbohydrateG are in grams. ironMg and magnesiumMg are in milligrams.
+        b12Micrograms is in micrograms. Never provide calories.
+        Copy each mealID and ingredientIndex EXACTLY. Only fill fields listed as MISSING;
+        set all other nutrient fields to null. Known reported zero is not missing.
+        If uncertain about a nutrient or an ingredient's identity, set that field null, NOT zero.
+        Do not invent fortification, specific branded composition, unknown ingredients or preparation.
+        If the brand of milk or a substitute isn't clear, do not invent B12 fortification.
+        These are rough, model-generated estimates, not source-verified values.
+        Use modest rounded numbers, no misleading precision; note important food assumptions.
+        Return confidence as 'low' or 'moderate'. This isn't a clinical dietary assessment.
+        """
+        let body: [String: Any] = [
+            "model": "openai/gpt-oss-120b",
+            "reasoning_effort": "low",
+            "include_reasoning": false,
+            "temperature": 0.2,
+            "max_completion_tokens": 2400,
+            "response_format": [
+                "type": "json_schema",
+                "json_schema": ["name": "food_diary_estimates_v1", "strict": true, "schema": schema]
+            ],
+            "messages": [
+                ["role": "system", "content": system],
+                ["role": "user", "content": payload]
+            ]
+        ]
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.timeoutInterval = 45
+        request.setValue("Bearer " + key, forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse else {
+            throw NutritionGroqError.message("No response from Groq.")
+        }
+        guard (200...299).contains(http.statusCode) else {
+            let errorJSON = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
+            let apiError = (errorJSON?["error"] as? [String: Any])?["message"] as? String
+            throw NutritionGroqError.message(apiError ?? "Groq returned HTTP \(http.statusCode).")
+        }
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let choices = json["choices"] as? [[String: Any]],
+              let content = (choices.first?["message"] as? [String: Any])?["content"] as? String,
+              let resultData = content.data(using: .utf8),
+              let parsed = try? JSONDecoder().decode(NutritionGroqEstimateResponse.self, from: resultData) else {
+            throw NutritionGroqError.message("Groq's structured estimates could not be read. Try again.")
+        }
+        return parsed
+    }
 }
 
 struct NutritionGroqReviewView: View {
     let payload: String
+    var estimatePayload: String = ""
+    var onApplyEstimates: (([NutritionGroqIngredientEstimate]) -> Int)? = nil
     @Environment(\.dismiss) private var dismiss
     @State private var hasKey = false
     @State private var newKey = ""
     @State private var showingKeyEditor = false
     @State private var working = false
     @State private var resultText = ""
+    @State private var estimates: NutritionGroqEstimateResponse? = nil
+    @State private var applied = false
+    @State private var appliedCount = 0
     @State private var feedback: String? = nil
 
     var body: some View {
@@ -186,7 +302,7 @@ struct NutritionGroqReviewView: View {
                     }
 
                     Divider()
-                    Text("Privacy: only when you tap **Summarise with Groq** will this day's meal names, portions, recorded nutrient contributions and your checked kitchen items be sent to Groq. No calorie data is sent.")
+                    Text("Privacy: day details are sent to Groq only when you tap a Groq button. Your checked kitchen items are only sent for the written review. No calories are shared.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
 
@@ -204,6 +320,61 @@ struct NutritionGroqReviewView: View {
                     .tint(Color(red: 0.11, green: 0.48, blue: 0.40))
                     .disabled(!hasKey || working)
 
+                    if !estimatePayload.isEmpty && onApplyEstimates != nil {
+                        Button {
+                            Task { await calculateEstimates() }
+                        } label: {
+                            HStack {
+                                if working { ProgressView().tint(.white) }
+                                Label(working ? "Estimating…" : "Estimate missing nutrients", systemImage: "chart.bar.xaxis")
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 7)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .disabled(!hasKey || working)
+                        Text("Estimates are calculated only for missing fields with a known portion. You choose whether to apply them.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    if let estimates {
+                        Text("Proposed AI estimates").font(.headline)
+                        ForEach(estimates.ingredients.filter { $0.hasNumbers }) { item in
+                            VStack(alignment: .leading, spacing: 5) {
+                                Text("Ingredient \(item.ingredientIndex + 1) · \(item.confidence) confidence")
+                                    .font(.subheadline.weight(.semibold))
+                                Text(estimateSummary(item))
+                                    .font(.caption)
+                                if !item.note.isEmpty {
+                                    Text(item.note).font(.caption2).foregroundStyle(.secondary)
+                                }
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        if estimates.ingredients.contains(where: { $0.hasNumbers }) && !applied {
+                            Button("Apply estimates to diary stats") {
+                                let count = onApplyEstimates?(estimates.ingredients) ?? 0
+                                if count > 0 {
+                                    applied = true
+                                    appliedCount = count
+                                    feedback = nil
+                                } else {
+                                    feedback = "No estimates were applied. The meals may have changed or the values could not be verified."
+                                }
+                            }
+                            .buttonStyle(.borderedProminent)
+                        }
+                        Text("These are rough AI guesses, not tested nutrition facts. Recorded label data always takes precedence, and unestimated fields remain unknown.")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    if appliedCount > 0 {
+                        Text("Saved \(appliedCount) ingredient estimates. Recorded and approximate values are now separated in your daily stats.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
                     if let feedback {
                         Text(feedback)
                             .foregroundStyle(.red)
@@ -229,6 +400,42 @@ struct NutritionGroqReviewView: View {
                 }
             }
             .onAppear { hasKey = NutritionGroqKeychain.read() != nil }
+        }
+    }
+
+    private func estimateSummary(_ item: NutritionGroqIngredientEstimate) -> String {
+        let values: [(String, String, Double?)] = [
+            ("protein", "g", item.proteinG), ("fibre", "g", item.fibreG),
+            ("carbs", "g", item.carbohydrateG), ("iron", "mg", item.ironMg),
+            ("magnesium", "mg", item.magnesiumMg), ("B12", "µg", item.b12Micrograms)
+        ]
+        return values.compactMap { label, unit, number in
+            guard let number, number.isFinite, number >= 0 else { return nil }
+            return "\(label) ≈\(String(format: "%.2g", number)) \(unit)"
+        }.joined(separator: " · ")
+    }
+
+    @MainActor
+    private func calculateEstimates() async {
+        guard let key = NutritionGroqKeychain.read() else {
+            hasKey = false
+            feedback = "Add your personal Groq key first."
+            return
+        }
+        working = true
+        feedback = nil
+        estimates = nil
+        applied = false
+        appliedCount = 0
+        defer { working = false }
+        do {
+            let response = try await NutritionGroqService.estimate(estimatePayload, key: key)
+            estimates = response
+            if !response.ingredients.contains(where: { $0.hasNumbers }) {
+                feedback = "Groq couldn't make dependable numeric estimates for these portions. Your recorded stats are unchanged."
+            }
+        } catch {
+            feedback = error.localizedDescription
         }
     }
 
