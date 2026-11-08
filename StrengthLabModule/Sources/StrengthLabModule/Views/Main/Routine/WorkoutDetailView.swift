@@ -7,6 +7,9 @@ struct WorkoutDetailView: View {
     @Environment(\.dismiss)
     private var dismiss
 
+    @Environment(\.modelContext)
+    private var modelContext
+
     let workout: WorkoutTemplate
 
     @Environment(\.openURL)
@@ -32,6 +35,11 @@ struct WorkoutDetailView: View {
 
     @State
     private var runningWorkout = false
+
+    // Swipe left to reveal a deliberate, two-step removal action.
+    @State private var revealedExerciseID: UUID?
+    @State private var showRemovalError = false
+    @State private var removalErrorMessage = ""
 
     private var exercises:
         [SetDeckExercise]
@@ -166,6 +174,11 @@ struct WorkoutDetailView: View {
             WorkoutRunView(
                 workout: workout
             )
+        }
+        .alert("Couldn't remove exercise", isPresented: $showRemovalError) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(removalErrorMessage)
         }
     }
 
@@ -647,98 +660,161 @@ struct WorkoutDetailView: View {
         )
     }
 
+    // STRENGTHLAB_SWIPE_REMOVE_EXERCISE_NOV03_V1
     private func exerciseRow(
         _ exercise: SetDeckExercise,
         index: Int
     ) -> some View {
-        Button {
-            editingExercise =
-                exercise
-        } label: {
-            HStack(spacing: 24) {
-                Circle()
-                    .fill(
-                        StrengthLabFigmaTheme
-                            .blush
+        ZStack(alignment: .trailing) {
+            Button {
+                removeExerciseFromWorkout(exercise)
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 19, weight: .bold))
+                    .foregroundStyle(.white)
+                    .frame(width: 56, height: 48)
+                    .background(
+                        Color.red,
+                        in: RoundedRectangle(cornerRadius: 14, style: .continuous)
                     )
-                    .frame(
-                        width: 48,
-                        height: 48
-                    )
-                    .overlay {
-                        Image(
-                            systemName:
-                                index.isMultiple(
-                                    of: 2
-                                )
-                                ? "dumbbell.fill"
-                                : "figure.strengthtraining.traditional"
-                        )
-                        .font(
-                            .system(
-                                size: 18,
-                                weight: .medium
-                            )
-                        )
-                        .foregroundStyle(
-                            StrengthLabFigmaTheme
-                                .ink
-                        )
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Remove \(exercise.name) from this workout")
+
+            Button {
+                if revealedExerciseID == exercise.uuid {
+                    withAnimation(.easeOut(duration: 0.22)) {
+                        revealedExerciseID = nil
                     }
-
-                VStack(
-                    alignment: .leading,
-                    spacing: 2
-                ) {
-                    Text(exercise.name)
-                        .font(
+                } else {
+                    editingExercise = exercise
+                }
+            } label: {
+                HStack(spacing: 24) {
+                    Circle()
+                        .fill(
                             StrengthLabFigmaTheme
-                                .medium(14)
+                                .blush
                         )
-                        .foregroundStyle(
-                            StrengthLabFigmaTheme
-                                .ink
+                        .frame(
+                            width: 48,
+                            height: 48
                         )
-                        .lineLimit(1)
-
-                    if
-                        exercise
-                            .supersetGroupID
-                        != nil
-                    {
-                        Text("SUPERSET")
+                        .overlay {
+                            Image(
+                                systemName:
+                                    index.isMultiple(
+                                        of: 2
+                                    )
+                                    ? "dumbbell.fill"
+                                    : "figure.strengthtraining.traditional"
+                            )
                             .font(
-                                StrengthLabFigmaTheme
-                                    .bold(10)
+                                .system(
+                                    size: 18,
+                                    weight: .medium
+                                )
                             )
                             .foregroundStyle(
                                 StrengthLabFigmaTheme
-                                    .coral
+                                    .ink
                             )
+                        }
+    
+                    VStack(
+                        alignment: .leading,
+                        spacing: 2
+                    ) {
+                        Text(exercise.name)
+                            .font(
+                                StrengthLabFigmaTheme
+                                    .medium(14)
+                            )
+                            .foregroundStyle(
+                                StrengthLabFigmaTheme
+                                    .ink
+                            )
+                            .lineLimit(1)
+    
+                        if
+                            exercise
+                                .supersetGroupID
+                            != nil
+                        {
+                            Text("SUPERSET")
+                                .font(
+                                    StrengthLabFigmaTheme
+                                        .bold(10)
+                                )
+                                .foregroundStyle(
+                                    StrengthLabFigmaTheme
+                                        .coral
+                                )
+                        }
+                    }
+    
+                    Spacer()
+    
+                    Image(
+                        systemName:
+                            "chevron.right"
+                    )
+                    .font(
+                        .system(
+                            size: 14,
+                            weight: .bold
+                        )
+                    )
+                    .foregroundStyle(
+                        StrengthLabFigmaTheme
+                            .ink
+                    )
+                }
+                .frame(height: 48)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .frame(maxWidth: .infinity)
+            .background(Color.white)
+            .offset(x: revealedExerciseID == exercise.uuid ? -72 : 0)
+        }
+        .frame(height: 48)
+        .clipped()
+        .contentShape(Rectangle())
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 18)
+                .onEnded { value in
+                    let horizontal = value.translation.width
+                    let vertical = value.translation.height
+                    guard abs(horizontal) > 35,
+                          abs(horizontal) > abs(vertical) else { return }
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
+                        revealedExerciseID = horizontal < 0 ? exercise.uuid : nil
                     }
                 }
+        )
+    }
 
-                Spacer()
+    // Detach this exercise from the workout without deleting its SwiftData
+    // object, media, set history, or records from other routines.
+    private func removeExerciseFromWorkout(_ exercise: SetDeckExercise) {
+        let remaining = exercises.filter { $0.uuid != exercise.uuid }
+        guard remaining.count < exercises.count else { return }
 
-                Image(
-                    systemName:
-                        "chevron.right"
-                )
-                .font(
-                    .system(
-                        size: 14,
-                        weight: .bold
-                    )
-                )
-                .foregroundStyle(
-                    StrengthLabFigmaTheme
-                        .ink
-                )
-            }
-            .frame(height: 48)
-            .contentShape(Rectangle())
+        workout.exercises = remaining
+        for (index, item) in remaining.enumerated() {
+            item.orderIndex = index
         }
-        .buttonStyle(.plain)
+        workout.updatedAt = Date()
+        revealedExerciseID = nil
+
+        do {
+            try modelContext.save()
+        } catch {
+            modelContext.rollback()
+            removalErrorMessage = error.localizedDescription
+            showRemovalError = true
+        }
     }
 }
 

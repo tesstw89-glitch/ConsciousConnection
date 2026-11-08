@@ -703,7 +703,8 @@ struct WorkoutTemplateExerciseEditor: View {
 
                 TemplateSetEditorCard(
                     set: set,
-                    number: index + 1
+                    number: index + 1,
+                    exercise: exercise
                 ) {
                     deleteSet(set)
                 }
@@ -852,10 +853,13 @@ struct WorkoutTemplateExerciseEditor: View {
 private struct TemplateSetEditorCard:
     View
 {
+    @Environment(\.modelContext) private var modelContext
+
     @Bindable
     var set: SetDeckSet
 
     let number: Int
+    let exercise: SetDeckExercise
     let onDelete: () -> Void
 
     var body: some View {
@@ -1090,7 +1094,7 @@ private struct TemplateSetEditorCard:
                     value:
                         weightBinding,
                     range: 0...1000,
-                    step: 2.5,
+                    step: 0.5,
                     suffix: ""
                 )
             }
@@ -1143,6 +1147,7 @@ private struct TemplateSetEditorCard:
             },
             set: {
                 set.targetReps = $0
+                StrengthLabExercisePreferences.change(.reps($0), for: exercise, in: modelContext)
             }
         )
     }
@@ -1156,6 +1161,7 @@ private struct TemplateSetEditorCard:
             },
             set: {
                 set.weight = $0
+                StrengthLabExercisePreferences.change(.weight($0), for: exercise, in: modelContext)
             }
         )
     }
@@ -1190,6 +1196,7 @@ private struct TemplateSetEditorCard:
                     $0 <= 0
                     ? nil
                     : $0
+                StrengthLabExercisePreferences.change(.rest($0), for: exercise, in: modelContext)
             }
         )
     }

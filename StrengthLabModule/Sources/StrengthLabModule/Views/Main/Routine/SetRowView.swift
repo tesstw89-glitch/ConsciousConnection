@@ -10,6 +10,7 @@ import SwiftData
 
 struct SetRowView: View {
     @Environment(ExerciseManager.self) private var exerciseManager
+    @Environment(\.modelContext) private var modelContext
     @AppStorage(AppStorageKeys.useMetricUnits) private var useMetricUnits = false
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
@@ -131,7 +132,7 @@ struct SetRowView: View {
                                         editorFieldVertical("Weight (\(useMetricUnits ? "kg" : "lbs"))") {
                                             StepperControlDouble(
                                                 value: $editWeight,
-                                                step: useMetricUnits ? 2.5 : 5.0,
+                                                step: 0.5,
                                                 display: trimTrailingZeros(editWeight)
                                             )
                                         }
@@ -154,7 +155,7 @@ struct SetRowView: View {
                                         editorFieldVertical("Weight (\(useMetricUnits ? "kg" : "lbs"))") {
                                             StepperControlDouble(
                                                 value: $editWeight,
-                                                step: useMetricUnits ? 2.5 : 5.0,
+                                                step: 0.5,
                                                 display: trimTrailingZeros(editWeight)
                                             )
                                         }
@@ -285,6 +286,14 @@ struct SetRowView: View {
         }
 
         exerciseManager.update(set: set, withReps: repsToSave, weight: weightToSave, rpe: rpeToSave)
+        if let exercise = set.exercise {
+            if editReps != originalReps, let repsToSave {
+                StrengthLabExercisePreferences.change(.reps(repsToSave), for: exercise, in: modelContext)
+            }
+            if editWeight != originalWeight, let weightToSave {
+                StrengthLabExercisePreferences.change(.weight(weightToSave), for: exercise, in: modelContext)
+            }
+        }
         withAnimation { isEditing = false }
     }
 

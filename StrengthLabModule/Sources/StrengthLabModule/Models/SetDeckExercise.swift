@@ -154,3 +154,95 @@ extension SetDeckExercise {
         }
     }
 }
+
+// STRENGTHLAB_NOV03_EMBEDDED_EXERCISE_PREFS
+/// Preferences are keyed by the EXERCISE name, so they survive across saved
+/// workout templates. Supersets and single-set exercises are deliberately excluded.
+@MainActor
+enum StrengthLabExercisePreferences {
+    private static let storageKey = "strengthlab_exercise_metrics_v1"
+
+    private struct Values: Codable {
+        var reps: Int?
+        var weight: Double?
+        var rest: Int?
+    }
+
+    enum Change {
+        case reps(Int)
+        case weight(Double)
+        case rest(Int)
+    }
+
+    private static func normalized(_ name: String) -> String {
+        name.trimmingCharacters(in: .whitespacesAndNewlines)
+            .folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current)
+    }
+
+    private static func qualifies(_ exercise: SetDeckExercise) -> Bool {
+        exercise.supersetGroupID == nil && (exercise.sets ?? []).count > 1
+    }
+
+    private static func read() -> [String: Values] {
+        guard let data = UserDefaults.standard.data(forKey: storageKey) else { return [:] }
+        return (try? JSONDecoder().decode([String: Values].self, from: data)) ?? [:]
+    }
+
+    private static func apply(_ change: Change, to exercise: SetDeckExercise) {
+        for set in exercise.sets ?? [] {
+            switch change {
+            case .reps(let reps):
+                // Leave timed and freeform exercises alone.
+                if set.setType == .reps || set.setType == .amap {
+                    set.targetReps = reps
+                }
+            case .weight(let weight):
+                if set.setType == .reps || set.setType == .amap {
+                    set.weight = weight
+                }
+            case .rest(let seconds):
+                set.restTimeInSeconds = seconds > 0 ? seconds : nil
+            }
+        }
+    }
+
+    static func change(_ change: Change, for exercise: SetDeckExercise, in context: ModelContext) {
+        guard qualifies(exercise) else { return }
+        let key = normalized(exercise.name)
+        guard !key.isEmpty else { return }
+
+        var settings = read()
+        var values = settings[key] ?? Values()
+        switch change {
+        case .reps(let reps): values.reps = reps
+        case .weight(let weight): values.weight = weight
+        case .rest(let seconds): values.rest = seconds
+        }
+        settings[key] = values
+        if let data = try? JSONEncoder().encode(settings) {
+            UserDefaults.standard.set(data, forKey: storageKey)
+        }
+
+        // Update every occurrence of this ordinary exercise in the user's
+        // existing templates. The updated set models are persisted by SwiftData.
+        let all = (try? context.fetch(FetchDescriptor<SetDeckExercise>())) ?? []
+        for item in all where qualifies(item) && normalized(item.name) == key {
+            apply(change, to: item)
+        }
+        // Also handle a newly created exercise not yet included in a fetch.
+        apply(change, to: exercise)
+        try? context.save()
+    }
+
+    static func applySaved(to workout: WorkoutTemplate, in context: ModelContext) {
+        let settings = read()
+        guard !settings.isEmpty else { return }
+        for exercise in workout.exercises ?? [] where qualifies(exercise) {
+            guard let value = settings[normalized(exercise.name)] else { continue }
+            if let reps = value.reps { apply(.reps(reps), to: exercise) }
+            if let weight = value.weight { apply(.weight(weight), to: exercise) }
+            if let rest = value.rest { apply(.rest(rest), to: exercise) }
+        }
+        try? context.save()
+    }
+}

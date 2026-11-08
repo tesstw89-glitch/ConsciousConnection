@@ -9,6 +9,8 @@ import Foundation
 private enum StrengthLabWorkoutPhase:
     Equatable
 {
+    case preflight
+    case countdown
     case exercise
     case rest
     case extraDecision
@@ -53,7 +55,7 @@ struct WorkoutRunView:
     @State
     private var phase:
         StrengthLabWorkoutPhase =
-            .exercise
+            .preflight
 
     @State
     private var currentExerciseIndex =
@@ -113,6 +115,9 @@ struct WorkoutRunView:
     @State
     private var summaryLookupToken =
         UUID()
+
+    @State private var countdownValue = 3
+    @State private var countdownBurst = false
 
     // STRENGTHLAB_WORKOUT_UX_OCT27_V1
     // These extra sets only exist for this workout, never in its saved template.
@@ -231,6 +236,12 @@ struct WorkoutRunView:
         ZStack {
             switch phase {
 
+            case .preflight:
+                workoutWatchReminder
+
+            case .countdown:
+                workoutStartingCountdown
+
             case .exercise:
                 exerciseScreen
 
@@ -255,7 +266,7 @@ struct WorkoutRunView:
             } catch {
                 print("Music mixing: \(error.localizedDescription)")
             }
-            moveToFirstPlayableSet()
+            StrengthLabExercisePreferences.applySaved(to: workout, in: modelContext)
         }
         .task {
             await healthManager
@@ -326,6 +337,154 @@ struct WorkoutRunView:
         }
     }
 
+
+    // STRENGTHLAB_WORKOUT_REFINEMENTS_NOV03_2026
+    // Workout preparation happens BEFORE the session clock begins.
+    private var workoutWatchReminder: some View {
+        ZStack {
+            StrengthLabFigmaTheme.paleBlush.ignoresSafeArea()
+
+            VStack(spacing: 26) {
+                Spacer()
+
+                Image(systemName: "applewatch")
+                    .font(.system(size: 64, weight: .light))
+                    .foregroundStyle(StrengthLabFigmaTheme.coral)
+                    .frame(width: 136, height: 136)
+                    .background(Color.white, in: Circle())
+
+                Text("BEFORE YOU START")
+                    .font(StrengthLabFigmaTheme.bold(13))
+                    .tracking(3)
+                    .foregroundStyle(StrengthLabFigmaTheme.coral)
+
+                Text("Remember to switch on workout on your watch")
+                    .font(StrengthLabFigmaTheme.bold(30))
+                    .multilineTextAlignment(.center)
+                    .foregroundStyle(StrengthLabFigmaTheme.ink)
+                    .padding(.horizontal, 20)
+
+                Text("Choose a workout on your Apple Watch, then you're ready to go.")
+                    .font(StrengthLabFigmaTheme.regular(16))
+                    .multilineTextAlignment(.center)
+                    .foregroundStyle(StrengthLabFigmaTheme.muted)
+
+                Spacer()
+
+                Button {
+                    countdownValue = 3
+                    countdownBurst = false
+                    withAnimation(.easeInOut(duration: 0.25)) {
+                        phase = .countdown
+                    }
+                } label: {
+                    HStack(spacing: 12) {
+                        Text("Next")
+                        Image(systemName: "arrow.right")
+                    }
+                    .font(StrengthLabFigmaTheme.bold(19))
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 62)
+                    .background(StrengthLabFigmaTheme.coralGradient, in: Capsule())
+                }
+                .buttonStyle(.plain)
+                .padding(.bottom, 44)
+            }
+            .padding(.horizontal, 28)
+        }
+    }
+
+    // STRENGTHLAB_CLEAN_COUNTDOWN_NOV03_V3
+    // Use the same clean coral countdown disc as StrengthLab's rest timer.
+    // A subtle ring expands and fades at GO, without persistent tick marks.
+    private var workoutStartingCountdown: some View {
+        ZStack {
+            StrengthLabFigmaTheme.paleBlush.ignoresSafeArea()
+
+            VStack(spacing: 36) {
+                Spacer()
+
+                Text("GET READY")
+                    .font(StrengthLabFigmaTheme.bold(15))
+                    .tracking(3)
+                    .foregroundStyle(StrengthLabFigmaTheme.coral)
+
+                ZStack {
+                    Circle()
+                        .fill(StrengthLabFigmaTheme.coralGradient)
+                        .frame(width: 248, height: 248)
+                        .shadow(
+                            color: StrengthLabFigmaTheme.coral.opacity(0.16),
+                            radius: 18, y: 9
+                        )
+                        .scaleEffect(countdownBurst ? 1.06 : 1.0)
+
+                    // Soft inner edge, rather than a busy clock-face border.
+                    Circle()
+                        .stroke(Color.white.opacity(0.25), lineWidth: 2)
+                        .frame(width: 238, height: 238)
+                        .scaleEffect(countdownBurst ? 1.06 : 1.0)
+
+                    // This ripple is understated during the countdown and
+                    // becomes an outward fizzle as the circle says GO!.
+                    Circle()
+                        .stroke(
+                            StrengthLabFigmaTheme.coral.opacity(0.50),
+                            lineWidth: 4
+                        )
+                        .frame(width: 248, height: 248)
+                        .scaleEffect(countdownBurst ? 1.58 : 1.03)
+                        .opacity(countdownBurst ? 0 : 0.35)
+
+                    Text(countdownBurst ? "GO!" : "\(countdownValue)")
+                        .font(
+                            .system(
+                                size: countdownBurst ? 61 : 100,
+                                weight: .bold,
+                                design: .rounded
+                            )
+                        )
+                        .monospacedDigit()
+                        .foregroundStyle(.white)
+                        .contentTransition(.numericText())
+                        .scaleEffect(countdownBurst ? 1.06 : 1.0)
+                }
+                .frame(height: 265)
+                .animation(.easeOut(duration: 0.48), value: countdownBurst)
+
+                Text(workout.name)
+                    .font(StrengthLabFigmaTheme.medium(18))
+                    .foregroundStyle(StrengthLabFigmaTheme.ink)
+
+                Spacer()
+            }
+            .padding(.horizontal, 24)
+        }
+        .task { await beginWorkoutAfterCountdown() }
+    }
+
+    @MainActor
+    private func beginWorkoutAfterCountdown() async {
+        for tick in [3, 2, 1] {
+            guard !Task.isCancelled else { return }
+            withAnimation(.spring(response: 0.2, dampingFraction: 0.75)) {
+                countdownValue = tick
+            }
+            try? await Task.sleep(for: .seconds(1))
+        }
+
+        guard !Task.isCancelled else { return }
+        withAnimation(.easeOut(duration: 0.48)) {
+            countdownBurst = true
+        }
+        try? await Task.sleep(for: .milliseconds(480))
+        guard !Task.isCancelled else { return }
+
+        startedAt = Date()
+        now = startedAt
+        moveToFirstPlayableSet()
+    }
 
     // MARK: - Exercise
 
@@ -1859,6 +2018,16 @@ struct WorkoutRunView:
                 endedEarly
         )
 
+        if !completedSetIDs.isEmpty {
+            StrengthLabCompletedSessions.record(
+                workoutName: workout.name,
+                startedAt: startedAt,
+                endedAt: workoutEndedAt ?? Date(),
+                completedSetCount: completedSetIDs.count,
+                endedEarly: endedEarly
+            )
+        }
+
         healthSummary =
             nil
 
@@ -2207,6 +2376,24 @@ struct WorkoutRunView:
             SetDeckSet
     ) -> String
     {
+        // STRENGTHLAB_DYNAMIC_REPS_INSTRUCTION_NOV03_2026
+        // The main workout screen must always reflect edits to current reps.
+        // A saved instructional note may contain obsolete phrases such as
+        // "20 total • plate core • 2 rounds"; don't use it as the live target.
+        if set.setType == .reps {
+            if let reps = set.targetReps {
+                return "\(reps) reps"
+            }
+            return "Complete the set"
+        }
+
+        if set.setType == .amap {
+            if let reps = set.targetReps, reps > 0 {
+                return "AMAP · aim for \(reps)+ reps"
+            }
+            return "As many reps as possible"
+        }
+
         if
             let description =
                 set
@@ -2587,6 +2774,8 @@ private struct WorkoutLiveSetEditor:
     private var useMetricUnits =
         false
 
+    @Environment(\.modelContext) private var modelContext
+
     @Bindable
     var set:
         SetDeckSet
@@ -2745,9 +2934,7 @@ private struct WorkoutLiveSetEditor:
                                 range:
                                     0...1000,
                                 step:
-                                    useMetricUnits
-                                    ? 2.5
-                                    : 5
+                                    0.5
                             )
                         }
 
@@ -2856,6 +3043,7 @@ private struct WorkoutLiveSetEditor:
             },
             set: {
                 set.targetReps = $0
+                StrengthLabExercisePreferences.change(.reps($0), for: exercise, in: modelContext)
             }
         )
     }
@@ -2910,6 +3098,7 @@ private struct WorkoutLiveSetEditor:
                     $0 <= 0
                     ? nil
                     : $0
+                StrengthLabExercisePreferences.change(.rest($0), for: exercise, in: modelContext)
             }
         )
     }
@@ -2939,6 +3128,7 @@ private struct WorkoutLiveSetEditor:
                     ? value
                         / 0.45359237
                     : value
+                StrengthLabExercisePreferences.change(.weight(set.weight ?? 0), for: exercise, in: modelContext)
             }
         )
     }

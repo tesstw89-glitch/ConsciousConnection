@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import UniformTypeIdentifiers
 
 struct WorkoutTemplateEditorView: View {
     @Environment(\.dismiss) private var dismiss
@@ -13,6 +14,16 @@ struct WorkoutTemplateEditorView: View {
     @State private var replacementTarget: SetDeckExercise?
     @State private var appReplacementRequest: ReplacementAppRequest?
     @State private var customReplacementDraft: SetDeckExercise?
+
+    // STRENGTHLAB_SMOOTH_REORDER_GLOBULUS_V1
+    // One draggable item per ordinary exercise or complete superset.
+    @State private var reorderBlocks: [StrengthLabSmoothReorderBlock] = []
+
+    private var exerciseGroupingSignature: [String] {
+        (workout.exercises ?? []).map {
+            "\($0.uuid.uuidString):\($0.supersetGroupID?.uuidString ?? "none")"
+        }.sorted()
+    }
 
     private let purple = Color(
         red: 0.40,
@@ -47,11 +58,35 @@ struct WorkoutTemplateEditorView: View {
                     VStack(spacing: 16) {
                         nameCard
 
-                        ForEach(
-                            exercises,
-                            id: \.uuid
-                        ) { exercise in
-                            exerciseCard(exercise)
+
+                        StrengthLabNativeReorderableForEach(
+                            $reorderBlocks,
+                            allowReordering: .constant(true)
+                        ) { block, isDragged in
+                            VStack(alignment: .leading, spacing: 10) {
+                                if block.exerciseIDs.count > 1 {
+                                    HStack(spacing: 8) {
+                                        Image(systemName: "line.3.horizontal")
+                                        Text("SUPERSET · \(block.exerciseIDs.count) exercises")
+                                            .font(.caption.weight(.bold))
+                                        Spacer()
+                                        Text("HOLD TO MOVE")
+                                            .font(.caption2)
+                                    }
+                                    .foregroundStyle(purple)
+                                    .padding(.horizontal, 6)
+                                }
+
+                                ForEach(block.exerciseIDs, id: \.self) { exerciseID in
+                                    if let exercise = exercises.first(where: { $0.uuid == exerciseID }) {
+                                        exerciseCard(exercise)
+                                    }
+                                }
+                            }
+                            .contentShape(Rectangle())
+                            .opacity(isDragged ? 0.50 : 1)
+                            .scaleEffect(isDragged ? 0.985 : 1)
+                            .animation(.easeInOut(duration: 0.16), value: isDragged)
                         }
 
                         Button {
@@ -96,6 +131,13 @@ struct WorkoutTemplateEditorView: View {
             }
         }
         .preferredColorScheme(.light)
+        .onAppear { rebuildReorderBlocks() }
+        .onChange(of: exerciseGroupingSignature) { _, _ in
+            rebuildReorderBlocks()
+        }
+        .onChange(of: reorderBlocks) { _, blocks in
+            saveReorderBlocks(blocks)
+        }
         .sheet(
             isPresented: $showingExerciseLibrary
         ) {
@@ -208,6 +250,7 @@ struct WorkoutTemplateEditorView: View {
             spacing: 13
         ) {
             HStack {
+
                 VStack(
                     alignment: .leading,
                     spacing: 4
@@ -245,6 +288,13 @@ struct WorkoutTemplateEditorView: View {
                 }
 
                 Spacer()
+
+                if exercise.supersetGroupID == nil {
+                    Image(systemName: "line.3.horizontal")
+                        .font(.system(size: 19, weight: .medium))
+                        .foregroundStyle(.secondary)
+                        .accessibilityLabel("Hold to reorder exercise")
+                }
 
                 Menu {
                     Button {
@@ -290,6 +340,19 @@ struct WorkoutTemplateEditorView: View {
                                     )
                                 }
                             }
+                        }
+                    }
+
+                    if exercise.supersetGroupID != nil {
+                        Button {
+                            moveWithinSuperset(exercise, offset: -1)
+                        } label: {
+                            Label("Earlier in Superset", systemImage: "arrow.up")
+                        }
+                        Button {
+                            moveWithinSuperset(exercise, offset: 1)
+                        } label: {
+                            Label("Later in Superset", systemImage: "arrow.down")
                         }
                     }
 
@@ -367,6 +430,62 @@ struct WorkoutTemplateEditorView: View {
                 style: .continuous
             )
         )
+    }
+
+    // STRENGTHLAB_SMOOTH_REORDER_GLOBULUS_V1
+    // Rebuild only when exercises are added/removed or group membership changes.
+    private func rebuildReorderBlocks() {
+        let ordered = exercises
+        var handledGroups = Set<UUID>()
+        var next: [StrengthLabSmoothReorderBlock] = []
+        for exercise in ordered {
+            if let groupID = exercise.supersetGroupID {
+                if handledGroups.insert(groupID).inserted {
+                    let members = ordered.filter { $0.supersetGroupID == groupID }
+                    next.append(StrengthLabSmoothReorderBlock(
+                        id: groupID,
+                        exerciseIDs: members.map(\.uuid)
+                    ))
+                }
+            } else {
+                next.append(StrengthLabSmoothReorderBlock(
+                    id: exercise.uuid,
+                    exerciseIDs: [exercise.uuid]
+                ))
+            }
+        }
+        if next != reorderBlocks { reorderBlocks = next }
+    }
+
+    private func saveReorderBlocks(_ blocks: [StrengthLabSmoothReorderBlock]) {
+        let current = workout.exercises ?? []
+        let byID = Dictionary(uniqueKeysWithValues: current.map { ($0.uuid, $0) })
+        let ids = blocks.flatMap(\.exerciseIDs)
+        let reordered = ids.compactMap { byID[$0] }
+        guard ids.count == current.count,
+              Set(ids).count == current.count,
+              reordered.count == current.count else { return }
+        guard reordered.map(\.uuid) != exercises.map(\.uuid) else { return }
+
+        for (index, exercise) in reordered.enumerated() {
+            exercise.orderIndex = index
+        }
+        workout.exercises = reordered
+        workout.updatedAt = Date()
+        do { try modelContext.save() }
+        catch { print("Failed to save exercise order: \(error)") }
+    }
+
+    private func moveWithinSuperset(_ exercise: SetDeckExercise, offset: Int) {
+        guard let group = exercise.supersetGroupID,
+              let index = reorderBlocks.firstIndex(where: { $0.id == group }),
+              let from = reorderBlocks[index].exerciseIDs.firstIndex(of: exercise.uuid)
+        else { return }
+        let to = from + offset
+        guard reorderBlocks[index].exerciseIDs.indices.contains(to) else { return }
+        withAnimation(.snappy(duration: 0.25)) {
+            reorderBlocks[index].exerciseIDs.swapAt(from, to)
+        }
     }
 
     private func addExercise(
@@ -627,6 +746,90 @@ struct WorkoutTemplateEditorView: View {
     }
 }
 
+
+// Stable identity is important for SwiftUIReorderableForEach's onDrag/onDrop.
+private struct StrengthLabSmoothReorderBlock: Hashable {
+    let id: UUID
+    var exerciseIDs: [UUID]
+}
+
+// STRENGTHLAB_NATIVE_SMOOTH_REORDER_FIX_20261104
+// Self-contained live row reordering. No third-party Swift package required.
+private struct StrengthLabNativeReorderableForEach<Item: Hashable, Row: View>: View {
+    @Binding var items: [Item]
+    @Binding var allowReordering: Bool
+    let row: (Item, Bool) -> Row
+
+    @State private var draggedItem: Item?
+    @State private var movedDuringDrag = false
+
+    init(
+        _ items: Binding<[Item]>,
+        allowReordering: Binding<Bool>,
+        @ViewBuilder content: @escaping (Item, Bool) -> Row
+    ) {
+        _items = items
+        _allowReordering = allowReordering
+        row = content
+    }
+
+    var body: some View {
+        ForEach(items, id: \.self) { item in
+            if allowReordering {
+                row(item, draggedItem == item && movedDuringDrag)
+                    .onDrag {
+                        draggedItem = item
+                        movedDuringDrag = false
+                        return NSItemProvider(object: String(item.hashValue) as NSString)
+                    }
+                    .onDrop(
+                        of: [UTType.plainText],
+                        delegate: StrengthLabNativeReorderDropDelegate(
+                            destination: item,
+                            items: $items,
+                            draggedItem: $draggedItem,
+                            movedDuringDrag: $movedDuringDrag
+                        )
+                    )
+            } else {
+                row(item, false)
+            }
+        }
+    }
+}
+
+private struct StrengthLabNativeReorderDropDelegate<Item: Hashable>: DropDelegate {
+    let destination: Item
+    @Binding var items: [Item]
+    @Binding var draggedItem: Item?
+    @Binding var movedDuringDrag: Bool
+
+    func dropEntered(info: DropInfo) {
+        guard let draggedItem,
+              draggedItem != destination,
+              let from = items.firstIndex(of: draggedItem),
+              let to = items.firstIndex(of: destination),
+              from != to else { return }
+
+        movedDuringDrag = true
+        withAnimation(.interactiveSpring(response: 0.28, dampingFraction: 0.83)) {
+            items.move(
+                fromOffsets: IndexSet(integer: from),
+                toOffset: to > from ? to + 1 : to
+            )
+        }
+    }
+
+    func dropUpdated(info: DropInfo) -> DropProposal? {
+        DropProposal(operation: .move)
+    }
+
+    func performDrop(info: DropInfo) -> Bool {
+        draggedItem = nil
+        movedDuringDrag = false
+        return true
+    }
+}
 
 // MARK: - App exercise replacement picker
 
