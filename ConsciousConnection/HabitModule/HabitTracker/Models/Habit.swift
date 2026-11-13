@@ -101,6 +101,8 @@ class Habit {
     var habitTypeRaw: String = HabitType.manual.rawValue
     var dataSourceRaw: String = HabitDataSource.manual.rawValue
     var dailyGoal: Double?
+    // For manual habits, a target reached across Monday-Sunday rather than each day.
+    var weeklyTarget: Int? = nil
     var unit: String?
 
     // Dynamic Goal properties
@@ -165,7 +167,8 @@ class Habit {
         habitType: HabitType = .manual,
         dataSource: HabitDataSource = .manual,
         dailyGoal: Double? = nil,
-        unit: String? = nil
+        unit: String? = nil,
+        weeklyTarget: Int? = nil
     ) {
         self.id = UUID()
         self.name = name
@@ -177,6 +180,7 @@ class Habit {
         self.dataSourceRaw = dataSource.rawValue
         self.dailyGoal = dailyGoal
         self.unit = unit
+        self.weeklyTarget = weeklyTarget
     }
 
     // MARK: - Goal Completion Helper
@@ -200,6 +204,16 @@ class Habit {
     /// Safe accessor for completions (returns empty array if nil)
     var safeCompletions: [HabitCompletion] {
         completions ?? []
+    }
+
+    /// Manual weekly targets count individual check-offs, including multiple on one day.
+    /// A fresh Monday starts at zero; previous weeks remain in history.
+    func weeklyProgress(on date: Date, calendar: Calendar = .current) -> Int {
+        guard weeklyTarget != nil else { return 0 }
+        var mondayCalendar = calendar
+        mondayCalendar.firstWeekday = 2
+        guard let interval = mondayCalendar.dateInterval(of: .weekOfYear, for: date) else { return 0 }
+        return safeCompletions.filter { !$0.isCheatDay && interval.contains($0.date) }.count
     }
 
     // MARK: - Date-aware helpers
@@ -236,6 +250,9 @@ class Habit {
     }
 
     func isCompleted(on date: Date, calendar: Calendar = .current) -> Bool {
+        if let target = weeklyTarget, target > 0 {
+            return weeklyProgress(on: date, calendar: calendar) >= target
+        }
         guard let completion = completion(on: date, calendar: calendar) else {
             return false
         }
@@ -254,6 +271,9 @@ class Habit {
     }
 
     func progress(on date: Date, calendar: Calendar = .current) -> Double {
+        if let target = weeklyTarget, target > 0 {
+            return min(1.0, Double(weeklyProgress(on: date, calendar: calendar)) / Double(target))
+        }
         guard let goal = dailyGoal, goal > 0 else {
             return isCompleted(on: date, calendar: calendar) ? 1.0 : 0.0
         }

@@ -71,7 +71,26 @@ struct HomeView: View {
 
     private var visibleHabits: [Habit] {
         habits.filter { habit in
-            !habit.isRestDay(on: selectedDate)
+            // Weekly goals should be offered on every day, regardless of daily rest-day settings.
+            if let target = habit.weeklyTarget, target > 0 {
+                return habit.weeklyProgress(on: selectedDate) < target
+            }
+            return !habit.isRestDay(on: selectedDate)
+        }
+    }
+
+    private var hasWorkoutWeeklyTarget: Bool {
+        habits.contains {
+            ($0.name.localizedCaseInsensitiveCompare("Workout") == .orderedSame ||
+             $0.name.localizedCaseInsensitiveCompare("Workout (weekly)") == .orderedSame) &&
+            ($0.weeklyTarget ?? 0) > 0
+        }
+    }
+
+    private var allWeeklyTargetsMet: Bool {
+        visibleHabits.isEmpty && habits.contains {
+            guard let target = $0.weeklyTarget, target > 0 else { return false }
+            return $0.weeklyProgress(on: selectedDate) >= target
         }
     }
 
@@ -298,6 +317,12 @@ struct HomeView: View {
                         Color.clear
                             .frame(height: visibleHabits.isEmpty ? 180 : 280)
 
+                        // A visible recovery action if the initial Workout target was never created,
+                        // or if it was deleted deliberately and the user now wants it back.
+                        if !hasWorkoutWeeklyTarget {
+                            restoreWorkoutTargetButton
+                        }
+
                         if habits.isEmpty {
                             emptyStateSection
                         } else if visibleHabits.isEmpty {
@@ -347,7 +372,7 @@ struct HomeView: View {
                                     .id(refreshID)
                                     .padding(.bottom, 8)
                                 } else {
-                                    Text(hasHabitsButAllAreResting ? "Rest day" : "Add habits to track progress")
+                                    Text(allWeeklyTargetsMet ? "Weekly goal achieved!" : (hasHabitsButAllAreResting ? "Rest day" : "Add habits to track progress"))
                                         .font(.subheadline)
                                         .foregroundStyle(greetingSubtitleColor)
                                         .shadow(color: themeManager.dynamicHeaderEnabled ? .black.opacity(0.3) : .clear, radius: 2, x: 0, y: 1)
@@ -440,6 +465,7 @@ struct HomeView: View {
                 }
             }
             .onAppear {
+                WorkoutWeeklyHabitSeeder.seedOnce(in: modelContext)
                 let calendar = Calendar.current
                 let now = Date()
 
@@ -458,6 +484,7 @@ struct HomeView: View {
                 }
             }
             .onReceive(NotificationCenter.default.publisher(for: .habitsDidChange)) { _ in
+                refreshID = UUID()
                 WidgetDataManager.shared.updateWidgetData(habits: habits)
             }
             .onReceive(NotificationCenter.default.publisher(for: .allHabitsCompleted)) { _ in
@@ -752,13 +779,45 @@ struct HomeView: View {
         )
     }
 
+    private var restoreWorkoutTargetButton: some View {
+        Button {
+            WorkoutWeeklyHabitSeeder.restore(in: modelContext)
+            refreshID = UUID()
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "dumbbell.fill")
+                    .font(.title3)
+                    .foregroundStyle(.white)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Add Workout · 0/4 per week")
+                        .font(.headline)
+                        .foregroundStyle(.white)
+                    Text("Tap to restore your weekly workout target")
+                        .font(.caption)
+                        .foregroundStyle(.white.opacity(0.75))
+                }
+                Spacer()
+                Image(systemName: "plus.circle.fill")
+                    .font(.title2)
+                    .foregroundStyle(.white)
+            }
+            .padding(16)
+            .background(Color(hex: "#EC4899").opacity(0.85),
+                        in: RoundedRectangle(cornerRadius: 20))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Add Workout goal, four times per week")
+    }
+
     private var restDaySection: some View {
         VStack(spacing: 10) {
-            Text("Rest day")
+            Text(allWeeklyTargetsMet ? "Weekly targets complete!" : "Rest day")
                 .font(.title2.weight(.bold))
                 .foregroundStyle(.white)
 
-            Text("No habits scheduled for \(selectedDateLabel.lowercased()).")
+            Text(allWeeklyTargetsMet
+                 ? "Your weekly goals will return next Monday."
+                 : "No habits scheduled for \(selectedDateLabel.lowercased()).")
                 .font(.subheadline)
                 .foregroundStyle(.white.opacity(0.75))
                 .multilineTextAlignment(.center)
@@ -796,5 +855,54 @@ struct HomeView: View {
         guard let stack = getStack(for: habit) else { return nil }
         guard let index = stack.habitOrder.firstIndex(of: habit.id) else { return nil }
         return (current: index + 1, total: stack.habitOrder.count)
+    }
+}
+
+// MARK: - Default Workout weekly target
+// Shared by the main app on launch and the habit screen, so it is ready
+// before the tracker is presented. A second version of the seed key repairs
+// the previous on-appear-only implementation.
+@MainActor
+enum WorkoutWeeklyHabitSeeder {
+    private static let seedKey = "workoutWeeklyHabitBootstrap.v2"
+
+    static func seedOnce(in context: ModelContext) {
+        guard !UserDefaults.standard.bool(forKey: seedKey) else { return }
+        restore(in: context)
+    }
+
+    static func restore(in context: ModelContext) {
+        do {
+            let allHabits = try context.fetch(FetchDescriptor<Habit>())
+            let existingTarget = allHabits.first {
+                ($0.name.localizedCaseInsensitiveCompare("Workout") == .orderedSame ||
+                 $0.name.localizedCaseInsensitiveCompare("Workout (weekly)") == .orderedSame) &&
+                ($0.weeklyTarget ?? 0) > 0
+            }
+
+            if existingTarget == nil {
+                // Don't mutate existing daily Workout habits or count their
+                // past check-offs towards a new target unexpectedly.
+                let name = allHabits.contains {
+                    $0.name.localizedCaseInsensitiveCompare("Workout") == .orderedSame
+                } ? "Workout (weekly)" : "Workout"
+
+                let newHabit = Habit(
+                    name: name,
+                    icon: "dumbbell.fill",
+                    color: "#EC4899",
+                    weeklyTarget: 4
+                )
+                context.insert(newHabit)
+            }
+
+            try context.save()
+            UserDefaults.standard.set(true, forKey: seedKey)
+            NotificationCenter.default.post(name: .habitsDidChange, object: nil)
+        } catch {
+            #if DEBUG
+            print("Unable to install Workout weekly target: \(error.localizedDescription)")
+            #endif
+        }
     }
 }

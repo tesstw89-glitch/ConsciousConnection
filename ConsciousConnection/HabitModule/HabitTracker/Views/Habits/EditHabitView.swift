@@ -21,6 +21,8 @@ struct EditHabitView: View {
     @State private var selectedColor: String
     @State private var hasGoal: Bool
     @State private var dailyGoal: Double
+    @State private var weeklyTargetEnabled: Bool
+    @State private var weeklyTargetValue: Int
 
     // Goal Progression
     @State private var goalProgression: GoalProgression
@@ -77,6 +79,8 @@ struct EditHabitView: View {
         _selectedColor = State(initialValue: habit.color)
         _hasGoal = State(initialValue: habit.dailyGoal != nil)
         _dailyGoal = State(initialValue: habit.dailyGoal ?? 0)
+        _weeklyTargetEnabled = State(initialValue: habit.weeklyTarget != nil)
+        _weeklyTargetValue = State(initialValue: habit.weeklyTarget ?? 4)
 
         // Goal progression
         _goalProgression = State(initialValue: habit.goalProgression)
@@ -127,6 +131,9 @@ struct EditHabitView: View {
                         if hasGoal && habit.habitType != .manual {
                             goalProgressionSection
                         }
+
+                        // Per-week count target for manual habits.
+                        if habit.habitType == .manual { weeklyTargetSection }
 
                         // Rest Days Section
                         restDaysSection
@@ -483,6 +490,24 @@ struct EditHabitView: View {
 
     // MARK: - Rest Days Section
 
+    private var weeklyTargetSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Toggle("Per-week target", isOn: $weeklyTargetEnabled)
+                .font(.headline)
+                .tint(accentColor)
+                .foregroundStyle(primaryText)
+            Text("Count check-offs across Monday to Sunday. The habit disappears once the target is met.")
+                .font(.caption)
+                .foregroundStyle(secondaryText)
+            if weeklyTargetEnabled {
+                Stepper("Times per week: \(weeklyTargetValue)", value: $weeklyTargetValue, in: 1...21)
+                    .foregroundStyle(primaryText)
+            }
+        }
+        .padding(16)
+        .liquidGlass(cornerRadius: 20)
+    }
+
     private var restDaysSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
@@ -664,6 +689,9 @@ struct EditHabitView: View {
         habit.icon = selectedIcon
         habit.color = selectedColor
         habit.dailyGoal = hasGoal ? dailyGoal : nil
+        if habit.habitType == .manual {
+            habit.weeklyTarget = weeklyTargetEnabled ? weeklyTargetValue : nil
+        }
 
         // Goal progression
         habit.goalProgression = goalProgression

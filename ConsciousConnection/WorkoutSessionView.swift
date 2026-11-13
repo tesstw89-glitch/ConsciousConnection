@@ -1,5 +1,6 @@
 import SwiftUI
 import UIKit
+import AVFoundation
 
 private enum WorkoutScreenPhase {
     case performingSet
@@ -59,6 +60,7 @@ struct WorkoutSessionView: View {
         .onReceive(timer) { _ in
             if phase == .resting && restRemaining > 0 {
                 restRemaining -= 1
+                WorkoutCountdownBeeper.shared.play(at: restRemaining)
             }
         }
         .toolbar {
@@ -417,6 +419,7 @@ struct WorkoutSessionView: View {
 
         restRemaining = blocks[location.blockIndex].exercises[location.exerciseIndex].sets[currentSetIndex].restSeconds
         phase = .resting
+        if (1...3).contains(restRemaining) { WorkoutCountdownBeeper.shared.play(at: restRemaining) }
     }
 
     private func skipCurrentSet() {
@@ -427,6 +430,7 @@ struct WorkoutSessionView: View {
 
         restRemaining = blocks[location.blockIndex].exercises[location.exerciseIndex].sets[currentSetIndex].restSeconds
         phase = .resting
+        if (1...3).contains(restRemaining) { WorkoutCountdownBeeper.shared.play(at: restRemaining) }
     }
 
     private func skipCurrentExercise() {
@@ -480,5 +484,71 @@ struct WorkoutSessionView: View {
         let generator = UIImpactFeedbackGenerator(style: .medium)
         generator.prepare()
         generator.impactOccurred()
+    }
+}
+
+// Two original, synthesised sounds shared by the start, exercise and rest timers.
+// The session uses .ambient audio, so these mix with music and respect silent mode.
+@MainActor
+final class WorkoutCountdownBeeper {
+    static let shared = WorkoutCountdownBeeper()
+
+    private let shortBeep: AVAudioPlayer?
+    private let longBeep: AVAudioPlayer?
+
+    private init() {
+        shortBeep = Self.makeTone(duration: 0.12)
+        longBeep = Self.makeTone(duration: 0.55)
+        shortBeep?.prepareToPlay()
+        longBeep?.prepareToPlay()
+    }
+
+    func play(at remaining: Int) {
+        switch remaining {
+        case 1...3:
+            shortBeep?.currentTime = 0
+            shortBeep?.play()
+        case 0:
+            longBeep?.currentTime = 0
+            longBeep?.play()
+        default:
+            break
+        }
+    }
+
+    private static func makeTone(duration: Double) -> AVAudioPlayer? {
+        let sampleRate = 22_050
+        let frameCount = Int(Double(sampleRate) * duration)
+        let pcmByteCount = frameCount * MemoryLayout<Int16>.size
+        var wav = Data()
+
+        func put<T: FixedWidthInteger>(_ value: T) {
+            var littleEndian = value.littleEndian
+            withUnsafeBytes(of: &littleEndian) { wav.append(contentsOf: $0) }
+        }
+
+        wav.append(contentsOf: "RIFF".utf8)
+        put(UInt32(36 + pcmByteCount))
+        wav.append(contentsOf: "WAVEfmt ".utf8)
+        put(UInt32(16))
+        put(UInt16(1)) // PCM
+        put(UInt16(1)) // Mono
+        put(UInt32(sampleRate))
+        put(UInt32(sampleRate * 2))
+        put(UInt16(2))
+        put(UInt16(16))
+        wav.append(contentsOf: "data".utf8)
+        put(UInt32(pcmByteCount))
+
+        for sampleIndex in 0..<frameCount {
+            let position = Double(sampleIndex) / Double(frameCount)
+            let attack = min(1, position / 0.03)
+            let release = min(1, (1 - position) / 0.14)
+            let envelope = max(0, min(attack, release))
+            let tone = sin(2 * Double.pi * 880 * Double(sampleIndex) / Double(sampleRate))
+            put(Int16(tone * envelope * 12_000))
+        }
+
+        return try? AVAudioPlayer(data: wav)
     }
 }

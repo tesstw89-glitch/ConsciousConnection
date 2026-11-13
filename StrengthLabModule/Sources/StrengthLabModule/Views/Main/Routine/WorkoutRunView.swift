@@ -486,6 +486,7 @@ struct WorkoutRunView:
     private func beginWorkoutAfterCountdown() async {
         for tick in [3, 2, 1] {
             guard !Task.isCancelled else { return }
+            StrengthLabCountdownBeeper.shared.play(at: tick)
             withAnimation(.spring(response: 0.2, dampingFraction: 0.75)) {
                 countdownValue = tick
             }
@@ -493,6 +494,7 @@ struct WorkoutRunView:
         }
 
         guard !Task.isCancelled else { return }
+        StrengthLabCountdownBeeper.shared.play(at: 0)
         withAnimation(.easeOut(duration: 0.48)) {
             countdownBurst = true
         }
@@ -933,6 +935,7 @@ struct WorkoutRunView:
         let full = max(1, Int(ceil(set.targetDuration ?? 0)))
         let seconds = (timedRemaining ?? full) > 0 ? (timedRemaining ?? full) : full
         timedRemaining = seconds
+        if seconds <= 3 { StrengthLabCountdownBeeper.shared.play(at: seconds) }
         timedEndDate = Date().addingTimeInterval(TimeInterval(seconds))
     }
 
@@ -941,7 +944,10 @@ struct WorkoutRunView:
         guard let end = timedEndDate else { return }
         while !Task.isCancelled {
             let remaining = max(0, Int(ceil(end.timeIntervalSinceNow)))
-            timedRemaining = remaining
+            if remaining != timedRemaining {
+                StrengthLabCountdownBeeper.shared.play(at: remaining)
+                timedRemaining = remaining
+            }
             if remaining == 0 {
                 timedEndDate = nil
                 return // Never auto-complete the set or start the next one.
@@ -1941,6 +1947,8 @@ struct WorkoutRunView:
             restRemaining =
                 rest
 
+            if rest <= 3 { StrengthLabCountdownBeeper.shared.play(at: rest) }
+
             restEndDate =
                 Date()
                     .addingTimeInterval(
@@ -2169,8 +2177,10 @@ struct WorkoutRunView:
                     )
                 )
 
-            restRemaining =
-                remaining
+            if remaining != restRemaining {
+                StrengthLabCountdownBeeper.shared.play(at: remaining)
+                restRemaining = remaining
+            }
 
             if remaining <= 0 {
                 finishRest()
@@ -3456,5 +3466,71 @@ private struct WorkoutDoubleAdjuster:
                     "%.1f",
                 value
             )
+    }
+}
+
+// Two original, synthesised sounds shared by the start, exercise and rest timers.
+// The session uses .ambient audio, so these mix with music and respect silent mode.
+@MainActor
+private final class StrengthLabCountdownBeeper {
+    static let shared = StrengthLabCountdownBeeper()
+
+    private let shortBeep: AVAudioPlayer?
+    private let longBeep: AVAudioPlayer?
+
+    private init() {
+        shortBeep = Self.makeTone(duration: 0.12)
+        longBeep = Self.makeTone(duration: 0.55)
+        shortBeep?.prepareToPlay()
+        longBeep?.prepareToPlay()
+    }
+
+    func play(at remaining: Int) {
+        switch remaining {
+        case 1...3:
+            shortBeep?.currentTime = 0
+            shortBeep?.play()
+        case 0:
+            longBeep?.currentTime = 0
+            longBeep?.play()
+        default:
+            break
+        }
+    }
+
+    private static func makeTone(duration: Double) -> AVAudioPlayer? {
+        let sampleRate = 22_050
+        let frameCount = Int(Double(sampleRate) * duration)
+        let pcmByteCount = frameCount * MemoryLayout<Int16>.size
+        var wav = Data()
+
+        func put<T: FixedWidthInteger>(_ value: T) {
+            var littleEndian = value.littleEndian
+            withUnsafeBytes(of: &littleEndian) { wav.append(contentsOf: $0) }
+        }
+
+        wav.append(contentsOf: "RIFF".utf8)
+        put(UInt32(36 + pcmByteCount))
+        wav.append(contentsOf: "WAVEfmt ".utf8)
+        put(UInt32(16))
+        put(UInt16(1)) // PCM
+        put(UInt16(1)) // Mono
+        put(UInt32(sampleRate))
+        put(UInt32(sampleRate * 2))
+        put(UInt16(2))
+        put(UInt16(16))
+        wav.append(contentsOf: "data".utf8)
+        put(UInt32(pcmByteCount))
+
+        for sampleIndex in 0..<frameCount {
+            let position = Double(sampleIndex) / Double(frameCount)
+            let attack = min(1, position / 0.03)
+            let release = min(1, (1 - position) / 0.14)
+            let envelope = max(0, min(attack, release))
+            let tone = sin(2 * Double.pi * 880 * Double(sampleIndex) / Double(sampleRate))
+            put(Int16(tone * envelope * 12_000))
+        }
+
+        return try? AVAudioPlayer(data: wav)
     }
 }
