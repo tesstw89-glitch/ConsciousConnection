@@ -247,6 +247,8 @@ struct ConsciousConnectionApp: App {
                 .modelContainer(container)
                 .environment(\.isUsingLocalStorage, false)
                 .onAppear {
+                    // Prepare the default weekly Workout habit before opening the tracker.
+                    WorkoutWeeklyHabitSeeder.seedOnce(in: container.mainContext)
                     NotificationManager.shared.requestPermissionAndScheduleTaskReminders()
                     handleLockScreenLaunchIfNeeded()
                 }
