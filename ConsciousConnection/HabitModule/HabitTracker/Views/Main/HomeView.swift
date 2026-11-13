@@ -81,7 +81,8 @@ struct HomeView: View {
 
     private var hasWorkoutWeeklyTarget: Bool {
         habits.contains {
-            $0.name.localizedCaseInsensitiveCompare("Workout") == .orderedSame &&
+            ($0.name.localizedCaseInsensitiveCompare("Workout") == .orderedSame ||
+             $0.name.localizedCaseInsensitiveCompare("Workout (weekly)") == .orderedSame) &&
             ($0.weeklyTarget ?? 0) > 0
         }
     }
@@ -874,7 +875,8 @@ enum WorkoutWeeklyHabitSeeder {
         do {
             let allHabits = try context.fetch(FetchDescriptor<Habit>())
             let existingTarget = allHabits.first {
-                $0.name.localizedCaseInsensitiveCompare("Workout") == .orderedSame &&
+                ($0.name.localizedCaseInsensitiveCompare("Workout") == .orderedSame ||
+                 $0.name.localizedCaseInsensitiveCompare("Workout (weekly)") == .orderedSame) &&
                 ($0.weeklyTarget ?? 0) > 0
             }
 
