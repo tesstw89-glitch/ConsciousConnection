@@ -91,7 +91,11 @@ struct HabitCard: View {
                             }
                         }
 
-                        if habit.habitType != .manual, let goal = habit.dailyGoal {
+                        if let weeklyTarget = habit.weeklyTarget, weeklyTarget > 0 {
+                            Text("\(habit.weeklyProgress(on: selectedDate))/\(weeklyTarget) this week")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(secondaryTextColor)
+                        } else if habit.habitType != .manual, let goal = habit.dailyGoal {
                             HStack(spacing: 4) {
                                 Text(formatValue(valueForSelectedDate, unit: habit.unit))
                                     .font(.caption.weight(.medium))
@@ -160,7 +164,21 @@ struct HabitCard: View {
                     .accessibilityHint("Double tap to start a timed focus session")
                 }
 
-                if habit.habitType != .manual, habit.dailyGoal != nil {
+                if let weeklyTarget = habit.weeklyTarget, weeklyTarget > 0 {
+                    Button {
+                        addWeeklyCompletion()
+                        HapticManager.shared.habitCompleted()
+                    } label: {
+                        Image(systemName: "plus")
+                            .font(.title3.weight(.bold))
+                            .foregroundStyle(.white)
+                            .frame(width: 44, height: 44)
+                            .background(Color(hex: habit.color), in: Circle())
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(habit.weeklyProgress(on: selectedDate) >= weeklyTarget)
+                    .accessibilityLabel("Add \(habit.name) completion, \(habit.weeklyProgress(on: selectedDate)) of \(weeklyTarget) this week")
+                } else if habit.habitType != .manual, habit.dailyGoal != nil {
                     progressRing
                 } else {
                     CheckmarkTapView(
@@ -258,6 +276,20 @@ struct HabitCard: View {
             return "\(Int(value)) kcal"
         default:
             return String(format: "%.1f", value)
+        }
+    }
+
+    private func addWeeklyCompletion() {
+        guard let target = habit.weeklyTarget, target > 0,
+              habit.weeklyProgress(on: selectedDate) < target else { return }
+        let completion = HabitCompletion(date: selectedDate, habit: habit)
+        if habit.completions == nil { habit.completions = [] }
+        habit.completions?.append(completion)
+        modelContext.insert(completion)
+        try? modelContext.save()
+        NotificationCenter.default.post(name: .habitsDidChange, object: nil)
+        if habit.weeklyProgress(on: selectedDate) >= target {
+            checkAllHabitsCompleted()
         }
     }
 
