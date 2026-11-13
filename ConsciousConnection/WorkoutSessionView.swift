@@ -487,28 +487,63 @@ struct WorkoutSessionView: View {
     }
 }
 
-// Two original, synthesised sounds shared by the start, exercise and rest timers.
-// The session uses .ambient audio, so these mix with music and respect silent mode.
+// Recorded 3-short-then-long workout beep sequence, with a synthesized fallback.
+// Playback bypasses Silent mode while still allowing other music to continue.
 @MainActor
 final class WorkoutCountdownBeeper {
     static let shared = WorkoutCountdownBeeper()
 
+    private let countdownClip: AVAudioPlayer?
     private let shortBeep: AVAudioPlayer?
     private let longBeep: AVAudioPlayer?
 
     private init() {
+        if let url = Bundle.main.url(forResource: "mixkit-sport-start-bleeps-918", withExtension: "wav") {
+            countdownClip = try? AVAudioPlayer(contentsOf: url)
+        } else {
+            countdownClip = nil
+            #if DEBUG
+            print("Workout countdown WAV not bundled; using synthesized fallback.")
+            #endif
+        }
         shortBeep = Self.makeTone(duration: 0.12)
         longBeep = Self.makeTone(duration: 0.55)
+        countdownClip?.prepareToPlay()
         shortBeep?.prepareToPlay()
         longBeep?.prepareToPlay()
     }
 
     func play(at remaining: Int) {
+        guard (0...3).contains(remaining) else { return }
+        do {
+            let session = AVAudioSession.sharedInstance()
+            try session.setCategory(.playback, mode: .default, options: [.mixWithOthers])
+            try session.setActive(true)
+        } catch {
+            #if DEBUG
+            print("Unable to activate workout countdown audio: \(error)")
+            #endif
+        }
+
+        if let clip = countdownClip {
+            if remaining == 3 {
+                clip.stop()
+                clip.currentTime = 0
+                clip.play()
+                return
+            }
+            // The sample contains its own beeps for 2, 1, and 0.
+            if clip.isPlaying { return }
+        }
+
+        // For shorter timers, or before the provided WAV is added to the app.
         switch remaining {
         case 1...3:
+            shortBeep?.stop()
             shortBeep?.currentTime = 0
             shortBeep?.play()
         case 0:
+            longBeep?.stop()
             longBeep?.currentTime = 0
             longBeep?.play()
         default:
