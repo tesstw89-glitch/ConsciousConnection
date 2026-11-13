@@ -275,13 +275,8 @@ struct WorkoutRunView:
             .light
         )
         .onAppear {
-            // STRENGTHLAB_WORKOUT_MUSIC_V1
-            do {
-                try AVAudioSession.sharedInstance()
-                    .setCategory(.ambient, mode: .default)
-            } catch {
-                print("Music mixing: \(error.localizedDescription)")
-            }
+            // Allow audible countdowns in Silent mode while mixing with other music.
+            StrengthLabCountdownBeeper.shared.prepareAudioSession()
             for source in sessionWorkouts {
                 StrengthLabExercisePreferences.applySaved(to: source, in: modelContext)
             }
@@ -3469,28 +3464,68 @@ private struct WorkoutDoubleAdjuster:
     }
 }
 
-// Two original, synthesised sounds shared by the start, exercise and rest timers.
-// The session uses .ambient audio, so these mix with music and respect silent mode.
+// Play the user's 3-short-then-long countdown recording. The last beep is
+// already part of the 3.79-second clip, so don't also play generated tones.
+// Short countdowns (<3 seconds) retain a small synthesized fallback.
 @MainActor
 private final class StrengthLabCountdownBeeper {
     static let shared = StrengthLabCountdownBeeper()
 
+    private let countdownClip: AVAudioPlayer?
     private let shortBeep: AVAudioPlayer?
     private let longBeep: AVAudioPlayer?
 
     private init() {
+        if let url = Bundle.main.url(forResource: "mixkit-sport-start-bleeps-918", withExtension: "wav") {
+            countdownClip = try? AVAudioPlayer(contentsOf: url)
+        } else {
+            countdownClip = nil
+            #if DEBUG
+            print("Workout countdown WAV not found in app bundle; using synthesized fallback.")
+            #endif
+        }
         shortBeep = Self.makeTone(duration: 0.12)
         longBeep = Self.makeTone(duration: 0.55)
+        countdownClip?.prepareToPlay()
         shortBeep?.prepareToPlay()
         longBeep?.prepareToPlay()
     }
 
+    func prepareAudioSession() {
+        do {
+            let session = AVAudioSession.sharedInstance()
+            try session.setCategory(.playback, mode: .default, options: [.mixWithOthers])
+            try session.setActive(true)
+        } catch {
+            #if DEBUG
+            print("Could not activate audible workout countdowns: \(error)")
+            #endif
+        }
+    }
+
     func play(at remaining: Int) {
+        guard (0...3).contains(remaining) else { return }
+        prepareAudioSession()
+
+        if let clip = countdownClip {
+            if remaining == 3 {
+                clip.stop()
+                clip.currentTime = 0
+                clip.play()
+                return
+            }
+            // The recorded sound includes the later beats at 2, 1 and 0.
+            if clip.isPlaying { return }
+        }
+
+        // Fallback for a 1- or 2-second timer, or if the WAV is not bundled.
         switch remaining {
         case 1...3:
+            shortBeep?.stop()
             shortBeep?.currentTime = 0
             shortBeep?.play()
         case 0:
+            longBeep?.stop()
             longBeep?.currentTime = 0
             longBeep?.play()
         default:
@@ -3513,8 +3548,8 @@ private final class StrengthLabCountdownBeeper {
         put(UInt32(36 + pcmByteCount))
         wav.append(contentsOf: "WAVEfmt ".utf8)
         put(UInt32(16))
-        put(UInt16(1)) // PCM
-        put(UInt16(1)) // Mono
+        put(UInt16(1))
+        put(UInt16(1))
         put(UInt32(sampleRate))
         put(UInt32(sampleRate * 2))
         put(UInt16(2))
@@ -3530,7 +3565,6 @@ private final class StrengthLabCountdownBeeper {
             let tone = sin(2 * Double.pi * 880 * Double(sampleIndex) / Double(sampleRate))
             put(Int16(tone * envelope * 12_000))
         }
-
         return try? AVAudioPlayer(data: wav)
     }
 }
