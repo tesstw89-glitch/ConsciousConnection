@@ -40,6 +40,7 @@ struct HomeView: View {
     @State private var showingCelebration = false
 
     @AppStorage("lastActiveDate") private var lastActiveDateTimestamp: Double = 0
+    @AppStorage("workoutWeeklyHabitBootstrap.v1") private var didBootstrapWorkout = false
     @State private var refreshID = UUID()
 
     @State private var syncError: String?
@@ -71,7 +72,18 @@ struct HomeView: View {
 
     private var visibleHabits: [Habit] {
         habits.filter { habit in
-            !habit.isRestDay(on: selectedDate)
+            guard !habit.isRestDay(on: selectedDate) else { return false }
+            if let target = habit.weeklyTarget, target > 0 {
+                return habit.weeklyProgress(on: selectedDate) < target
+            }
+            return true
+        }
+    }
+
+    private var allWeeklyTargetsMet: Bool {
+        visibleHabits.isEmpty && habits.contains {
+            guard let target = $0.weeklyTarget, target > 0 else { return false }
+            return $0.weeklyProgress(on: selectedDate) >= target
         }
     }
 
@@ -81,6 +93,30 @@ struct HomeView: View {
 
     private func updateLastActiveDate() {
         lastActiveDateTimestamp = Date().timeIntervalSince1970
+    }
+
+    /// Add Workout 0/4 once, without recreating it if the user later deletes it.
+    private func bootstrapWorkoutWeeklyHabit() {
+        guard !didBootstrapWorkout else { return }
+        do {
+            let existing = try modelContext.fetch(FetchDescriptor<Habit>())
+                .first { $0.name.compare("Workout", options: .caseInsensitive) == .orderedSame }
+            if let existing {
+                if existing.habitType == .manual && existing.weeklyTarget == nil {
+                    existing.weeklyTarget = 4
+                }
+            } else {
+                let workout = Habit(name: "Workout", icon: "dumbbell.fill",
+                                    color: "#EC4899", weeklyTarget: 4)
+                modelContext.insert(workout)
+            }
+            try modelContext.save()
+            didBootstrapWorkout = true
+        } catch {
+            #if DEBUG
+            print("Could not create weekly Workout habit: \(error)")
+            #endif
+        }
     }
 
     private func moveSelectedDate(by days: Int) {
@@ -347,7 +383,7 @@ struct HomeView: View {
                                     .id(refreshID)
                                     .padding(.bottom, 8)
                                 } else {
-                                    Text(hasHabitsButAllAreResting ? "Rest day" : "Add habits to track progress")
+                                    Text(allWeeklyTargetsMet ? "Weekly goal achieved!" : (hasHabitsButAllAreResting ? "Rest day" : "Add habits to track progress"))
                                         .font(.subheadline)
                                         .foregroundStyle(greetingSubtitleColor)
                                         .shadow(color: themeManager.dynamicHeaderEnabled ? .black.opacity(0.3) : .clear, radius: 2, x: 0, y: 1)
@@ -440,6 +476,7 @@ struct HomeView: View {
                 }
             }
             .onAppear {
+                bootstrapWorkoutWeeklyHabit()
                 let calendar = Calendar.current
                 let now = Date()
 
@@ -754,11 +791,13 @@ struct HomeView: View {
 
     private var restDaySection: some View {
         VStack(spacing: 10) {
-            Text("Rest day")
+            Text(allWeeklyTargetsMet ? "Weekly targets complete!" : "Rest day")
                 .font(.title2.weight(.bold))
                 .foregroundStyle(.white)
 
-            Text("No habits scheduled for \(selectedDateLabel.lowercased()).")
+            Text(allWeeklyTargetsMet
+                 ? "Your weekly goals will return next Monday."
+                 : "No habits scheduled for \(selectedDateLabel.lowercased()).")
                 .font(.subheadline)
                 .foregroundStyle(.white.opacity(0.75))
                 .multilineTextAlignment(.center)
