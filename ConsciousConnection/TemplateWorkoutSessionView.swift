@@ -85,6 +85,7 @@ struct TemplateWorkoutSessionView: View {
         .onReceive(timer) { _ in
             if restRemaining > 0 {
                 restRemaining -= 1
+                WorkoutCountdownBeeper.shared.play(at: restRemaining)
             }
         }
         .toolbar {
@@ -307,6 +308,7 @@ struct TemplateWorkoutSessionView: View {
         if blocks[blockIndex].exercises[exerciseIndex].sets[setIndex].completed {
             blocks[blockIndex].exercises[exerciseIndex].sets[setIndex].skipped = false
             restRemaining = blocks[blockIndex].exercises[exerciseIndex].sets[setIndex].restSeconds
+            if (1...3).contains(restRemaining) { WorkoutCountdownBeeper.shared.play(at: restRemaining) }
         } else {
             restRemaining = 0
         }
