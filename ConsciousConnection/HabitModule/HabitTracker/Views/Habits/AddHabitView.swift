@@ -27,6 +27,8 @@ struct AddHabitView: View {
     @State private var selectedColor = "#A855F7"
     @State private var hasGoal = false
     @State private var dailyGoal: Double = 0
+    @State private var weeklyTargetEnabled = false
+    @State private var weeklyTargetValue = 4
 
     // Goal Progression
     @State private var goalProgression: GoalProgression = .fixed
@@ -334,6 +336,9 @@ struct AddHabitView: View {
                 if hasGoal && selectedHabitType != .manual {
                     goalProgressionSection
                 }
+
+                // Manual habits may count completions across the whole week.
+                if selectedHabitType == .manual { weeklyTargetSection }
 
                 // Rest Days Section
                 restDaysSection
@@ -778,6 +783,24 @@ struct AddHabitView: View {
 
     // MARK: - Rest Days Section
 
+    private var weeklyTargetSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Toggle("Per-week target", isOn: $weeklyTargetEnabled)
+                .font(.headline)
+                .tint(accentColor)
+                .foregroundStyle(primaryText)
+            Text("Show this habit every day until you complete your weekly target. Resets every Monday.")
+                .font(.caption)
+                .foregroundStyle(secondaryText)
+            if weeklyTargetEnabled {
+                Stepper("Times per week: \(weeklyTargetValue)", value: $weeklyTargetValue, in: 1...21)
+                    .foregroundStyle(primaryText)
+            }
+        }
+        .padding(16)
+        .liquidGlass(cornerRadius: 20)
+    }
+
     private var restDaysSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
@@ -964,7 +987,8 @@ struct AddHabitView: View {
             habitType: selectedHabitType,
             dataSource: selectedDataSource,
             dailyGoal: hasGoal ? dailyGoal : nil,
-            unit: selectedHabitType != .manual ? unitForType : nil
+            unit: selectedHabitType != .manual ? unitForType : nil,
+            weeklyTarget: selectedHabitType == .manual && weeklyTargetEnabled ? weeklyTargetValue : nil
         )
 
         // Set goal progression properties
