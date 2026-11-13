@@ -219,6 +219,14 @@ struct WorkoutLibraryHomeView: View {
     @State private var showingCombineWorkouts = false
     @State private var pendingCombinedWorkout: WorkoutTemplate?
 
+    // STRENGTHLAB_COMBINED_SESSIONS_NOV08_2026
+    @State private var combinedSession: CombinedWorkoutLaunch?
+    // STRENGTHLAB_SCHEDULED_ORDER_NOV08_2026
+    @AppStorage("strengthlab.scheduledWorkoutOrder.v1") private var scheduledWorkoutOrderJSON = "{}"
+    @State private var showingSessionCombinePicker = false
+    @State private var pendingCombinedSessionWorkouts: [WorkoutTemplate]?
+
+
     @State private var programStore = StrengthLabProgramStore.shared
     @State private var showingPrograms = false
     @State private var newProgramName = ""
@@ -229,6 +237,24 @@ struct WorkoutLibraryHomeView: View {
     private var activeWorkouts: [WorkoutTemplate] {
         guard programStore.activeProgram != nil else { return workouts }
         return workouts.filter { programStore.containsWorkout($0.uuid) }
+    }
+
+    // STRENGTHLAB_SCHEDULED_ORDER_NOV08_2026
+    // Uses the order set with the up/down arrows in the calendar.
+    private var todayScheduledWorkouts: [WorkoutTemplate] {
+        let today = Date()
+        let matching = StrengthLabScheduledWorkoutOrder.ordered(
+            schedules.filter { schedule in
+                schedule.matches(today) &&
+                (programStore.activeProgram == nil || programStore.containsSchedule(schedule.uuid))
+            },
+            encoded: scheduledWorkoutOrderJSON
+        )
+        var seen = Set<UUID>()
+        return matching.compactMap(\.workout).filter { workout in
+            seen.insert(workout.uuid).inserted &&
+            !(workout.exercises ?? []).isEmpty
+        }
     }
 
     private var unattachedWorkouts: [WorkoutTemplate] {
@@ -346,6 +372,28 @@ struct WorkoutLibraryHomeView: View {
             WorkoutRunView(
                 workout: workout
             )
+        }
+        // STRENGTHLAB_COMBINED_SESSIONS_NOV08_2026
+        // One player is used for the entire combined session. No interim
+        // completion screens or separate per-workout history summaries.
+        .fullScreenCover(item: $combinedSession) { launch in
+            if let first = launch.workouts.first {
+                WorkoutRunView(
+                    workout: first,
+                    additionalWorkouts: Array(launch.workouts.dropFirst())
+                )
+            }
+        }
+        .sheet(isPresented: $showingSessionCombinePicker, onDismiss: {
+            if let chosen = pendingCombinedSessionWorkouts, chosen.count >= 2 {
+                combinedSession = CombinedWorkoutLaunch(workouts: chosen)
+            }
+            pendingCombinedSessionWorkouts = nil
+        }) {
+            WorkoutSessionCombinePicker(workouts: activeWorkouts) { selected in
+                pendingCombinedSessionWorkouts = selected
+                showingSessionCombinePicker = false
+            }
         }
         .fullScreenCover(
             isPresented: $showingCalendar
@@ -638,6 +686,48 @@ struct WorkoutLibraryHomeView: View {
             }
             .buttonStyle(.plain)
 
+            // STRENGTHLAB_COMBINED_SESSIONS_NOV08_2026
+            Button {
+                startScheduledWorkouts()
+            } label: {
+                HStack(spacing: 12) {
+                    Image(systemName: "calendar.badge.clock")
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Do scheduled workouts")
+                            .font(StrengthLabFigmaTheme.bold(16))
+                        Text(todayScheduledWorkouts.isEmpty
+                            ? "Nothing scheduled for today"
+                            : "\(todayScheduledWorkouts.count) workout\(todayScheduledWorkouts.count == 1 ? "" : "s") today · one session")
+                            .font(StrengthLabFigmaTheme.medium(12))
+                    }
+                    Spacer(minLength: 0)
+                    Image(systemName: "play.fill")
+                }
+                .foregroundStyle(.white)
+                .padding(.horizontal, 18)
+                .frame(maxWidth: .infinity, minHeight: 62)
+                .background(StrengthLabFigmaTheme.coralGradient,
+                            in: RoundedRectangle(cornerRadius: 16))
+            }
+            .buttonStyle(.plain)
+            .disabled(todayScheduledWorkouts.isEmpty)
+            .opacity(todayScheduledWorkouts.isEmpty ? 0.48 : 1.0)
+            .padding(.top, 12)
+
+            if activeWorkouts.count >= 2 {
+                Button {
+                    showingSessionCombinePicker = true
+                } label: {
+                    Label("Do Combined Workout", systemImage: "figure.strengthtraining.traditional")
+                        .font(StrengthLabFigmaTheme.bold(15))
+                        .foregroundStyle(StrengthLabFigmaTheme.ink)
+                        .frame(maxWidth: .infinity, minHeight: 50)
+                        .background(Color.white, in: RoundedRectangle(cornerRadius: 15))
+                }
+                .buttonStyle(.plain)
+                .padding(.top, 10)
+            }
+
             if workouts.count >= 2 {
                 Button {
                     showingCombineWorkouts = true
@@ -897,6 +987,14 @@ struct WorkoutLibraryHomeView: View {
     }
 
     // MARK: Actions
+
+    // STRENGTHLAB_COMBINED_SESSIONS_NOV08_2026
+    private func startScheduledWorkouts() {
+        let selected = todayScheduledWorkouts
+        guard !selected.isEmpty else { return }
+        combinedSession = CombinedWorkoutLaunch(workouts: selected)
+    }
+
 
     private func createWorkout() {
         let workout = WorkoutTemplate(name: "New Workout")
@@ -1305,5 +1403,120 @@ struct WorkoutCombineSheet: View {
             }
         }
         .presentationDetents([.medium, .large])
+    }
+}
+
+
+// STRENGTHLAB_COMBINED_SESSIONS_NOV08_2026
+// Transient launch metadata; the selected templates are played directly,
+// not copied, duplicated, or merged in the database.
+private struct CombinedWorkoutLaunch: Identifiable {
+    let id = UUID()
+    let workouts: [WorkoutTemplate]
+}
+
+private struct WorkoutSessionCombinePicker: View {
+    let workouts: [WorkoutTemplate]
+    let onStart: ([WorkoutTemplate]) -> Void
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var selectedIDs: [UUID] = []
+
+    private var selectedWorkouts: [WorkoutTemplate] {
+        selectedIDs.compactMap { id in workouts.first { $0.uuid == id } }
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    ForEach(workouts, id: \.uuid) { workout in
+                        let playable = !(workout.exercises ?? []).isEmpty
+                        Button {
+                            if let index = selectedIDs.firstIndex(of: workout.uuid) {
+                                selectedIDs.remove(at: index)
+                            } else {
+                                selectedIDs.append(workout.uuid)
+                            }
+                        } label: {
+                            HStack(spacing: 12) {
+                                Image(systemName: selectedIDs.contains(workout.uuid)
+                                      ? "checkmark.circle.fill" : "circle")
+                                    .foregroundStyle(StrengthLabFigmaTheme.coral)
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text(workout.name).foregroundStyle(.primary)
+                                    Text("\((workout.exercises ?? []).count) exercises")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                                Spacer()
+                                if let index = selectedIDs.firstIndex(of: workout.uuid) {
+                                    Text("\(index + 1)")
+                                        .font(.caption.bold())
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(!playable)
+                    }
+                } header: {
+                    Text("Choose workouts")
+                } footer: {
+                    Text("Select two or more. The original workouts and their schedules stay unchanged.")
+                }
+
+                if selectedIDs.count >= 2 {
+                    Section("Session order") {
+                        ForEach(Array(selectedWorkouts.enumerated()), id: \.element.uuid) { index, workout in
+                            HStack(spacing: 12) {
+                                Text("\(index + 1).")
+                                    .monospacedDigit()
+                                    .foregroundStyle(.secondary)
+                                Text(workout.name)
+                                Spacer()
+                                Button {
+                                    guard index > 0 else { return }
+                                    selectedIDs.swapAt(index, index - 1)
+                                } label: {
+                                    Image(systemName: "arrow.up.circle")
+                                }
+                                .disabled(index == 0)
+                                Button {
+                                    guard index + 1 < selectedIDs.count else { return }
+                                    selectedIDs.swapAt(index, index + 1)
+                                } label: {
+                                    Image(systemName: "arrow.down.circle")
+                                }
+                                .disabled(index + 1 == selectedIDs.count)
+                            }
+                            .buttonStyle(.borderless)
+                        }
+                    }
+                }
+
+                Section {
+                    Button {
+                        onStart(selectedWorkouts)
+                    } label: {
+                        Label("Start one combined session", systemImage: "play.fill")
+                            .font(.headline)
+                            .frame(maxWidth: .infinity)
+                    }
+                    .disabled(selectedIDs.count < 2)
+                } footer: {
+                    Text("One Apple Watch reminder, one countdown, one end screen and one combined diary record.")
+                }
+            }
+            .navigationTitle("Do Combined Workout")
+            .navigationBarTitleDisplayMode(.inline)
+            .tint(StrengthLabFigmaTheme.coral)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+            }
+        }
+        .presentationDetents([.large])
     }
 }

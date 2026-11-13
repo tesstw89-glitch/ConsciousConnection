@@ -36,6 +36,25 @@ struct WorkoutRunView:
     let workout:
         WorkoutTemplate
 
+    // STRENGTHLAB_COMBINED_SESSIONS_NOV08_2026
+    // Old single-workout call sites continue working unchanged.
+    let additionalWorkouts: [WorkoutTemplate]
+
+    init(workout: WorkoutTemplate, additionalWorkouts: [WorkoutTemplate] = []) {
+        self.workout = workout
+        self.additionalWorkouts = additionalWorkouts
+    }
+
+    private var sessionWorkouts: [WorkoutTemplate] {
+        var seen = Set<UUID>()
+        return ([workout] + additionalWorkouts).filter { seen.insert($0.uuid).inserted }
+    }
+
+    private var sessionName: String {
+        sessionWorkouts.map(\.name).joined(separator: " + ")
+    }
+
+
     @State
     private var startedAt =
         Date()
@@ -148,13 +167,10 @@ struct WorkoutRunView:
     private var exercises:
         [SetDeckExercise]
     {
-        (workout.exercises ?? [])
-            .sorted {
-                $0.orderIndex <
-                $1.orderIndex
-            }
+        sessionWorkouts.flatMap { source in
+            (source.exercises ?? []).sorted { $0.orderIndex < $1.orderIndex }
+        }
     }
-
 
     private var currentExercise:
         SetDeckExercise?
@@ -266,7 +282,9 @@ struct WorkoutRunView:
             } catch {
                 print("Music mixing: \(error.localizedDescription)")
             }
-            StrengthLabExercisePreferences.applySaved(to: workout, in: modelContext)
+            for source in sessionWorkouts {
+                StrengthLabExercisePreferences.applySaved(to: source, in: modelContext)
+            }
         }
         .task {
             await healthManager
@@ -453,7 +471,7 @@ struct WorkoutRunView:
                 .frame(height: 265)
                 .animation(.easeOut(duration: 0.48), value: countdownBurst)
 
-                Text(workout.name)
+                Text(sessionName)
                     .font(StrengthLabFigmaTheme.medium(18))
                     .foregroundStyle(StrengthLabFigmaTheme.ink)
 
@@ -1227,7 +1245,7 @@ struct WorkoutRunView:
                     )
 
                     Text(
-                        workout.name
+                        sessionName
                     )
                     .font(
                         StrengthLabFigmaTheme
@@ -1833,34 +1851,41 @@ struct WorkoutRunView:
     }
 
 
-    // Exercise order for this session. Group members run in cycles:
-    // A1, A2, A3, A4, then A1 set 2, ...; never A1 x3 first.
+    // STRENGTHLAB_COMBINED_SESSIONS_NOV08_2026
+    // Each template is played completely before the next. Supersets cycle
+    // inside their OWN template, even if two source templates share a group UUID.
     private var playbackPositions: [(exercise: Int, set: Int)] {
-        let ordered = exercises
         var result: [(exercise: Int, set: Int)] = []
-        var handledGroups = Set<UUID>()
+        var offset = 0
 
-        for (index, exercise) in ordered.enumerated() {
-            if let groupID = exercise.supersetGroupID {
-                guard handledGroups.insert(groupID).inserted else { continue }
-                let members = ordered.enumerated().filter {
-                    $0.element.supersetGroupID == groupID
-                }
-                let cycles = members.map { orderedSets(for: $0.element).count }.max() ?? 0
-                if cycles > 0 {
-                    for cycle in 0..<cycles {
-                        for (memberIndex, member) in members {
-                            if orderedSets(for: member).indices.contains(cycle) {
-                                result.append((memberIndex, cycle))
+        for source in sessionWorkouts {
+            let local = (source.exercises ?? [])
+                .sorted { $0.orderIndex < $1.orderIndex }
+            var handledGroups = Set<UUID>()
+
+            for (index, exercise) in local.enumerated() {
+                if let groupID = exercise.supersetGroupID {
+                    guard handledGroups.insert(groupID).inserted else { continue }
+                    let members = local.enumerated().filter {
+                        $0.element.supersetGroupID == groupID
+                    }
+                    let cycles = members.map { orderedSets(for: $0.element).count }.max() ?? 0
+                    if cycles > 0 {
+                        for cycle in 0..<cycles {
+                            for (memberIndex, member) in members {
+                                if orderedSets(for: member).indices.contains(cycle) {
+                                    result.append((offset + memberIndex, cycle))
+                                }
                             }
                         }
                     }
-                }
-            } else {
-                for setIndex in orderedSets(for: exercise).indices {
-                    result.append((index, setIndex))
+                } else {
+                    for setIndex in orderedSets(for: exercise).indices {
+                        result.append((offset + index, setIndex))
+                    }
                 }
             }
+            offset += local.count
         }
         return result
     }
@@ -2020,7 +2045,7 @@ struct WorkoutRunView:
 
         if !completedSetIDs.isEmpty {
             StrengthLabCompletedSessions.record(
-                workoutName: workout.name,
+                workoutName: sessionName,
                 startedAt: startedAt,
                 endedAt: workoutEndedAt ?? Date(),
                 completedSetCount: completedSetIDs.count,
@@ -2290,8 +2315,8 @@ struct WorkoutRunView:
                                 set.rpe,
                             note:
                                 endedEarly
-                                ? "Ended early · \(workout.name)"
-                                : "Workout · \(workout.name)"
+                                ? "Ended early · \(sessionName)"
+                                : "Workout · \(sessionName)"
                         )
             }
         }
@@ -2311,7 +2336,7 @@ struct WorkoutRunView:
                     actualDuration: extra.setType == .duration ? extra.targetDuration : nil,
                     actualDescription: extra.setDescription,
                     actualRpe: extra.rpe,
-                    note: "Extra set · \(workout.name)"
+                    note: "Extra set · \(sessionName)"
                 )
             }
         }

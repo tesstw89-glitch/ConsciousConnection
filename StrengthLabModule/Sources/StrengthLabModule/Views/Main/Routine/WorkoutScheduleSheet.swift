@@ -44,6 +44,8 @@ struct WorkoutScheduleSheet: View {
         .sorted { $0.finishedAt < $1.finishedAt }
     }
 
+    // STRENGTHLAB_SCHEDULED_ORDER_NOV08_2026
+    @AppStorage("strengthlab.scheduledWorkoutOrder.v1") private var scheduledWorkoutOrderJSON = "{}"
     @State private var programStore = StrengthLabProgramStore.shared
     @State private var scheduleError = ""
     @State private var showingScheduleError = false
@@ -502,6 +504,20 @@ struct WorkoutScheduleSheet: View {
                 )
             }
             .buttonStyle(.plain)
+
+            // STRENGTHLAB_COMBINED_SESSIONS_NOV08_2026
+            if activeWorkouts.contains(where: { $0.uuid != workout.uuid }) {
+                Menu {
+                    ForEach(activeWorkouts.filter { $0.uuid != workout.uuid }) { other in
+                        Button(other.name) { addSchedule(for: other) }
+                    }
+                } label: {
+                    Label("Schedule another workout today", systemImage: "plus.circle")
+                        .font(StrengthLabFigmaTheme.medium(14))
+                        .foregroundStyle(StrengthLabFigmaTheme.coral)
+                        .frame(maxWidth: .infinity, minHeight: 38)
+                }
+            }
         } else {
             Menu {
                 ForEach(activeWorkouts) {
@@ -553,6 +569,14 @@ struct WorkoutScheduleSheet: View {
             }
             .disabled(activeWorkouts.isEmpty)
         }
+    }
+
+    // STRENGTHLAB_SCHEDULED_ORDER_NOV08_2026
+    private func moveScheduledWorkout(_ schedule: WorkoutSchedule, by direction: Int) {
+        scheduledWorkoutOrderJSON = StrengthLabScheduledWorkoutOrder.moving(
+            schedule, by: direction, among: panelSchedules,
+            encoded: scheduledWorkoutOrderJSON
+        )
     }
 
     private func scheduleRow(
@@ -626,6 +650,36 @@ struct WorkoutScheduleSheet: View {
             }
 
             Spacer()
+
+            // STRENGTHLAB_SCHEDULED_ORDER_NOV08_2026
+            if panelSchedules.count > 1 {
+                VStack(spacing: 3) {
+                    Button {
+                        moveScheduledWorkout(schedule, by: -1)
+                    } label: {
+                        Image(systemName: "arrow.up.circle.fill")
+                            .font(.system(size: 22))
+                            .foregroundStyle(StrengthLabFigmaTheme.coral)
+                            .frame(width: 34, height: 29)
+                    }
+                    .disabled(panelSchedules.first?.uuid == schedule.uuid)
+                    .opacity(panelSchedules.first?.uuid == schedule.uuid ? 0.3 : 1)
+                    .accessibilityLabel("Move \(schedule.workout?.name ?? "workout") earlier")
+
+                    Button {
+                        moveScheduledWorkout(schedule, by: 1)
+                    } label: {
+                        Image(systemName: "arrow.down.circle.fill")
+                            .font(.system(size: 22))
+                            .foregroundStyle(StrengthLabFigmaTheme.coral)
+                            .frame(width: 34, height: 29)
+                    }
+                    .disabled(panelSchedules.last?.uuid == schedule.uuid)
+                    .opacity(panelSchedules.last?.uuid == schedule.uuid ? 0.3 : 1)
+                    .accessibilityLabel("Move \(schedule.workout?.name ?? "workout") later")
+                }
+                .buttonStyle(.plain)
+            }
 
             Image(
                 systemName:
@@ -792,68 +846,18 @@ struct WorkoutScheduleSheet: View {
         )
     }
 
-    private var panelTitle:
-        String
-    {
-        if let workout {
-            let count =
-                activeSchedules.filter {
-                    $0.workout?.uuid ==
-                        workout.uuid
-                }.count
-
-            return
-                "\(count) " +
-                (
-                    count == 1
-                    ? "Schedule"
-                    : "Schedules"
-                )
-        }
-
-        let count =
-            panelSchedules.count
-
-        return
-            "\(count) " +
-            (
-                count == 1
-                ? "Workout"
-                : "Workouts"
-            )
+    // STRENGTHLAB_COMBINED_SESSIONS_NOV08_2026
+    private var panelTitle: String {
+        let count = panelSchedules.count
+        return "\(count) " + (count == 1 ? "Workout" : "Workouts") + " on this day"
     }
 
-    private var panelSchedules:
-        [WorkoutSchedule]
-    {
-        if let workout {
-            return activeSchedules
-                .filter {
-                    $0.workout?.uuid ==
-                        workout.uuid
-                }
-                .sorted {
-                    $0.scheduledDate <
-                        $1.scheduledDate
-                }
-        }
-
-        return activeSchedules
-            .filter {
-                $0.matches(
-                    selectedDate
-                )
-            }
-            .sorted {
-                (
-                    $0.workout?.name ??
-                    ""
-                ) <
-                (
-                    $1.workout?.name ??
-                    ""
-                )
-            }
+    // STRENGTHLAB_SCHEDULED_ORDER_NOV08_2026
+    private var panelSchedules: [WorkoutSchedule] {
+        StrengthLabScheduledWorkoutOrder.ordered(
+            activeSchedules.filter { $0.matches(selectedDate) },
+            encoded: scheduledWorkoutOrderJSON
+        )
     }
 
     private func shiftMonth(
@@ -992,4 +996,59 @@ struct WorkoutScheduleSheet: View {
         showingScheduleError = true
     }
 
+}
+
+
+// STRENGTHLAB_SCHEDULED_ORDER_NOV08_2026
+// Persist the order of schedule IDs as app preferences, avoiding changes to
+// existing SwiftData models, migration, or saved workout templates.
+// Each weekly schedule has its own ID, so its order persists week to week.
+enum StrengthLabScheduledWorkoutOrder {
+    private static func positions(_ encoded: String) -> [String: Int] {
+        guard let data = encoded.data(using: .utf8) else { return [:] }
+        return (try? JSONDecoder().decode([String: Int].self, from: data)) ?? [:]
+    }
+
+    static func ordered(_ schedules: [WorkoutSchedule], encoded: String) -> [WorkoutSchedule] {
+        let positions = positions(encoded)
+        return schedules.sorted { left, right in
+            let l = positions[left.uuid.uuidString]
+            let r = positions[right.uuid.uuidString]
+            if let l, let r, l != r { return l < r }
+            if l != nil && r == nil { return true }
+            if l == nil && r != nil { return false }
+            let leftName = left.workout?.name ?? ""
+            let rightName = right.workout?.name ?? ""
+            let comparison = leftName.localizedStandardCompare(rightName)
+            if comparison != .orderedSame { return comparison == .orderedAscending }
+            return left.uuid.uuidString < right.uuid.uuidString
+        }
+    }
+
+    static func moving(
+        _ schedule: WorkoutSchedule,
+        by direction: Int,
+        among schedules: [WorkoutSchedule],
+        encoded: String
+    ) -> String {
+        let sorted = ordered(schedules, encoded: encoded)
+        guard let index = sorted.firstIndex(where: { $0.uuid == schedule.uuid }) else {
+            return encoded
+        }
+        let destination = index + direction
+        guard sorted.indices.contains(destination), destination != index else {
+            return encoded
+        }
+        var reordered = sorted
+        reordered.swapAt(index, destination)
+        var positions = positions(encoded)
+        for (rank, item) in reordered.enumerated() {
+            positions[item.uuid.uuidString] = rank
+        }
+        guard let data = try? JSONEncoder().encode(positions),
+              let output = String(data: data, encoding: .utf8) else {
+            return encoded
+        }
+        return output
+    }
 }
