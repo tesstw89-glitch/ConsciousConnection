@@ -403,7 +403,7 @@
 			mainGroup = 082BB2212F3E74410023DFEF;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				085BE53E2F98C08600E2484B /* XCLocalSwiftPackageReference "../BEMCheckBox-master" */,
+				085BE53E2F98C08600E2484B /* XCRemoteSwiftPackageReference "BEMCheckBox" */,
 				71BFCA52A13B4C8CB78472A8 /* XCLocalSwiftPackageReference "StrengthLabModule" */,
 			);
 			preferredProjectObjectVersion = 77;
@@ -942,20 +942,25 @@
 		};
 /* End XCConfigurationList section */
 
-/* Begin XCLocalSwiftPackageReference section */
-		085BE53E2F98C08600E2484B /* XCLocalSwiftPackageReference "../BEMCheckBox-master" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = "../BEMCheckBox-master";
+/* Begin XCRemoteSwiftPackageReference section */
+		085BE53E2F98C08600E2484B /* XCRemoteSwiftPackageReference "BEMCheckBox" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/Boris-Em/BEMCheckBox.git";
+			requirement = {
+				kind = revision;
+				revision = a3292ebae9f0c2737b0c90281219dced2ce51ac8;
+			};
 		};
 		71BFCA52A13B4C8CB78472A8 /* XCLocalSwiftPackageReference "StrengthLabModule" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = StrengthLabModule;
 		};
-/* End XCLocalSwiftPackageReference section */
+/* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
 		085BE53F2F98C08600E2484B /* BEMCheckBox */ = {
 			isa = XCSwiftPackageProductDependency;
+			package = 085BE53E2F98C08600E2484B /* XCRemoteSwiftPackageReference "BEMCheckBox" */;
 			productName = BEMCheckBox;
 		};
 		AFA4F654FD3F4626BB3FA63B /* StrengthLabModule */ = {
