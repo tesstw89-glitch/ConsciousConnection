@@ -844,8 +844,7 @@ struct WorkoutRunView:
                 Spacer()
 
                 doneSetButton(
-                    action:
-                        completeCurrentSet
+                    action: { completeCurrentSet() }
                 )
             }
         }
