@@ -22,14 +22,17 @@ final class SLWatchController: NSObject, ObservableObject, WCSessionDelegate {
     private let health = SLWatchHealth()
     private let cacheKey = "strengthlab.watch.snapshot.v1"
     private let progressKey = "strengthlab.watch.progress.v1"
+    private let activeWorkoutKey = "strengthlab.watch.activeWorkout.v1"
     private let pendingKey = "strengthlab.watch.pendingEvents.v1"
     private var pendingEvents: [SLWatchEvent] = []
     private var startedAt: Date?
+    private var savedActiveWorkout: SLWatchWorkout?
 
     private struct SavedProgress: Codable {
         var workoutID: UUID
         var currentSetID: UUID?
         var completedIDs: [UUID]
+        var startedAt: Date?
     }
 
     override init() {
@@ -42,6 +45,10 @@ final class SLWatchController: NSObject, ObservableObject, WCSessionDelegate {
             activeWorkoutID = saved.workoutID
             currentSetID = saved.currentSetID
             completedSetIDs = Set(saved.completedIDs)
+            startedAt = saved.startedAt
+        }
+        if let data = UserDefaults.standard.data(forKey: activeWorkoutKey) {
+            savedActiveWorkout = try? JSONDecoder().decode(SLWatchWorkout.self, from: data)
         }
         if let data = UserDefaults.standard.data(forKey: pendingKey) {
             pendingEvents = (try? JSONDecoder().decode([SLWatchEvent].self, from: data)) ?? []
@@ -49,7 +56,7 @@ final class SLWatchController: NSObject, ObservableObject, WCSessionDelegate {
     }
 
     var activeWorkout: SLWatchWorkout? {
-        snapshot?.workouts.first(where: { $0.id == activeWorkoutID })
+        snapshot?.workouts.first(where: { $0.id == activeWorkoutID }) ?? savedActiveWorkout
     }
 
     var current: (exercise: SLWatchExercise, set: SLWatchSet, index: Int, total: Int)? {
@@ -106,6 +113,10 @@ final class SLWatchController: NSObject, ObservableObject, WCSessionDelegate {
             return
         }
         activeWorkoutID = workout.id
+        savedActiveWorkout = workout
+        if let data = try? JSONEncoder().encode(workout) {
+            UserDefaults.standard.set(data, forKey: activeWorkoutKey)
+        }
         startedAt = Date()
         completedSetIDs.removeAll()
         currentSetID = workout.exercises.flatMap(\.sets).first?.id
@@ -202,6 +213,8 @@ final class SLWatchController: NSObject, ObservableObject, WCSessionDelegate {
             emit(kind: "finished", workoutID: workout.id, calories: kcal, startedAt: startedAt)
         }
         activeWorkoutID = nil
+        savedActiveWorkout = nil
+        UserDefaults.standard.removeObject(forKey: activeWorkoutKey)
         startedAt = nil
         currentSetID = nil
         completedSetIDs.removeAll()
@@ -216,7 +229,7 @@ final class SLWatchController: NSObject, ObservableObject, WCSessionDelegate {
             return
         }
         let data = SavedProgress(workoutID: id, currentSetID: currentSetID,
-                                 completedIDs: Array(completedSetIDs))
+                                 completedIDs: Array(completedSetIDs), startedAt: startedAt)
         if let encoded = try? JSONEncoder().encode(data) {
             UserDefaults.standard.set(encoded, forKey: progressKey)
         }
