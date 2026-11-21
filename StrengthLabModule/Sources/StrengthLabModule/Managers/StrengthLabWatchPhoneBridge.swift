@@ -37,6 +37,7 @@ struct SLWatchEvent: Codable {
     var duration: Double?
     var calories: Double?
     var when: Date
+    var startedAt: Date?
 }
 
 extension Notification.Name {
@@ -52,6 +53,7 @@ final class StrengthLabWatchPhoneBridge: NSObject, WCSessionDelegate {
     private var processed: Set<UUID> = []
     private let processedKey = "strengthlab.watch.eventIDs.v1"
     private(set) var phoneWorkoutID: UUID?
+    private(set) var watchStartedWorkoutID: UUID?
 
     private override init() {
         super.init()
@@ -137,7 +139,7 @@ final class StrengthLabWatchPhoneBridge: NSObject, WCSessionDelegate {
         guard let wc = session, wc.isReachable else { return }
         let event = SLWatchEvent(id: UUID(), kind: kind, workoutID: workoutID,
                                  setID: setID, reps: reps, weight: weight,
-                                 duration: nil, calories: nil, when: Date())
+                                 duration: nil, calories: nil, when: Date(), startedAt: nil)
         if let data = try? JSONEncoder().encode(event) {
             wc.sendMessage(["slEvent": data], replyHandler: nil, errorHandler: nil)
         }
@@ -148,6 +150,7 @@ final class StrengthLabWatchPhoneBridge: NSObject, WCSessionDelegate {
         guard processed.insert(event.id).inserted else { return }
         UserDefaults.standard.set(processed.suffix(1000).map(\.uuidString), forKey: processedKey)
         guard let context else { return }
+        if event.kind == "started" { watchStartedWorkoutID = event.workoutID }
 
         if event.kind == "adjusted", let setID = event.setID,
            let set = findSet(setID, in: context) {
@@ -175,9 +178,28 @@ final class StrengthLabWatchPhoneBridge: NSObject, WCSessionDelegate {
             }
         }
         if event.kind == "finished" {
-            // Calories are from HealthKit's workout builder, not a fabricated estimate.
+            watchStartedWorkoutID = nil
+            // Calories come from the watch's HealthKit workout, not an estimate.
             if let kcal = event.calories {
                 UserDefaults.standard.set(kcal, forKey: "strengthlab.watch.calories.\(event.workoutID)")
+            }
+            // A watch-only workout must also appear in the phone's workout log.
+            // The normal phone player records its own summary, so never double-record it.
+            if phoneWorkoutID != event.workoutID, let started = event.startedAt,
+               let workout = (try? context.fetch(FetchDescriptor<WorkoutTemplate>()))?
+                    .first(where: { $0.uuid == event.workoutID }) {
+                let label = "Apple Watch · \(event.workoutID.uuidString)"
+                let entries = (try? context.fetch(FetchDescriptor<SetDeckSetHistory>())) ?? []
+                let count = entries.filter {
+                    $0.note == label && $0.completedDate >= started && $0.completedDate <= event.when
+                }.count
+                if count > 0 {
+                    StrengthLabCompletedSessions.record(
+                        workoutName: workout.name, startedAt: started,
+                        endedAt: event.when, completedSetCount: count,
+                        endedEarly: count < (workout.exercises ?? []).reduce(0) { $0 + ($1.sets ?? []).count }
+                    )
+                }
             }
             publishWorkouts()
         }
