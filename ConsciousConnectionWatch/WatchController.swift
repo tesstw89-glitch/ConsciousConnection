@@ -24,6 +24,7 @@ final class SLWatchController: NSObject, ObservableObject, WCSessionDelegate {
     private let progressKey = "strengthlab.watch.progress.v1"
     private let pendingKey = "strengthlab.watch.pendingEvents.v1"
     private var pendingEvents: [SLWatchEvent] = []
+    private var startedAt: Date?
 
     private struct SavedProgress: Codable {
         var workoutID: UUID
@@ -105,6 +106,7 @@ final class SLWatchController: NSObject, ObservableObject, WCSessionDelegate {
             return
         }
         activeWorkoutID = workout.id
+        startedAt = Date()
         completedSetIDs.removeAll()
         currentSetID = workout.exercises.flatMap(\.sets).first?.id
         restEnd = nil
@@ -197,9 +199,10 @@ final class SLWatchController: NSObject, ObservableObject, WCSessionDelegate {
         calories = kcal
         finishedName = workout.name
         if !fromPhone {
-            emit(kind: "finished", workoutID: workout.id, calories: kcal)
+            emit(kind: "finished", workoutID: workout.id, calories: kcal, startedAt: startedAt)
         }
         activeWorkoutID = nil
+        startedAt = nil
         currentSetID = nil
         completedSetIDs.removeAll()
         timedEnd = nil
@@ -221,10 +224,11 @@ final class SLWatchController: NSObject, ObservableObject, WCSessionDelegate {
 
     private func emit(kind: String, workoutID: UUID, setID: UUID? = nil,
                       reps: Int? = nil, weight: Double? = nil,
-                      duration: Double? = nil, calories: Double? = nil) {
+                      duration: Double? = nil, calories: Double? = nil,
+                      startedAt: Date? = nil) {
         let event = SLWatchEvent(id: UUID(), kind: kind, workoutID: workoutID, setID: setID,
                                  reps: reps, weight: weight, duration: duration,
-                                 calories: calories, when: Date())
+                                 calories: calories, when: Date(), startedAt: startedAt)
         guard let wc, wc.activationState == .activated else {
             pendingEvents.append(event)
             savePending()
