@@ -35,4 +35,5 @@ struct SLWatchEvent: Codable {
     var duration: Double?
     var calories: Double?
     var when: Date
+    var startedAt: Date?
 }
