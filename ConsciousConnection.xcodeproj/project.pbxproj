@@ -942,6 +942,13 @@
 		};
 /* End XCConfigurationList section */
 
+/* Begin XCLocalSwiftPackageReference section */
+		71BFCA52A13B4C8CB78472A8 /* XCLocalSwiftPackageReference "StrengthLabModule" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = StrengthLabModule;
+		};
+/* End XCLocalSwiftPackageReference section */
+
 /* Begin XCRemoteSwiftPackageReference section */
 		085BE53E2F98C08600E2484B /* XCRemoteSwiftPackageReference "BEMCheckBox" */ = {
 			isa = XCRemoteSwiftPackageReference;
@@ -950,10 +957,6 @@
 				kind = revision;
 				revision = a3292ebae9f0c2737b0c90281219dced2ce51ac8;
 			};
-		};
-		71BFCA52A13B4C8CB78472A8 /* XCLocalSwiftPackageReference "StrengthLabModule" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = StrengthLabModule;
 		};
 /* End XCRemoteSwiftPackageReference section */
 
