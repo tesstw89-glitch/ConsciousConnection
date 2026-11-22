@@ -61,8 +61,8 @@
 		CCAA00000000000000000007 /* Embed Watch Content */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 13;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
 			files = (
 				CCAA00000000000000000008 /* ConsciousConnectionWatch.app in Embed Watch Content */,
 			);
