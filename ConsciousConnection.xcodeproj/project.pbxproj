@@ -61,8 +61,8 @@
 		CCAA00000000000000000007 /* Embed Watch Content */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
-			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
-			dstSubfolderSpec = 16;
+			dstPath = "";
+			dstSubfolderSpec = 13;
 			files = (
 				CCAA00000000000000000008 /* ConsciousConnectionWatch.app in Embed Watch Content */,
 			);
@@ -83,6 +83,13 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		CCAA00000000000000000014 /* Exceptions for "ConsciousConnectionWatch" folder in "ConsciousConnectionWatch" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = CCAA00000000000000000001 /* ConsciousConnectionWatch */;
+		};
 		085BE0732F98183400E2484B /* Exceptions for "ConsciousConnection" folder in "ConsciousConnection" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -160,6 +167,9 @@
 		};
 		CCAA00000000000000000003 /* ConsciousConnectionWatch */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				CCAA00000000000000000014 /* Exceptions for "ConsciousConnectionWatch" folder in "ConsciousConnectionWatch" target */,
+			);
 			path = ConsciousConnectionWatch;
 			sourceTree = "<group>";
 		};
@@ -842,11 +852,12 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = RYLASAZ54A;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ConsciousConnectionWatch/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = StrengthLab;
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "Read workout and active energy information to show your activity."; 
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Record strength workouts and calories from your Apple Watch."; 
 				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.tess.ConsciousConnection;
-				INFOPLIST_KEY_WKWatchKitApp = YES;
+				INFOPLIST_KEY_WKApplication = YES;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.tess.ConsciousConnection.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -868,11 +879,12 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = RYLASAZ54A;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ConsciousConnectionWatch/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = StrengthLab;
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "Read workout and active energy information to show your activity."; 
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Record strength workouts and calories from your Apple Watch."; 
 				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.tess.ConsciousConnection;
-				INFOPLIST_KEY_WKWatchKitApp = YES;
+				INFOPLIST_KEY_WKApplication = YES;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.tess.ConsciousConnection.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
