@@ -846,6 +846,7 @@
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "Read workout and active energy information to show your activity."; 
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Record strength workouts and calories from your Apple Watch."; 
 				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.tess.ConsciousConnection;
+				INFOPLIST_KEY_WKWatchKitApp = YES;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.tess.ConsciousConnection.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -871,6 +872,7 @@
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "Read workout and active energy information to show your activity."; 
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Record strength workouts and calories from your Apple Watch."; 
 				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.tess.ConsciousConnection;
+				INFOPLIST_KEY_WKWatchKitApp = YES;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.tess.ConsciousConnection.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
