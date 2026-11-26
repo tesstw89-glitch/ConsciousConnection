@@ -27,3 +27,36 @@ struct ConsciousCircleBackButton: View {
         .accessibilityHint("Returns to the previous screen or closes this section")
     }
 }
+
+// Attach the close button to the actual destination, not the entire stack.
+// SwiftUI's dismiss action can pop both value-based and view-based links.
+private struct ConsciousNavigationBackModifier: ViewModifier {
+    @Environment(\.dismiss) private var dismiss
+    let hidesDuringPerformance: Bool
+    @State private var hiddenForPerformance = false
+
+    func body(content: Content) -> some View {
+        content
+            .navigationBarBackButtonHidden(true)
+            .overlay(alignment: .topLeading) {
+                if !hiddenForPerformance {
+                    ConsciousCircleBackButton { dismiss() }
+                        .padding(.leading, 20)
+                        .padding(.top, 18)
+                        .zIndex(999)
+                }
+            }
+            .onReceive(NotificationCenter.default.publisher(
+                for: Notification.Name("KeysStudioPerformanceVisibility")
+            )) { event in
+                guard hidesDuringPerformance else { return }
+                hiddenForPerformance = (event.object as? Bool) == true
+            }
+    }
+}
+
+extension View {
+    func consciousNavigationBack(hidesDuringPerformance: Bool = false) -> some View {
+        modifier(ConsciousNavigationBackModifier(hidesDuringPerformance: hidesDuringPerformance))
+    }
+}

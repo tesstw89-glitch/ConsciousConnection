@@ -150,7 +150,7 @@ struct SectionHomeView: View {
 
                         Button {
                             tap()
-                            router.path = [.resetMenu]
+                            router.path.append(.resetMenu)
                         } label: {
 
                             Image("resetButton")

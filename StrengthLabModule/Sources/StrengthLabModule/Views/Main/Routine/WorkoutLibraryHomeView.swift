@@ -1,4 +1,5 @@
 import SwiftUI
+import Combine
 import SwiftData
 
 // MARK: - Figma design tokens
@@ -341,9 +342,24 @@ struct WorkoutLibraryHomeView: View {
                 let currentWorkouts = try modelContext.fetch(FetchDescriptor<WorkoutTemplate>())
                 let currentSchedules = try modelContext.fetch(FetchDescriptor<WorkoutSchedule>())
                 try programStore.prepare(workouts: currentWorkouts, schedules: currentSchedules)
+                StrengthLabWatchPhoneBridge.shared.publishWorkouts()
             } catch {
                 showProgramError(error)
             }
+        }
+        // Refresh the watch after a programme switch or workout edit.
+        .onChange(of: programStore.activeID) { _, _ in
+            StrengthLabWatchPhoneBridge.shared.publishWorkouts()
+        }
+        .onChange(of: workouts.map(\.uuid)) { _, _ in
+            StrengthLabWatchPhoneBridge.shared.publishWorkouts()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .strengthLabWatchEvent)) { notification in
+            guard let event = notification.userInfo?["event"] as? SLWatchEvent,
+                  event.kind == "started",
+                  activeWorkout == nil,
+                  let workout = workouts.first(where: { $0.uuid == event.workoutID }) else { return }
+            activeWorkout = workout
         }
         .sheet(
             item: $editingWorkout

@@ -111,6 +111,8 @@ private struct StrengthLabEmbeddedHome: View {
             let achievements = AchievementManager(exerciseManager: manager)
             achievementManager = achievements
             exerciseManager = manager
+            // Pair the embedded StrengthLab database with its watch companion.
+            StrengthLabWatchPhoneBridge.shared.activate(context: modelContext, manager: manager)
         }
     }
 }

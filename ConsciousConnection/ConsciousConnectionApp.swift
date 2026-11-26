@@ -6,7 +6,6 @@ import UIKit
 struct ConsciousConnectionApp: App {
 
     @StateObject private var router = AppRouter()
-    @State private var hidesKeysPerformanceBackButton = false
     @StateObject private var workoutStore = WorkoutStore()
 
     let habitModelContainer: ModelContainer?
@@ -161,7 +160,13 @@ struct ConsciousConnectionApp: App {
                                         router.path.append(.spiralEMT(trigger, currentIndex))
                                     },
                                     onReset: {
-                                        router.path = [.spiral]
+                                        if let index = router.path.firstIndex(of: .spiral) {
+                                            router.path = Array(router.path.prefix(through: index))
+                                        } else if router.path.contains(.resetMenu) {
+                                            router.replaceSectionContent(with: [.resetMenu, .spiral])
+                                        } else {
+                                            router.replaceSectionContent(with: [.spiral])
+                                        }
                                     }
                                 )
 
@@ -216,31 +221,8 @@ struct ConsciousConnectionApp: App {
                                 TemplateWorkoutSessionView(templateID: templateID)
                                 }
                             }
-                            .navigationBarBackButtonHidden(true)
+                            .consciousNavigationBack()
                         }
-                }
-                // This overlay sits above every pushed route, including
-                // video screens that intentionally hide the navigation bar.
-                .overlay(alignment: .topLeading) {
-                    if !router.path.isEmpty && !hidesKeysPerformanceBackButton {
-                        ConsciousCircleBackButton {
-                            guard !router.path.isEmpty else { return }
-                            router.path.removeLast()
-                        }
-                        .padding(.leading, 20)
-                        .padding(.top, 18)
-                        .zIndex(999)
-                    }
-                }
-                .onReceive(
-                    NotificationCenter.default.publisher(
-                        for: Notification.Name(
-                            "KeysStudioPerformanceVisibility"
-                        )
-                    )
-                ) { event in
-                    hidesKeysPerformanceBackButton =
-                        (event.object as? Bool) == true
                 }
                 .environmentObject(router)
                 .environmentObject(workoutStore)
@@ -275,7 +257,7 @@ struct ConsciousConnectionApp: App {
         } else if hour >= 21 {
             router.path = [.nightVideo1]
         } else {
-            router.goHome()
+            router.goToMainMenu()
         }
     }
 }

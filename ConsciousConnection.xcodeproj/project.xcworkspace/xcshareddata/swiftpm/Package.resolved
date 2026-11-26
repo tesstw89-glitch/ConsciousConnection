@@ -1,6 +1,14 @@
 {
-  "originHash" : "9d11c517c53dd236ec107f0a4f988748c00aec6a01d7e659297497f623e526f6",
+  "originHash" : "c0b52bd00d844d9ffba9096cef49dfbd08d032f0549d457efafebf5d1ecd110e",
   "pins" : [
+    {
+      "identity" : "bemcheckbox",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/Boris-Em/BEMCheckBox.git",
+      "state" : {
+        "revision" : "a3292ebae9f0c2737b0c90281219dced2ce51ac8"
+      }
+    },
     {
       "identity" : "youtubekit",
       "kind" : "remoteSourceControl",

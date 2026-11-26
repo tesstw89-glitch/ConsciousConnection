@@ -38,7 +38,7 @@ struct ResetMenuView: View {
 
                 // States
                 Button {
-                    router.path = [.states]
+                    router.path.append(.states)
                 } label: {
                     Image("reset")
                         .resizable()
@@ -53,7 +53,7 @@ struct ResetMenuView: View {
 
                 // Spiral
                 Button {
-                    router.path = [.spiral]
+                    router.path.append(.spiral)
                 } label: {
                     Image("spiral")
                         .resizable()
@@ -93,7 +93,7 @@ struct ResetMenuView: View {
                         showingLimitingBeliefs = false
 
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-                            router.path = [.spiralStates(belief)]
+                            router.path.append(.spiralStates(belief))
                         }
                     }
                 )

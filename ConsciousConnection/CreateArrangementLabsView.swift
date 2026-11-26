@@ -49,7 +49,7 @@ struct MusicArrangementLabsView: View {
                         .font(.subheadline).foregroundStyle(.white.opacity(0.74))
                         .padding(.bottom, 8)
                     ForEach(ArrangementPracticeLibrary.all) { lab in
-                        NavigationLink(destination: ArrangementPracticeDetailView(lab: lab)) {
+                        NavigationLink(destination: ArrangementPracticeDetailView(lab: lab).consciousNavigationBack()) {
                             HStack(alignment: .top, spacing: 13) {
                                 Text(String(format: "%02d", lab.number))
                                     .font(.title3.bold()).foregroundStyle(arrangementMint)
@@ -69,7 +69,7 @@ struct MusicArrangementLabsView: View {
                             .background(.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 16))
                         }.buttonStyle(.plain)
                     }
-                    NavigationLink(destination: CreateSongLabView()) {
+                    NavigationLink(destination: CreateSongLabView().consciousNavigationBack()) {
                         Label("Your saved song plans and original blueprint library",
                               systemImage: "square.stack")
                             .font(.subheadline.bold()).foregroundStyle(arrangementMint)

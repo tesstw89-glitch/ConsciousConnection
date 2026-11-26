@@ -1,4 +1,5 @@
 import SwiftUI
+import Combine
 import SwiftData
 import AVFoundation
 import ImageIO
@@ -280,6 +281,18 @@ struct WorkoutRunView:
             for source in sessionWorkouts {
                 StrengthLabExercisePreferences.applySaved(to: source, in: modelContext)
             }
+            // When opened from the watch, enter the same exercise directly.
+            if StrengthLabWatchPhoneBridge.shared.watchStartedWorkoutID == workout.uuid,
+               phase == .preflight {
+                startedAt = Date()
+                now = startedAt
+                StrengthLabWatchPhoneBridge.shared.phoneStarted(workoutID: workout.uuid)
+                moveToFirstPlayableSet()
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .strengthLabWatchEvent)) { notification in
+            guard let event = notification.userInfo?["event"] as? SLWatchEvent else { return }
+            handleWatchEvent(event)
         }
         .task {
             await healthManager
@@ -371,13 +384,13 @@ struct WorkoutRunView:
                     .tracking(3)
                     .foregroundStyle(StrengthLabFigmaTheme.coral)
 
-                Text("Remember to switch on workout on your watch")
+                Text("Ready to start your StrengthLab workout?")
                     .font(StrengthLabFigmaTheme.bold(30))
                     .multilineTextAlignment(.center)
                     .foregroundStyle(StrengthLabFigmaTheme.ink)
                     .padding(.horizontal, 20)
 
-                Text("Choose a workout on your Apple Watch, then you're ready to go.")
+                Text("Your StrengthLab Watch app records exercise and calorie data in Apple Health automatically.")
                     .font(StrengthLabFigmaTheme.regular(16))
                     .multilineTextAlignment(.center)
                     .foregroundStyle(StrengthLabFigmaTheme.muted)
@@ -498,6 +511,7 @@ struct WorkoutRunView:
 
         startedAt = Date()
         now = startedAt
+        StrengthLabWatchPhoneBridge.shared.phoneStarted(workoutID: workout.uuid)
         moveToFirstPlayableSet()
     }
 
@@ -831,8 +845,7 @@ struct WorkoutRunView:
                 Spacer()
 
                 doneSetButton(
-                    action:
-                        completeCurrentSet
+                    action: { completeCurrentSet() }
                 )
             }
         }
@@ -1829,6 +1842,44 @@ struct WorkoutRunView:
 
     // MARK: - Progression
 
+    // Apply wrist-driven changes in the existing iPhone workout player.
+    // The watch data always references stable SwiftData set UUIDs.
+    private func handleWatchEvent(_ event: SLWatchEvent) {
+        guard event.workoutID == workout.uuid else { return }
+        switch event.kind {
+        case "started":
+            if phase == .preflight {
+                startedAt = event.when
+                now = startedAt
+                StrengthLabWatchPhoneBridge.shared.phoneStarted(workoutID: workout.uuid)
+                moveToFirstPlayableSet()
+            }
+        case "navigated":
+            guard phase != .preflight, phase != .complete, let id = event.setID else { return }
+            if currentSet?.uuid == id { return }
+            for (exerciseIndex, exercise) in exercises.enumerated() {
+                if let setIndex = orderedSets(for: exercise).firstIndex(where: { $0.uuid == id }) {
+                    goTo(exerciseIndex: exerciseIndex, setIndex: setIndex, notifyWatch: false)
+                    return
+                }
+            }
+        case "completed":
+            guard phase == .exercise, currentSet?.uuid == event.setID else { return }
+            if let set = currentSet {
+                if let reps = event.reps { set.targetReps = reps }
+                if let weight = event.weight { set.weight = weight }
+            }
+            completeCurrentSet(announceToWatch: false)
+        case "finished":
+            if phase != .complete && phase != .preflight {
+                finishWorkout(endedEarly: completedSetIDs.count < totalSetCount)
+            }
+        default:
+            break
+        }
+    }
+
+
     private func moveToFirstPlayableSet()
     {
         guard
@@ -1896,7 +1947,7 @@ struct WorkoutRunView:
     }
 
 
-    private func completeCurrentSet()
+    private func completeCurrentSet(announceToWatch: Bool = true)
     {
         guard
             let set =
@@ -1914,6 +1965,12 @@ struct WorkoutRunView:
         completedSetIDs.insert(
             set.uuid
         )
+        if announceToWatch {
+            StrengthLabWatchPhoneBridge.shared.phoneCompleted(
+                workoutID: workout.uuid, setID: set.uuid,
+                reps: set.targetReps, weight: set.weight
+            )
+        }
 
         try?
             modelContext.save()
@@ -2074,6 +2131,7 @@ struct WorkoutRunView:
             phase =
                 .complete
         }
+        StrengthLabWatchPhoneBridge.shared.phoneFinished(workoutID: workout.uuid)
     }
 
 
@@ -2091,7 +2149,8 @@ struct WorkoutRunView:
         exerciseIndex:
             Int,
         setIndex:
-            Int
+            Int,
+        notifyWatch: Bool = true
     )
     {
         currentExerciseIndex =
@@ -2100,6 +2159,11 @@ struct WorkoutRunView:
         currentSetIndex =
             setIndex
 
+        if notifyWatch, let set = currentSet {
+            StrengthLabWatchPhoneBridge.shared.phoneAdvanced(
+                workoutID: workout.uuid, setID: set.uuid
+            )
+        }
         resetTimedSet()
 
         detailsShown =
@@ -2295,6 +2359,12 @@ struct WorkoutRunView:
                         set.uuid
                     )
             {
+                // A set logged on the watch was already saved through the bridge.
+                // Avoid logging the same effort twice when the phone session ends.
+                if (set.history ?? []).contains(where: {
+                    $0.note?.hasPrefix("Apple Watch · ") == true &&
+                    $0.completedDate >= startedAt.addingTimeInterval(-90)
+                }) { continue }
                 _ =
                     exerciseManager
                         .recordHistory(

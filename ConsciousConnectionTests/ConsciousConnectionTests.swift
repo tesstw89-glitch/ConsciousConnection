@@ -43,4 +43,30 @@ struct ConsciousConnectionTests {
         #expect(daily.isCompleted(on: friday, calendar: calendar))
         #expect(!daily.isCompleted(on: saturday, calendar: calendar))
     }
+
+    @Test @MainActor
+    func completingToolsReturnsToTheirLaunchingSection() {
+        let router = AppRouter()
+        let sections: [Route] = [.groundHome, .liveHome, .createHome, .becomeHome, .timeOnlyHome]
+        for section in sections {
+            router.path = [section, .resetMenu, .spiral]
+            router.goHome()
+            #expect(router.path == [section])
+        }
+        router.path = [.goodMorning, .gratitude]
+        router.goHome()
+        #expect(router.path.isEmpty)
+    }
+
+    @Test @MainActor
+    func replacingToolRoutesKeepsSectionAndMainMenuStillClears() {
+        let router = AppRouter()
+        router.path = [.liveHome, .workoutMenu, .todaysWorkout]
+        router.replaceSectionContent(with: [.workoutMenu, .workoutLog])
+        #expect(router.path == [.liveHome, .workoutMenu, .workoutLog])
+        router.goToMainMenu()
+        #expect(router.path.isEmpty)
+        router.replaceSectionContent(with: [.spiral])
+        #expect(router.path == [.spiral])
+    }
 }
