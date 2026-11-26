@@ -50,7 +50,7 @@ struct WorkoutSessionView: View {
 
                     Button("Back to Workout Menu") {
                         makeTapFeelGood()
-                        router.path = [.workoutMenu]
+                        router.replaceSectionContent(with: [.workoutMenu])
                     }
                 }
             }
@@ -81,7 +81,7 @@ struct WorkoutSessionView: View {
         .alert("Discard this workout?", isPresented: $showDiscardAlert) {
             Button("Keep Going", role: .cancel) { }
             Button("Discard", role: .destructive) {
-                router.path = [.workoutMenu]
+                router.replaceSectionContent(with: [.workoutMenu])
             }
         } message: {
             Text("This will throw away the current workout.")
@@ -471,7 +471,7 @@ struct WorkoutSessionView: View {
     private func finishWorkout(endedEarly: Bool) {
         workoutStore.saveWorkout(day: day, blocks: blocks, endedEarly: endedEarly)
         restRemaining = 0
-        router.path = [.workoutMenu, .workoutLog]
+        router.replaceSectionContent(with: [.workoutMenu, .workoutLog])
     }
 
     private func timerText(_ seconds: Int) -> String {

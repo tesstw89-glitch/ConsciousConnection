@@ -98,7 +98,7 @@ private struct StudioLink<Destination: View>: View {
     let icon: String
     let destination: Destination
     var body: some View {
-        NavigationLink(destination: destination) {
+        NavigationLink(destination: destination.consciousNavigationBack()) {
             HStack(spacing: 15) {
                 Image(systemName: icon).font(.title2).foregroundStyle(studioMint).frame(width: 36)
                 VStack(alignment: .leading, spacing: 4) {
@@ -165,7 +165,7 @@ struct MusicLabListView: View {
                     .padding(13).background(.white.opacity(0.11), in: RoundedRectangle(cornerRadius: 12))
                     .foregroundStyle(.white)
                 ForEach(labs) { lab in
-                    NavigationLink(destination: MusicLabDetailView(lab: lab)) {
+                    NavigationLink(destination: MusicLabDetailView(lab: lab).consciousNavigationBack()) {
                         HStack(alignment: .top, spacing: 14) {
                             Text(String(format: "%02d", lab.number))
                                 .font(.system(.title3, design: .rounded, weight: .bold))
@@ -215,7 +215,7 @@ struct MusicLabDetailView: View {
                     if let chord = currentChord { chordPanel(chord) }
                     infoBlock("HARMONIC INGREDIENTS", lab.palette)
                 } else {
-                    NavigationLink(destination: SaxStudioPlayView(lab: lab)) {
+                    NavigationLink(destination: SaxStudioPlayView(lab: lab).consciousNavigationBack(hidesDuringPerformance: true)) {
                         HStack(spacing: 12) {
                             Image(systemName: "play.fill")
                                 .font(.title3.bold())
@@ -310,7 +310,7 @@ struct MusicLabDetailView: View {
                     }
                 }
                 Spacer()
-                NavigationLink(destination: KeysStudioPlayView(lab: lab)) {
+                NavigationLink(destination: KeysStudioPlayView(lab: lab).consciousNavigationBack(hidesDuringPerformance: true)) {
                     Label("Play", systemImage: "play.fill")
                         .font(.subheadline.bold())
                         .padding(.horizontal, 12)

@@ -104,7 +104,7 @@ struct TemplateWorkoutSessionView: View {
         .alert("Discard this workout?", isPresented: $showDiscardAlert) {
             Button("Keep Going", role: .cancel) { }
             Button("Discard", role: .destructive) {
-                router.path = [.workoutMenu]
+                router.replaceSectionContent(with: [.workoutMenu])
             }
         } message: {
             Text("This will throw away the current workout.")
@@ -338,7 +338,7 @@ struct TemplateWorkoutSessionView: View {
     private func finishWorkout(endedEarly: Bool) {
         workoutStore.saveTemplateWorkout(templateName: templateName, blocks: blocks, endedEarly: endedEarly)
         restRemaining = 0
-        router.path = [.workoutMenu, .workoutLog]
+        router.replaceSectionContent(with: [.workoutMenu, .workoutLog])
     }
 
     private func timerText(_ seconds: Int) -> String {

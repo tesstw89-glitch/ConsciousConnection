@@ -61,8 +61,27 @@ enum Route: Hashable {
 final class AppRouter: ObservableObject {
     @Published var path: [Route] = []
 
+    // Finishing a tool returns to the hub it was launched from.
+    private var sectionPrefix: [Route] {
+        guard let first = path.first else { return [] }
+        switch first {
+        case .groundHome, .liveHome, .createHome, .becomeHome, .timeOnlyHome:
+            return [first]
+        default:
+            return []
+        }
+    }
+
     func goHome() {
+        path = sectionPrefix
+    }
+
+    func goToMainMenu() {
         path.removeAll()
+    }
+
+    func replaceSectionContent(with routes: [Route]) {
+        path = sectionPrefix + routes
     }
 
     func goToTime(_ minutes: Int) {

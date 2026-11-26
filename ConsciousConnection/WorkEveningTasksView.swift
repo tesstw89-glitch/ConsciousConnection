@@ -20,7 +20,7 @@ struct WorkEveningTasksView: View {
                 Group {
                     if isDone {
                         Button {
-                            router.path = []
+                            router.goHome()
                         } label: {
                             Image("homeButton")
                                 .resizable()

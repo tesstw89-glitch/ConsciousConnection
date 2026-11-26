@@ -83,7 +83,7 @@ struct SetIntentionView: View {
                 Group {
                     if hasSubmitted {
                         Button {
-                            router.path = []
+                            router.goHome()
                         } label: {
                             Image("homeButton")
                                 .resizable()

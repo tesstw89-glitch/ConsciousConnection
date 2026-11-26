@@ -177,7 +177,7 @@ struct ContentView: View {
 
                 Button {
                     makeTapFeelGood()
-                    router.path = [.resetMenu]
+                    router.path.append(.resetMenu)
                 } label: {
                     Image("resetButton")
                         .resizable()
